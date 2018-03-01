@@ -6,7 +6,7 @@
 ?>
 <body>
 	<form name="ASAP_form"
-	      action="/cgi-bin/ASAP.cgi"
+	      action="/cgi-bin/test.py"
 	      method="post"
 	      ENCTYPE="multipart/form-data"
 	      onsubmit="return validate_input()"

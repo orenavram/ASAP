@@ -10,7 +10,7 @@ from mixcr_procedure import mixcr_procedure
 from parse_alignments import parse_alignment_file
 from directory_creator import create_dir
 from runs_aggregator import join_runs_analyses
-from plots_generator import plot_chart, plot_nuc_mut_cnt_dict
+from plots_generator import plot_barplot
 from text_handler import write_dict_to_file, string_similarity
 from msa_parser import remove_sparse_columns
 import logging
@@ -62,13 +62,14 @@ def analyze_samples(gp):
         joint_run_is_needed = True #TODO: should it be always OR when gp.run_number > 1?
         if joint_run_is_needed:
         '''
+        mixcr_output_path, parsed_mixcr_output_path, assignments_path = create_sub_working_directories(gp, 'joint')
+        gp.parsed_mixcr_output_paths.append(parsed_mixcr_output_path)
+        gp.assignments_paths.append(assignments_path)
+
         done_path = os.path.join(gp.output_path, 'done_3_' + 'join_runs_analysis.txt')
         if os.path.exists(done_path):
             logger.info('Skipping join_runs_analysis, output files already exist...')
         else:
-            mixcr_output_path, parsed_mixcr_output_path, assignments_path = create_sub_working_directories(gp, 'joint')
-            gp.parsed_mixcr_output_paths.append(parsed_mixcr_output_path)
-            gp.assignments_paths.append(assignments_path)
             join_runs_analyses(gp.number_of_runs, gp.run_output_paths, parsed_mixcr_output_path, gp.chains,
                                gp.sequence_annotation_file_suffix, gp.mutation_count_file_suffix)
             with open(done_path, 'w') as f:
@@ -136,7 +137,7 @@ def plot_mutation_counts(gp):
         for chain in gp.chains:
             mutation_counts_frequency_path = parsed_mixcr_output_path + '/' + chain + gp.mutation_count_file_suffix
             logger.info('Plotting mutation_counts_frequency_file: ' + mutation_counts_frequency_path)
-            plot_nuc_mut_cnt_dict(chain, mutation_counts_frequency_path, gp.raw_data_file_suffix)
+            plot_barplot(mutation_counts_frequency_path, gp.raw_data_file_suffix, key_type=int, value_type=int, fontsize=6, rotation=70, ylim=[0,30])
 
 
 def plot_assignments(gp):
@@ -146,16 +147,21 @@ def plot_assignments(gp):
             continue
         for raw_data_file in os.listdir(assignments_path):
             if not raw_data_file.endswith('_counts.' + gp.raw_data_file_suffix):
-                logger.info('Skipping ' + raw_data_file)
+                logger.debug('Skipping ' + raw_data_file)
                 continue
             assignment_file = os.path.join(assignments_path, raw_data_file)
 
             logger.info('Plotting assignment_file: ' + assignment_file)
             if assignment_file.endswith('cdr3_len_counts.' + gp.raw_data_file_suffix):
-                plot_chart(assignment_file, gp.raw_data_file_suffix,
-                           int)  # TODO: maybe this file should be handled separately
+                # TODO: maybe this file should be handled separately
+                plot_barplot(assignment_file, gp.raw_data_file_suffix, key_type=int)
             else:
-                plot_chart(assignment_file, gp.raw_data_file_suffix, str)
+                if 'VDJ' in assignment_file:
+                    plot_barplot(assignment_file, gp.raw_data_file_suffix, rotation=70, fontsize=2, ylim=[0, 15])
+                elif 'VD' in assignment_file or 'DJ' in assignment_file or 'VJ' in assignment_file:
+                    plot_barplot(assignment_file, gp.raw_data_file_suffix, rotation=70, fontsize=5, ylim=[0, 25])
+                else:
+                    plot_barplot(assignment_file, gp.raw_data_file_suffix)
 
 
 def parse_annotation_files(gp):

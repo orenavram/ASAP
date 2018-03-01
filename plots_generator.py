@@ -1,5 +1,5 @@
 import numpy as np
-#import seaborn as sns
+import seaborn as sns
 import matplotlib.pyplot as plt
 import logging
 logger = logging.getLogger('main')
@@ -48,11 +48,9 @@ def plot_nuc_mut_cnt_dict(chain, in_file_path, raw_data_file_suffix):
     plt.close('all')
 
 
-def plot_chart(assignment_file, raw_data_file_suffix, key_type = str, as_proportions = True):
+def plot_barplot(assignment_file ='/Users/Oren/Dropbox/Projects/wine/outputs/run1/vdj_assignments/IGH_V_counts.txt', raw_data_file_suffix ='txt', key_type = str, value_type=int, as_proportions = True, rotation = None, fontsize = None, ylim=[0, 50]):
     '''plot a simple bar chart of CDR3 lengths and VDJ assignments'''
-    # initialize chart variables
-
-    d = read_table_to_dict(assignment_file, key_type=key_type, value_type=int)
+    d = read_table_to_dict(assignment_file, key_type=key_type, value_type=value_type)
 
     x_values = sorted(d)
     y_values = [d[x] for x in x_values]
@@ -61,43 +59,31 @@ def plot_chart(assignment_file, raw_data_file_suffix, key_type = str, as_proport
         sum_y_values = sum(y_values)/100 # to get y's in percents
         y_values = [round(y/sum_y_values, 2) for y in y_values]
 
+    logger.debug(x_values)
+    logger.debug(y_values)
 
-    # create chart
-    fig, ax = plt.subplots(figsize=(len(x_values),len(x_values)/1.5))
+    # More colors can be found at https://stackoverflow.com/questions/22408237/named-colors-in-matplotlib
+    barplot = sns.barplot(x_values, y_values, color="mediumspringgreen")
+    ylim[1] = ylim[1] if ylim[1] > max(y_values) else 1.2*max(y_values)
+    barplot.set_ylim(ylim)
+    barplot.set_ylabel('Frequency (%)')
+    barplot.set_xticklabels(x_values, rotation=rotation, fontsize=fontsize)
 
-    bars_loc = np.arange(len(x_values))
-    bars = ax.bar(bars_loc, y_values, color='blue')
-    ax.set_xticks(bars_loc)  # align xticks under bars
-
-    # set chart parameters
-    # ax.set_title(sample_num + ' ' + chain + ' Frequency of ' + x_label)
-    ax.set_ylabel('Frequency')
-    ax.set_xticklabels(x_values, rotation=70)
-    ax.set_ylim([0, 100])
-
-    # label each bar in chart with its value
-    for bar, label in zip(bars, y_values):
-        height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width() / 2, height + 1, label,
-                ha='center', va='bottom', rotation=60)
-
+    plt.tight_layout()
     save_path = assignment_file.replace(raw_data_file_suffix, 'png')
-
-    fig.savefig(save_path)
-
-    plt.close('all')
-    plt.ioff()
-    #4/0
+    plt.savefig(save_path, dpi=500)
+    plt.close()
 
 
 def plot_intersection_histogram(runs, y_values, out_path):
     '''plot a simple bar chart of CDR3 lengths and VDJ assignments'''
 
-    logger.info(runs)
-    logger.info(y_values)
-    plt.title('Percent of intersection between joint and the different runs')
-    plt.ylabel('Frequency (%)')
-    plt.bar(range(len(runs)), y_values, color='b', tick_label=runs, align='center')
+    logger.debug(runs)
+    logger.debug(y_values)
+    barplot = sns.barplot(np.arange(len(runs)), y_values, color="mediumpurple")
+    barplot.set_xticklabels(runs)
+    barplot.set_title('Percent of intersection between joint and the different runs')
+    barplot.set_ylabel('Frequency (%)')
     plt.ylim([0, 100])
 
     plt.savefig(out_path)
@@ -164,3 +150,6 @@ if __name__ == '__main__':
     else:
         generate_alignment_report_pie_chart(*argv[1:])
 '''
+# plot_singles_barplot()
+# plot_pairs_barplot()
+# plot_triples_barplot()
