@@ -15,7 +15,6 @@ def send_email(sender, receiver, subject='', content=''):
 
 if __name__ == '__main__':
     if len(argv) < 3:
-        #send_email('danrap40@gmail.com', 'orabalber555@gmail.com', 'השתלטתי לך על המייל מוהאהאאהא')
         logger.error('Usage: python ' + argv[0] + ' <sender> <receiver> <?subject> <?content>')
         exit()
     else:
