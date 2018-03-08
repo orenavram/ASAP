@@ -9,7 +9,7 @@ ASAP_RESULTS_URL = os.path.join(GC.ASAP_URL, 'results')
 ASAP_HTML_DIR = '/data/www/html/asap'
 ASAP_EXEC = '/bioseq/asap'
 
-MAIN_SCRIPT = '/bioseq/asap/NGS_analyzer/NGS_analyzer.py'
+MAIN_SCRIPT = '/bioseq/asap/ASAP/NGS_analyzer.py'
 
 #path to example runs
 EXAMPLE_FILE_RUN1_R1 = os.path.join(ASAP_HTML_DIR, 'example/run1/242_R1.fastq')

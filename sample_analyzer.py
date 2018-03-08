@@ -130,13 +130,16 @@ def analyze_samples(gp):
 
 def plot_mutation_counts(gp):
     for parsed_mixcr_output_path in gp.parsed_mixcr_output_paths:
-        if gp.debug_run not in parsed_mixcr_output_path:
-            logger.info('!!DEBUG!! SKIPPING parse_chain_annotation_file for', parsed_mixcr_output_path)
-            continue
+        # if gp.debug_run not in parsed_mixcr_output_path:
+        #     logger.info('!!DEBUG!! SKIPPING parse_chain_annotation_file for', parsed_mixcr_output_path)
+        #     continue
         for chain in gp.chains:
             mutation_counts_frequency_path = parsed_mixcr_output_path + '/' + chain + gp.mutation_count_file_suffix
             logger.info('Plotting mutation_counts_frequency_file: ' + mutation_counts_frequency_path)
-            plot_barplot(mutation_counts_frequency_path, gp.raw_data_file_suffix, key_type=int, value_type=int, fontsize=6, rotation=70, ylim=[0,30])
+            if os.path.exists(mutation_counts_frequency_path):
+                plot_barplot(mutation_counts_frequency_path, gp.raw_data_file_suffix, key_type=int, value_type=int, fontsize=6, rotation=70, ylim=[0,30])
+            else:
+                logger.info('No such file: {}. Skipping this plot...'.format(mutation_counts_frequency_path))
 
 
 def plot_assignments(gp):
