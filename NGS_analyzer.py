@@ -13,12 +13,14 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('main')
 
-if len(argv) < 2:
-    logger.error('Usage: python3 '+argv[0]+' <working_directory>; <?parameters_file_name [parameters.txt]>')
-    exit(-1)
-
 logger.info('Starting '+argv[0]+'!')
 logger.debug('argv = ' + str(argv))
+logger.info('Usage: python3 ' + argv[0] + ' <?parameters_file_name [parameters.txt]>')
+if len(argv) < 2:
+    parameters_file_name = os.path.join(gp.working_dir, 'parameters.txt')
+else:
+    parameters_file_name = os.path.join(gp.working_dir, argv[1])
+logger.info('parameter file: ' + parameters_file_name)
 
 create_dir(gp.output_path)
 gp.mixcr_output_paths = []

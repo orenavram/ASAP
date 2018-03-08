@@ -47,7 +47,7 @@ with open(params_file_path) as f:
 
     #Boolean that indicates whether the samples originated in mice (and not human)
     line = get_next_relevant_rstriped_line(f)
-    MMU = True if line == 'True' else False
+    MMU = True if line == 'Mouse' else False
 
         #String that represent the raw data files suffix. txt / xls / etc...
     line = get_next_relevant_rstriped_line(f)

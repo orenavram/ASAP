@@ -51,6 +51,10 @@ def get_mixcr_cmds(fastq_path, outpath, sample, MMU, chains):
     fastq2 = os.path.join(fastq_path, sample + 'R2.fastq')
     logger.info('\n'.join(['fastq files paths are:', fastq1, fastq2]))
 
+    if not (os.path.exists(fastq1) and os.path.exists(fastq2)):
+        logger.error("One (or more) fastq file(s) does not exist...")
+        raise OSError
+
     vdjca_path = os.path.join(outpath, 'alignments.vdjca')
     clones_clns_path = os.path.join(outpath, 'clones.clns')
 

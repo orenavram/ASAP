@@ -40,7 +40,6 @@ def analyze_samples(gp):
         except:
             logger.error('Error in MiXCR procedure')
             raise
-            #exit()
 
         try:
             done_path = os.path.join(gp.output_path, 'done_2_' + run + '_' + 'parse_alignment_file.txt')
