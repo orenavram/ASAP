@@ -105,11 +105,12 @@ def generate_intersection_plot(number_of_runs, joint_annotation_path, sequence_a
     for i in range(number_of_runs): #without joint
         run = 'run' + str(i+1)
         runs.append(run)
-        run_annotation_path = joint_annotation_path.replace('joint', run)
-        num_of_run_annotations = int(subprocess.check_output(['wc', '-l', run_annotation_path]).split()[0]) #number of lines in annotation file
-        logger.info(run)
-        logger.info(num_of_run_annotations)
-        percent_of_intersected_annotations_per_run[i] = num_of_joint_annotations/num_of_run_annotations*100
+        if num_of_joint_annotations != 0:
+            run_annotation_path = joint_annotation_path.replace('joint', run)
+            num_of_run_annotations = int(subprocess.check_output(['wc', '-l', run_annotation_path]).split()[0]) #number of lines in annotation file
+            logger.info(run)
+            logger.info(num_of_run_annotations)
+            percent_of_intersected_annotations_per_run[i] = num_of_joint_annotations/num_of_run_annotations*100
     logger.info(percent_of_intersected_annotations_per_run)
 
     raw_data_path = joint_annotation_path.replace(sequence_annotation_file_suffix, '_runs_intersections.txt')

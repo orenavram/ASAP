@@ -183,11 +183,15 @@ def parse_annotation_files(gp):
 def analyze_cdr3(gp, parsed_mixcr_output_path, cdr3_analysis_dir):
     k = gp.top_cdr3_clones
     for chain in gp.chains:
+        annotations_path = os.path.join(parsed_mixcr_output_path, chain + gp.sequence_annotation_file_suffix)
+        if not os.path.exists(annotations_path):
+            logger.info('No such file: {}. Skipping its analysis...'.format(annotations_path))
+            continue
+
         cdr3_to_counts = {}
         cdr3_to_aa_reads = {}
         most_k_common_cdr3_to_entry = {}
 
-        annotations_path = os.path.join(parsed_mixcr_output_path, chain + gp.sequence_annotation_file_suffix)
         with open(annotations_path) as f:
             for line in f:
                 aa_read, chain, cdr3, v_type, d_type, j_type, dna_read, isotype, read_frequency = line.split('\t')

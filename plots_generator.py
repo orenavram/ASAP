@@ -128,7 +128,7 @@ def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, minim
     isotypes = isotypes[others_index:]
     portions = portions[others_index:]
 
-    if others_portion:
+    if others_portion > 0:
         isotypes.append('others')
         portions.append(others_portion)
     #explode = (0, 0.1, 0, 0)  # only "explode" the 2nd slice

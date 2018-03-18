@@ -1,13 +1,12 @@
 from time import time
 start = time()
-from sys import argv
-import os
+import sys, os
+argv = sys.argv
 import shutil
 from email_sender import send_email
 from sample_analyzer import analyze_samples
 import global_params as gp
 from directory_creator import create_dir
-from text_handler import logger
 from html_editor import edit_html
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -37,7 +36,12 @@ server_main_url = 'http://asap.tau.ac.il/'
 if os.path.exists('/Users/Oren/'):
     html_path = os.path.join(gp.working_dir, 'output.html')
     html_mode = 'w'
+    smtp_server = 'mxout.tau.ac.il'
 else:
+    sys.path.append('/bioseq/bioSequence_scripts_and_constants')
+    sys.path.append('/bioseq/asap')
+    import ASAP_CONSTANTS as CONSTS
+    smtp_server = CONSTS.GC.SMTP_SERVER
     html_path = os.path.join(gp.working_dir, 'output.php')
     html_mode = 'a'
 
@@ -94,8 +98,8 @@ if os.path.exists(user_email_file):
     Thanks
     ASAP Team'''.format(os.path.join(server_url, run_number, 'output.php'))
 
-    send_email(sender='TAU BioSequence <bioSequence@tauex.tau.ac.il>', receiver=addressee,
-               subject='Your ASAP run is ready!', content=email_content)
+    send_email(smtp_server=smtp_server, sender='TAU BioSequence <bioSequence@tauex.tau.ac.il>',
+               receiver=addressee, subject='Your ASAP run is ready!', content=email_content)
 
 logger.info(argv[0] + ' is DONE!!')
 

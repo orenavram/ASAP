@@ -53,7 +53,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
     chain_to_aa_read_to_meta_data_dict = dict(zip(allowed_chain_types, [{} for chain in allowed_chain_types]))
     chain_to_num_of_mutations_to_counts_dict = dict(zip(allowed_chain_types, [{} for chain in allowed_chain_types]))
 
-    chain_to_count_dict = dict.fromkeys(allowed_chain_types, 0)
+    chain_to_count_dict = dict.fromkeys(allowed_chain_types + ['unknown'], 0)
     isotypes_count_dict = dict.fromkeys(['other_A', 'A1', 'A2', 'D', 'E', 'G', 'M', 'unknown'], 0)
     errors_count_dict = dict.fromkeys(['cdr', 'len', 'quality', 'aligning'], 0)
 
@@ -100,7 +100,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
 
 
             # sanity check
-            if line[20][:3] != line[best_v_family_col][:3]:
+            if line_tokens[20][:3] != line_tokens[best_v_family_col][:3]:
                 logger.debug(line)
                 logger.debug(line[20][:3])
                 logger.debug(line[best_v_family_col][:3])
@@ -365,16 +365,20 @@ def get_meta_data(line, aa_read, dna_read, cdr3, isotype, best_v_family_col, bes
     # line[description_col][0:-8]
 
     chain = line[best_v_family_col][:3]
-    v_type = re.match('IGHV\d+', line[best_v_family_col]).group()
-    d_type = 'unknown'
-    if line[best_d_family_col]: # d assignment is sometimes missing
-        d_type = re.match('IGHD\d+', line[best_d_family_col]).group()
-    j_type = re.match('IGHJ\d+', line[best_j_family_col]).group()
 
     if chain != 'IGH':
         if not isotype:
             logger.info('Changing isotype from ' + isotype + 'to NONE')
         isotype = 'NONE'
+
+    if not re.match(chain + 'V\d+', line[best_v_family_col]):
+        print(line)
+        print(line[best_v_family_col])
+    v_type = re.match(chain + 'V\d+', line[best_v_family_col]).group()
+    d_type = 'unknown'
+    if line[best_d_family_col]: # d assignment is sometimes missing
+        d_type = re.match(chain + 'D\d+', line[best_d_family_col]).group()
+    j_type = re.match(chain + 'J\d+', line[best_j_family_col]).group()
 
 
     return [aa_read, chain, cdr3, v_type, d_type, j_type, dna_read, isotype]
@@ -400,31 +404,31 @@ def write_reports(out_file_path, total_time, errors_count_dict, total_lines, cha
         #information about valid data that was extracted from mixcr alignments file
 
 
-        f.write('Total time (seconds) = {}\n'.format(total_time))
+        f.write('Total time (seconds) = {:.3f}\n'.format(total_time))
         f.write('Mixcr alignment file provides {} results\n'.format(total_lines))
-        f.write('{} of paired reads with no CDR3 region = {}\n'.format('%', statistics_precent_dict['cdr']))
-        f.write('{} of entries shorter than specified threshold = {}\n'.format('%', statistics_precent_dict['len']))
-        f.write('{} of entries with lower quality than specified threshold = {}\n'.format('%', statistics_precent_dict['quality']))
-        f.write('{} of entries that are not aligned = {}\n\n'.format('%', statistics_precent_dict['aligning']))
+        f.write('% of paired reads with no CDR3 region = {:.3f}\n'.format(statistics_precent_dict['cdr']))
+        f.write('% of entries shorter than specified threshold = {:.3f}\n'.format(statistics_precent_dict['len']))
+        f.write('% of entries with lower quality than specified threshold = {:.3f}\n'.format(statistics_precent_dict['quality']))
+        f.write('% of entries that are not aligned = {:.3f}\n\n'.format(statistics_precent_dict['aligning']))
 
         for chain in sorted(chain_to_count_dict):
-            f.write('{} of {} chains = {}\n'.format('%', chain, chain_to_percent_dict[chain]))
+            f.write('% of {} chains = {:.3f}\n'.format(chain, chain_to_percent_dict[chain]))
 
         f.write('\n')
-        logger.debug('{} of other_A isotype = {}\n'.format('%', isotype_to_precent_dict['other_A']))
-        f.write('{} of other_A isotype = {}\n'.format('%', isotype_to_precent_dict['other_A']))
-        f.write('{} of A1 isotype = {}\n'.format('%', isotype_to_precent_dict['A1']))
-        f.write('{} of A2 isotype = {}\n'.format('%', isotype_to_precent_dict['A2']))
-        f.write('{} of D isotype = {}\n'.format('%', isotype_to_precent_dict['D']))
-        f.write('{} of E isotype = {}\n'.format('%', isotype_to_precent_dict['E']))
-        f.write('{} of G isotype = {}\n'.format('%', isotype_to_precent_dict['G']))
-        f.write('{} of M isotype = {}\n'.format('%', isotype_to_precent_dict['M']))
-        f.write('{} of unknown isotypes = {}\n'.format('%', isotype_to_precent_dict['unknown']))
+        logger.debug('% of other_A isotype = {:.3f}\n'.format(isotype_to_precent_dict['other_A']))
+        f.write('% of other_A isotype = {:.3f}\n'.format(isotype_to_precent_dict['other_A']))
+        f.write('% of A1 isotype = {:.3f}\n'.format(isotype_to_precent_dict['A1']))
+        f.write('% of A2 isotype = {:.3f}\n'.format(isotype_to_precent_dict['A2']))
+        f.write('% of D isotype = {:.3f}\n'.format(isotype_to_precent_dict['D']))
+        f.write('% of E isotype = {:.3f}\n'.format(isotype_to_precent_dict['E']))
+        f.write('% of G isotype = {:.3f}\n'.format(isotype_to_precent_dict['G']))
+        f.write('% of M isotype = {:.3f}\n'.format(isotype_to_precent_dict['M']))
+        f.write('% of unknown isotypes = {:.3f}\n'.format(isotype_to_precent_dict['unknown']))
 
         f.write('\n')
-        f.write('{} of other_A isotype (out of A) = {}\n'.format('%', A_sub_isotype_to_precent_dict['other_A']))
-        f.write('{} of A1 isotype (out of A) = {}\n'.format('%', A_sub_isotype_to_precent_dict['A1']))
-        f.write('{} of A2 isotype (out of A) = {}\n'.format('%', A_sub_isotype_to_precent_dict['A2']))
+        f.write('% of other_A isotype (out of A) = {:.3f}\n'.format(A_sub_isotype_to_precent_dict['other_A']))
+        f.write('% of A1 isotype (out of A) = {:.3f}\n'.format(A_sub_isotype_to_precent_dict['A1']))
+        f.write('% of A2 isotype (out of A) = {:.3f}\n'.format(A_sub_isotype_to_precent_dict['A2']))
 
     outfile_pie_chart = out_file_path.replace('log', 'png')
     generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict)

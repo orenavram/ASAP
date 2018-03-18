@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger('main')
 
 if len(argv)<3:
-    params_file_path = '/Users/Oren/Dropbox/Projects/wine/parameters_242.txt'
+    params_file_path = '/Users/Oren/Dropbox/Projects/wine/parameters.txt'
     debug_run = ''
     # debug_run = False
 else:
