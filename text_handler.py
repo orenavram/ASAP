@@ -36,10 +36,10 @@ def get_next_relevant_rstriped_line(file_handler):
     while True:
         line = file_handler.readline().strip()
         if line!='' and line[0]!='#':
-            logger.info('Parsing next relevant line:' + line)
+            logger.info('Parsing next relevant line:\n' + line)
             return line
         else:
-            logger.info('Skipping irrelevant (i.e., comment/white spaces) line:' + line)
+            logger.debug('Skipping irrelevant (i.e., comment/white spaces) line:\n' + line)
 
 def string_similarity(a, b):
     # measure similarity rate of two strings

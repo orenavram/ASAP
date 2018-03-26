@@ -10,7 +10,7 @@ from mixcr_procedure import mixcr_procedure
 from parse_alignments import parse_alignment_file
 from directory_creator import create_dir
 from runs_aggregator import join_runs_analyses
-from plots_generator import plot_barplot
+from plots_generator import plot_barplot, generate_polarization_histogram
 from text_handler import write_dict_to_file, string_similarity
 from msa_parser import remove_sparse_columns
 import logging
@@ -34,7 +34,7 @@ def analyze_samples(gp):
             else:
                 logger.info('Starting mixcr_procedure of {}...'.format(run))
                 fastq_path = os.path.join(gp.working_dir, 'reads', run)
-                mixcr_procedure(gp.path_to_mixcr, fastq_path, mixcr_output_path, gp.sample, gp.chains, gp.MMU)
+                mixcr_procedure(gp.path_to_mixcr, fastq_path, mixcr_output_path, gp.chains, gp.MMU)
                 with open(done_path, 'w') as f:
                     pass
         except:
@@ -137,7 +137,7 @@ def plot_mutation_counts(gp):
             mutation_counts_frequency_path = parsed_mixcr_output_path + '/' + chain + gp.mutation_count_file_suffix
             logger.info('Plotting mutation_counts_frequency_file: ' + mutation_counts_frequency_path)
             if os.path.exists(mutation_counts_frequency_path):
-                plot_barplot(mutation_counts_frequency_path, gp.raw_data_file_suffix, key_type=int, value_type=int, fontsize=6, rotation=70, ylim=[0,30])
+                plot_barplot(mutation_counts_frequency_path, gp.raw_data_file_suffix, key_type=int, value_type=float, fontsize=6, rotation=70, ylim=[0,30])
             else:
                 logger.info('No such file: {}. Skipping this plot...'.format(mutation_counts_frequency_path))
 
@@ -181,65 +181,100 @@ def parse_annotation_files(gp):
 
 
 def analyze_cdr3(gp, parsed_mixcr_output_path, cdr3_analysis_dir):
-    k = gp.top_cdr3_clones
+    k = gp.top_cdr3_clones_to_further_analyze
     for chain in gp.chains:
         annotations_path = os.path.join(parsed_mixcr_output_path, chain + gp.sequence_annotation_file_suffix)
         if not os.path.exists(annotations_path):
             logger.info('No such file: {}. Skipping its analysis...'.format(annotations_path))
             continue
 
-        cdr3_to_counts = {}
-        cdr3_to_aa_reads = {}
-        most_k_common_cdr3_to_entry = {}
+        cdr3_to_aa_reads, cdr3_to_counts = parse_sequence_annotations_file(annotations_path)
+        cdr3_to_num_of_different_reads = dict((cdr3, len(cdr3_to_aa_reads[cdr3])) for cdr3 in cdr3_to_aa_reads)
 
-        with open(annotations_path) as f:
-            for line in f:
-                aa_read, chain, cdr3, v_type, d_type, j_type, dna_read, isotype, read_frequency = line.split('\t')
-                cdr3_to_counts[cdr3] = cdr3_to_counts.get(cdr3, 0) + int(read_frequency)
-                cdr3_to_aa_reads[cdr3] = cdr3_to_aa_reads.get(cdr3, []) + [aa_read]
-        most_k_common_cdr3 = sorted(cdr3_to_counts, key=cdr3_to_counts.get, reverse=True)[:k]
-        most_k_common_cdr3_to_counts = {cdr3: cdr3_to_counts[cdr3] for cdr3 in most_k_common_cdr3}
-        most_k_common_cdr3_to_aa_reads = {cdr3: cdr3_to_aa_reads[cdr3] for cdr3 in most_k_common_cdr3}
-        if most_k_common_cdr3 != []:
-            for i in range(k):
-                cdr3 = most_k_common_cdr3[i]
-                multiple_sequences = most_k_common_cdr3_to_aa_reads[cdr3]
-                cluster_prefix = os.path.join(cdr3_analysis_dir, 'cluster_' + str(i))
-                ms_path = cluster_prefix + '_ms.fasta'
-                msa_path = cluster_prefix + '_msa.aln'
+        most_common_cdr3 = sorted(cdr3_to_counts, key=lambda cdr3:(cdr3_to_counts.get(cdr3), cdr3_to_num_of_different_reads.get(cdr3)), reverse=True)
 
-                try:
-                    aln, msa = align_sequences(multiple_sequences, ms_path, msa_path, i)
-                except:
-                    print(multiple_sequences)
-                    raise
-                summary_align = AlignInfo.SummaryInfo(aln)
+        cdr3_annotations_path = os.path.join(cdr3_analysis_dir, chain + gp.cdr3_annotation_file_suffix)
+        write_cdr3_counts_file(cdr3_annotations_path, most_common_cdr3, cdr3_to_counts, cdr3_to_num_of_different_reads)
 
-                # find consensus sequence by majority rule
-                consensus = summary_align.dumb_consensus(threshold=0, ambiguous='#')
-                consensus = str(consensus)
+        polarization_histogram_path = cdr3_annotations_path.replace(gp.raw_data_file_suffix, 'png')
+        generate_polarization_histogram(cdr3_annotations_path, polarization_histogram_path, gp.top_cdr3_clones_to_polarization_graph)
 
-                #find most similar sequence
-                aa_most_similar_to_consesnsus, similarity_rate = find_most_similar_sequence(msa, consensus)
+        handle_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_cdr3, cdr3_to_aa_reads, cdr3_to_counts, chain, gp, k)
 
-                dna_most_similar_to_consesnsus = find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path)
 
-                #add entry to dict
-                most_k_common_cdr3_to_entry[cdr3] = [cdr3, str(most_k_common_cdr3_to_counts[cdr3]), consensus, aa_most_similar_to_consesnsus, dna_most_similar_to_consesnsus, str(similarity_rate)]
+def write_cdr3_counts_file(cdr3_annotations_path, most_common_cdr3, cdr3_to_counts, cdr3_to_num_of_different_reads):
+    sum_of_cdr3_counts = sum(cdr3_to_counts.values())
+    sum_of_cdr3_different_reads = sum(cdr3_to_num_of_different_reads.values())
+    with open(cdr3_annotations_path, 'w') as f:
+        for cdr3 in most_common_cdr3:
+            cdr3_counts = cdr3_to_counts[cdr3]
+            cdr3_different_reads = cdr3_to_num_of_different_reads[cdr3]
+            f.write('\t'.join([cdr3, str(cdr3_counts), str(cdr3_different_reads), str(cdr3_counts / sum_of_cdr3_counts),
+                               str(cdr3_different_reads / sum_of_cdr3_different_reads)]) + '\n')
 
-                #generate web logo
-                weblogo_file_path = cluster_prefix + '_weblogo.pdf'
-                try:
-                    generate_weblogo(msa_path, weblogo_file_path)
-                except Exception as e:
-                    logger.warning('Couldn\'t generate weblogo {} due to the following reason: {}'.format(msa_path, e.args))
 
-            #write cdr3_to_entry to file
-            cdr3_annotations_path = os.path.join(cdr3_analysis_dir, chain + gp.cdr3_annotation_file_suffix)
-            with open(cdr3_annotations_path, 'w') as f:
-                for cdr3 in most_k_common_cdr3:
-                    f.write('\t'.join(most_k_common_cdr3_to_entry[cdr3]) + '\n')
-            #write_dict_to_file(cdr3_annotations_path, most_k_common_cdr3_to_entry, sort_by=most_k_common_cdr3_to_counts.get, reverse=True)
+def handle_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_cdr3, cdr3_to_aa_reads, cdr3_to_counts, chain, gp, k):
+    most_k_common_cdr3_to_entry = {}
+    most_k_common_cdr3 = most_common_cdr3[:k]
+    most_k_common_cdr3_to_counts = {cdr3: cdr3_to_counts[cdr3] for cdr3 in most_k_common_cdr3}
+    most_k_common_cdr3_to_aa_reads = {cdr3: cdr3_to_aa_reads[cdr3] for cdr3 in most_k_common_cdr3}
+    if most_k_common_cdr3 != []:
+        for i in range(gp.top_cdr3_clones_to_further_analyze):
+            cdr3 = most_k_common_cdr3[i]
+            multiple_sequences = most_k_common_cdr3_to_aa_reads[cdr3]
+            cluster_prefix = os.path.join(cdr3_analysis_dir, 'cluster_' + str(i))
+            ms_path = cluster_prefix + '_ms.fasta'
+            msa_path = cluster_prefix + '_msa.aln'
+
+            try:
+                aln, msa = align_sequences(multiple_sequences, ms_path, msa_path, i)
+            except:
+                print(multiple_sequences)
+                raise
+            summary_align = AlignInfo.SummaryInfo(aln)
+
+            # find consensus sequence by majority rule
+            consensus = summary_align.dumb_consensus(threshold=0, ambiguous='#')
+            consensus = str(consensus)
+
+            # find most similar sequence
+            aa_most_similar_to_consesnsus, similarity_rate = find_most_similar_sequence(msa, consensus)
+
+            dna_most_similar_to_consesnsus = find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path)
+
+            # add entry to dict
+            most_k_common_cdr3_to_entry[cdr3] = [cdr3, str(most_k_common_cdr3_to_counts[cdr3]),
+                                                 str(len(most_k_common_cdr3_to_aa_reads[cdr3])), consensus,
+                                                 aa_most_similar_to_consesnsus, dna_most_similar_to_consesnsus,
+                                                 str(similarity_rate)]
+            # TODO
+
+            # generate web logo
+            weblogo_file_path = cluster_prefix + '_weblogo.pdf'
+            try:
+                generate_weblogo(msa_path, weblogo_file_path)
+            except Exception as e:
+                logger.warning('Couldn\'t generate weblogo {} due to the following reason: {}'.format(msa_path, e.args))
+
+        # write cdr3_to_entry to file
+        top_cdr3_extended_annotations_path = os.path.join(cdr3_analysis_dir, chain + gp.top_cdr3_annotation_file_suffix)
+        with open(top_cdr3_extended_annotations_path, 'w') as f:
+            for cdr3 in most_k_common_cdr3:
+                f.write('\t'.join(most_k_common_cdr3_to_entry[cdr3]) + '\n')
+                # write_dict_to_file(cdr3_annotations_path, most_k_common_cdr3_to_entry, sort_by=most_k_common_cdr3_to_counts.get, reverse=True)
+
+
+def parse_sequence_annotations_file(annotations_path):
+    cdr3_to_counts = {}
+    cdr3_to_aa_reads = {}
+
+    with open(annotations_path) as f:
+        for line in f:
+            aa_read, chain, cdr3, v_type, d_type, j_type, dna_read, isotype, read_frequency = line.split('\t')
+            cdr3_to_counts[cdr3] = cdr3_to_counts.get(cdr3, 0) + int(read_frequency)
+            cdr3_to_aa_reads[cdr3] = cdr3_to_aa_reads.get(cdr3, []) + [aa_read]
+
+    return cdr3_to_aa_reads, cdr3_to_counts
 
 
 def find_most_similar_sequence(msa, consensus):
@@ -380,4 +415,4 @@ def align_sequences(multiple_sequences, ms_path, msa_path, cluster_number):
         msa_str += record.seq._data + '\n'
     logger.debug(msa_str)
 
-    return aln, msa_str
+    return aln, msa_str.split()

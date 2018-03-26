@@ -1,5 +1,9 @@
 from time import time
 start = time()
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('main')
+
 import sys, os
 argv = sys.argv
 import shutil
@@ -8,9 +12,6 @@ from sample_analyzer import analyze_samples
 import global_params as gp
 from directory_creator import create_dir
 from html_editor import edit_html
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('main')
 
 logger.info('Starting '+argv[0]+'!')
 logger.debug('argv = ' + str(argv))
@@ -25,10 +26,13 @@ create_dir(gp.output_path)
 gp.mixcr_output_paths = []
 gp.parsed_mixcr_output_paths = []
 gp.assignments_paths = []
+gp.top_cdr3_clones_to_polarization_graph = 100
+gp.top_cdr3_clones_to_further_analyze = 10
 gp.sequence_annotation_file_suffix = '_sequence_annotations.' + gp.raw_data_file_suffix
+gp.top_cdr3_annotation_file_suffix = '_top_{}_cdr3_extended_annotations.{}'.format(gp.top_cdr3_clones_to_further_analyze, gp.raw_data_file_suffix)
 gp.cdr3_annotation_file_suffix = '_cdr3_annotations.' + gp.raw_data_file_suffix
 gp.mutation_count_file_suffix = '_mutation_counts_distribution.' + gp.raw_data_file_suffix
-gp.top_cdr3_clones = 10
+
 
 #main code!
 succeeded = True
@@ -60,12 +64,6 @@ run_number = gp.working_dir.split('/')[-1]
 
 logger.info('Editing html file...')
 edit_html(gp, html_path, html_mode, server_main_url, run_number)
-'''
-except Exception as e:
-    succeeded = False
-    print('$'*100 + '\nanalyze_samples crashed!\n' + '$'*100)
-    logger.error(e.args)
-'''
 
 with open(html_path) as f:
     html_content = f.read()
@@ -89,14 +87,15 @@ if os.path.exists(user_email_file):
     server_url = 'http://asap.tau.ac.il/results'
     email_content = '''Hello,
 
-    The results for your ASAP run are ready at:
-    {}
+The results for your ASAP run are ready at:
+{}
 
 
-    Please note: the results will be kept on the server for three months.
+Please note: the results will be kept on the server for three months.
 
-    Thanks
-    ASAP Team'''.format(os.path.join(server_url, run_number, 'output.php'))
+Thanks
+ASAP Team
+    '''.format(os.path.join(server_url, run_number, 'output.php'))
 
     send_email(smtp_server=smtp_server, sender='TAU BioSequence <bioSequence@tauex.tau.ac.il>',
                receiver=addressee, subject='Your ASAP run is ready!', content=email_content)

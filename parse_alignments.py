@@ -58,14 +58,18 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
     errors_count_dict = dict.fromkeys(['cdr', 'len', 'quality', 'aligning'], 0)
 
     alignments_txt_path = os.path.join(mixcr_output_path, 'alignments.txt')
+
+    logger.info('Start parsing {}'.format(alignments_txt_path))
     with open(alignments_txt_path) as f:
 
+        logger.info('File was opened succssefully.')
         # skip header-related variables- use to extract specified fields from alignments file
-        f.readline()
+        logger.info('First line of file is:\n{}'.format(f.readline()))
 
         #iterate over alignments file line by line            
         for line in f:
 
+            #logger.debug('Next line of file is:\n{}'.format(line))
             line_tokens = line.split('\t')
             #count total number of entries provided by mixcr alignment
             total_lines += 1
@@ -114,6 +118,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
 
             #update chain counter
             chain_to_count_dict[chain] += 1
+            #print('chain_to_count_dict: {}'.format(chain_to_count_dict))
 
             #extract type from family annotation
             aa_read, isotype = translate_dna_to_amino_acid_and_get_isotype_if_any(isotypes_count_dict, dna_read, chain, allowed_chain_types)
@@ -159,6 +164,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
     #assert total_iso == sum(isotypes_count_dict.values())
     #assert total_chains == sum(chain_to_count_dict.values())
 
+    logger.info('chain_to_count_dict: {}'.format(chain_to_count_dict))
     write_reports(outfile_report, t2 - t1, errors_count_dict, total_lines, chain_to_count_dict, isotypes_count_dict)
 
 
@@ -302,14 +308,12 @@ def get_start_index_of_substring_in_string(sub_string, string, mismatches_allowe
 '''edit amino acid sequence to mass-spec'''
 #find IGH sequence identifier and edit the end of the sequence
 def get_final_aa_seq(read_AA, seq_id, mass_spec_seq, must_match, mismatch, end_J_seq):
-     
-    #IGH identifier found
+
     start_of_match = get_start_index_of_substring_in_string(end_J_seq, read_AA, 1)
-    if start_of_match != None:
-        read_AA = read_AA[:start_of_match] + end_J_seq + mass_spec_seq
-    
-    #IGH identifier not found => edit chain according to isotype identifier
-    else:
+
+    if start_of_match != None: #IGH identifier found
+        read_AA = read_AA[:start_of_match + len(end_J_seq)] + mass_spec_seq # discards seq_id (downstream to end_j_seq)
+    else: #IGH identifier not found => edit chain according to isotype identifier
         start_of_match = get_start_index_of_substring_in_string(seq_id, read_AA, mismatch, must_match)
         read_AA = read_AA[:start_of_match] + mass_spec_seq
 
@@ -393,6 +397,13 @@ def write_reports(out_file_path, total_time, errors_count_dict, total_lines, cha
     chain_to_percent_dict = percent_calculator(chain_to_count_dict, sum(chain_to_count_dict.values()))
     isotype_to_precent_dict = percent_calculator(isotypes_count_dict, sum(isotypes_count_dict.values()))
 
+    logger.info('chain_to_count_dict: {}'.format(chain_to_count_dict))
+    logger.info('chain_to_percent_dict: {}'.format(chain_to_percent_dict))
+    logger.info('errors_count_dict: {}'.format(errors_count_dict))
+    logger.info('statistics_precent_dict: {}'.format(statistics_precent_dict))
+    logger.info('isotypes_count_dict: {}'.format(isotypes_count_dict))
+    logger.info('isotypes_count_dict: {}'.format(isotypes_count_dict))
+
     A_sub_isotypes = ['other_A', 'A1', 'A2']
     A_sub_isotypes_to_count_dict = dict(
         [(A_sub_isotype, isotypes_count_dict[A_sub_isotype]) for A_sub_isotype in A_sub_isotypes])
@@ -431,7 +442,8 @@ def write_reports(out_file_path, total_time, errors_count_dict, total_lines, cha
         f.write('% of A2 isotype (out of A) = {:.3f}\n'.format(A_sub_isotype_to_precent_dict['A2']))
 
     outfile_pie_chart = out_file_path.replace('log', 'png')
-    generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict)
+    if isotypes_count_dict:
+        generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict)
 
     #TODO: generate A_subisotypes pie chart
 

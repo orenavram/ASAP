@@ -37,7 +37,7 @@ def remove_sparse_columns(in_path, out_path, maximal_gap_frequency_allowed_per_c
     with open(out_path, 'w') as f:
         f.write(result)
 
-    logger.info('Shortened from %d to %d columns' % (len(sequences[0]), len(cleaned_sequences[0])))
+    logger.info('Shortened from {} to {} columns'.format(len(sequences[0]), len(cleaned_sequences[0])))
 
 
 if __name__ == '__main__':

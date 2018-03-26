@@ -1,3 +1,4 @@
+import matplotlib_venn
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -89,30 +90,22 @@ def plot_intersection_histogram(runs, y_values, out_path):
     plt.savefig(out_path)
     plt.close()
 
+def plot_venn(out_path, runs_annotations_sets, runs):
+    if len(runs) == 2:
+        venn = matplotlib_venn.venn2
+    elif len(runs) == 3:
+        venn = matplotlib_venn.venn2
+    else:
+        logger.error('Can\'t plot venn diagram for {} sets!! (only for 2 or 3 sets)'.format(len(runs)))
+        return
+    plt.figure()
+    venn(runs_annotations_sets, set_labels=runs)
+    plt.title('Venn Diagram')
+    plt.savefig(out_path)
+    plt.close()
+
 
 def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, minimal_portion=0.05):
-
-    '''
-        # Pie chart, where the slices will be ordered and plotted counter-clockwise:
-        isotypes = []
-        portions = []
-        portion_to_isotype = {}
-        #subtypes = {} # isotype -> list of subtypes
-        with open(in_path) as f:
-            for line in f:
-                match = search('% of ([a-zA-Z]+) isotypes? = (\d+\.\d+)', line)
-                if not match:
-                    continue
-                isotype = match.group(1)
-                #subtype = match.group(2)
-                #subtypes[isotype] = subtypes.get(isotype, []) + [subtype]
-                portion = float(match.group(2))
-                isotypes.append(isotype)
-                portions.append(portion)
-                #portion_to_isotype[portion] = isotype
-    '''
-
-    #remove zero counts
 
     isotypes = sorted(isotype_to_precent_dict, key = isotype_to_precent_dict.get)
     portions = [isotype_to_precent_dict[isotype] for isotype in isotypes]
@@ -142,6 +135,23 @@ def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, minim
     plt.close()    #plt.legend('counts', 'unique')
 
 
+def generate_polarization_histogram(cdr3_annotations_path, out_path, cutoff):
+    #old: cdr3_annotations_path='/Users/Oren/Dropbox/Projects/wine/123_IGH_clones.txt'
+    title = 'Top {} common reads distribution VS unique sequences distribution'.format(cutoff)
+    cols = np.loadtxt(cdr3_annotations_path, usecols=(1, 2), dtype='int')
+    rank = range(1, cutoff+1)
+    #for style in plt.style.available:
+    style = 'seaborn-paper'
+    plt.figure()
+    plt.style.use(style)
+    plt.figure(figsize=[25,5])
+    plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,0], alpha=0.5)
+    plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,1], alpha=0.75)
+    plt.title(title)
+    plt.savefig(out_path)
+    plt.close()    #plt.legend('counts', 'unique')
+
+
 '''
 if __name__ == '__main__':
     if len(argv) < 3:
@@ -153,3 +163,4 @@ if __name__ == '__main__':
 # plot_singles_barplot()
 # plot_pairs_barplot()
 # plot_triples_barplot()
+

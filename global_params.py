@@ -12,7 +12,6 @@ else:
     params_file_path = argv[1]
     debug_run = argv[2]
 
-logger.info('DEBUG MODE?', debug_run if debug_run else False)
 
 with open(params_file_path) as f:
 
@@ -23,10 +22,6 @@ with open(params_file_path) as f:
     line = get_next_relevant_rstriped_line(f)
     #String that represents the path to MiXCR executable file
     path_to_mixcr = line
-
-    #String that represent a sample number. Should match the FASTQ file names
-    line = get_next_relevant_rstriped_line(f)
-    sample = line
 
     #Integer that represents number of runs (the output will be +1 because of the joint)
     line = get_next_relevant_rstriped_line(f)

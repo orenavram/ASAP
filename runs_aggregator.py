@@ -1,6 +1,7 @@
 import os, subprocess
+
 from text_handler import read_table_to_dict, write_dict_to_file
-from plots_generator import plot_intersection_histogram
+from plots_generator import plot_venn
 import logging
 logger = logging.getLogger('main')
 
@@ -44,7 +45,7 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
         if mutation_counts_frequency != {}:
             with open(os.path.join(joint_parsed_mixcr_output_path, chain + mutation_count_file_suffix), 'w') as f:
                 for mutation_count in mutation_counts_frequency:
-                    f.write(str(mutation_count) + '\t' + str(int(mutation_counts_frequency[mutation_count]/len(run_output_paths))) + '\n')
+                    f.write(str(mutation_count) + '\t' + '{:.3f}'.format(mutation_counts_frequency[mutation_count]/len(run_output_paths[:-1])) + '\n')
 
 
 def generate_final_fasta(aa_seq_intersection, final_fasta_path, minimal_overlap, sequence_to_entry_dict):
@@ -98,6 +99,32 @@ def passes_overlap_minimal_threshold_in_all_runs(l, threshold):
 
 
 def generate_intersection_plot(number_of_runs, joint_annotation_path, sequence_annotation_file_suffix):
+    runs_annotations_sets = []
+    runs = []
+    percent_of_intersected_annotations_per_run = []
+    num_of_joint_annotations = int(subprocess.check_output(['wc', '-l', joint_annotation_path]).split()[0]) #number of lines in annotation file
+    for i in range(number_of_runs):  # without joint
+        run = 'run' + str(i + 1)
+        runs.append(run)
+        run_annotation_path = joint_annotation_path.replace('joint', run)
+        with open(run_annotation_path) as f:
+            lines = f.readlines()
+        num_of_run_annotations = len(lines)
+        logger.info('{} has {} annotations'.format(run, num_of_run_annotations))
+        aa_seqs = [line.split()[0] for line in lines]
+        runs_annotations_sets.append(set(aa_seqs))
+        percent_of_intersected_annotations_per_run.append(num_of_joint_annotations / num_of_run_annotations * 100)
+
+    logger.info(percent_of_intersected_annotations_per_run)
+    raw_data_path = joint_annotation_path.replace(sequence_annotation_file_suffix, '_runs_intersections.txt')
+    write_dict_to_file(raw_data_path, {i:percent_of_intersected_annotations_per_run[i] for i in range(number_of_runs)})
+
+    out_path = raw_data_path.replace('txt', 'png')
+    plot_venn(out_path, runs_annotations_sets, runs)
+
+
+'''
+def generate_intersection_plot(number_of_runs, joint_annotation_path, sequence_annotation_file_suffix):
     percent_of_intersected_annotations_per_run = [0]*number_of_runs
     runs = []
     num_of_joint_annotations = int(subprocess.check_output(['wc', '-l', joint_annotation_path]).split()[0]) #number of lines in annotation file
@@ -117,6 +144,5 @@ def generate_intersection_plot(number_of_runs, joint_annotation_path, sequence_a
     write_dict_to_file(raw_data_path, {i:percent_of_intersected_annotations_per_run[i] for i in range(number_of_runs)})
     plot_path = raw_data_path.replace('txt', 'png')
     plot_intersection_histogram(runs, percent_of_intersected_annotations_per_run, plot_path)
-
-
+'''
 

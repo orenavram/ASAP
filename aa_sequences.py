@@ -12,8 +12,8 @@ iso_G_id = 'ASTKGPS'
 iso_M_id = 'SASAPT'
 
 end_J_seq = 'VTVSS'
-# mass_spec_seq = 'ASTK'
-mass_spec_seq = ''
+mass_spec_seq = 'ASTK'
+#mass_spec_seq = ''
 
 if MMU:
     iso_A_id = 'ESARNP'
