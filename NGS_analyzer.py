@@ -67,8 +67,8 @@ edit_html(gp, html_path, html_mode, server_main_url, run_number)
 
 with open(html_path) as f:
     html_content = f.read()
-html_content = html_content.replace('<META HTTP-EQUIV="REFRESH" CONTENT=30> </HEAD>', '')
-html_content = html_content.replace('<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE"> </HEAD>', '')
+html_content = html_content.replace(CONSTS.GC.RELOAD_TAG, '')
+html_content = html_content.replace('<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">', '')
 
 if succeeded:
     html_content = html_content.replace('RUNNING', 'FINISHED')
@@ -102,12 +102,6 @@ ASAP Team
 
 logger.info(argv[0] + ' is DONE!!')
 
-'''
-f.write('<li><a href="outputs/clones_analysis/' + sample + '/'+chain+'/consensus/2_consensus.fasta" target="_blank">2nd clone cluster</a></li>\n')
-f.write('<li><a href="outputs/clones_analysis/' + sample + '/'+chain+'/consensus/3_consensus.fasta" target="_blank">3rd clone cluster</a></li>\n')
-f.write('<li><a href="outputs/clones_analysis/' + sample + '/'+chain+'/consensus/4_consensus.fasta" target="_blank">4th clone cluster</a></li>\n')
-f.write('<li><a href="outputs/clones_analysis/' + sample + '/'+chain+'/consensus/5_consensus.fasta" target="_blank">5th clone cluster</a></li>\n')
-'''
 
 end = time()
 hours = int((end - start) / 3600)

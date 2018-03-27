@@ -35,6 +35,9 @@ def edit_html(gp, html_path, html_mode, server_main_url, run_number):
                     raw_link = '(<a href="outputs/' + run + '/parsed_mixcr_output/alignment_report.log" target="_blank">raw_data</a>)'
                     f.write('<li>' + link + ' ; ' + raw_link + '</li>')
 
+                link = '<a href="outputs/' + run + '/parsed_mixcr_output/' + chain + gp.sequence_annotation_file_suffix + '" target="_blank">Sequence annotations</a>'
+                f.write('<li>' + link + ' ;</li>')
+
                 link = '<a href="outputs/' + run + '/parsed_mixcr_output/' + chain + gp.mutation_count_file_suffix.replace(
                     gp.raw_data_file_suffix,
                     'png') + '" target="_blank">Somatic hypermutations - nucleotide substitution frequency</a>'
@@ -72,7 +75,7 @@ def edit_html(gp, html_path, html_mode, server_main_url, run_number):
                     link = '<a href="outputs/joint/cdr3_analysis/' + chain + gp.cdr3_annotation_file_suffix.replace(gp.raw_data_file_suffix, 'png') + '" target="_blank">Polarization graph</a>'
                     raw_link = '(<a href="outputs/joint/cdr3_analysis/' + chain + gp.cdr3_annotation_file_suffix + '" target="_blank">raw_data</a>)'
                     f.write('<li>' + link + ' ; ' + raw_link + '</li>\n')
-                    link = '<a href="outputs/joint/cdr3_analysis/' + chain + gp.top_cdr3_annotation_file_suffix + '" target="_blank">Top clones annotations</a>'
+                    link = '<a href="outputs/joint/cdr3_analysis/' + chain + gp.top_cdr3_annotation_file_suffix + '" target="_blank">Top {} clones annotations</a>'.format(gp.top_cdr3_clones_to_further_analyze)
                     f.write('<li>' + link + ' ;</li>\n')
                     for i in range(gp.top_cdr3_clones_to_further_analyze):
                         msa_link = '<a href="' + server_main_url + 'wasabi/index_general.html?url=' + server_main_url + 'results/' + run_number + '/outputs/joint/cdr3_analysis/cluster_' + str(

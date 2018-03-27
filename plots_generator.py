@@ -94,7 +94,7 @@ def plot_venn(out_path, runs_annotations_sets, runs):
     if len(runs) == 2:
         venn = matplotlib_venn.venn2
     elif len(runs) == 3:
-        venn = matplotlib_venn.venn2
+        venn = matplotlib_venn.venn3
     else:
         logger.error('Can\'t plot venn diagram for {} sets!! (only for 2 or 3 sets)'.format(len(runs)))
         return
