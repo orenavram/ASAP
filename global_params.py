@@ -16,7 +16,7 @@ else:
 with open(params_file_path) as f:
 
     line = get_next_relevant_rstriped_line(f)
-    #String that represents the path to MiXCR executable file
+    #String that represents the path to a folder where the output dir will be generated
     working_dir = line.rstrip('/')
 
     line = get_next_relevant_rstriped_line(f)
@@ -40,13 +40,17 @@ with open(params_file_path) as f:
     line = get_next_relevant_rstriped_line(f)
     sequencing_quality_threshold = int(line)
 
-    #Boolean that indicates whether the samples originated in mice (and not human)
+    #String that indicates whether the samples originated in mice (and not human)
     line = get_next_relevant_rstriped_line(f)
     MMU = True if line == 'Mouse' else False
 
-        #String that represent the raw data files suffix. txt / xls / etc...
+    #String that represent the raw data files suffix. txt / xls / etc...
     line = get_next_relevant_rstriped_line(f)
     raw_data_file_suffix = line
+
+    #String (yes/no) that represent whether to add mass_spec_seq to each aa sequence in the fasta output
+    line = get_next_relevant_rstriped_line(f)
+    add_mass_spec_seq = True if line == 'yes' else False
 
 output_path = os.path.join(working_dir, 'outputs')
 

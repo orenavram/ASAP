@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger('main')
 
 
-def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_output_path, chains, sequence_annotation_file_suffix, mutation_count_file_suffix, minimal_overlap = 1):
+def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_output_path, chains, sequence_annotation_file_suffix, mutation_count_file_suffix, mass_spec_seq, minimal_overlap = 1):
 
     logger.info('run_number ' + str(number_of_runs))
     for chain in chains:
@@ -37,7 +37,7 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
                         logger.debug('Omitting', aa_seq, aa_seq_intersection[aa_seq], 'from joint annotation file')
                     '''
             final_fasta_path = os.path.join(run_output_paths[-1], chain + '_final.fasta')
-            generate_final_fasta(aa_seq_intersection, final_fasta_path, minimal_overlap, sequence_to_entry_dict)
+            generate_final_fasta_with_mass_spec_sec(aa_seq_intersection, final_fasta_path, minimal_overlap, sequence_to_entry_dict, mass_spec_seq)
 
             generate_intersection_plot(number_of_runs, joint_annotation_path, sequence_annotation_file_suffix)
 
@@ -48,16 +48,14 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
                     f.write(str(mutation_count) + '\t' + '{:.3f}'.format(mutation_counts_frequency[mutation_count]/len(run_output_paths[:-1])) + '\n')
 
 
-def generate_final_fasta(aa_seq_intersection, final_fasta_path, minimal_overlap, sequence_to_entry_dict):
+def generate_final_fasta_with_mass_spec_sec(aa_seq_intersection, final_fasta_path, minimal_overlap, sequence_to_entry_dict, mass_spec_seq):
     with open(final_fasta_path, 'w') as f:
-        i = 0
         for aa_seq in sequence_to_entry_dict:
             if passes_overlap_minimal_threshold_in_all_runs(aa_seq_intersection[aa_seq], minimal_overlap):
-                i += 1
                 aa_read, chain, cdr3, v_type, d_type, j_type, dna_read, isotype, read_frequency = sequence_to_entry_dict[aa_seq]
-                f.write('|'.join(['> {}'.format(i), '{}({})'.format(chain, isotype), cdr3, v_type, d_type, j_type,
+                f.write('|'.join(['> {}({})'.format(chain, isotype), cdr3, v_type, d_type, j_type,
                                   ','.join(str(x) for x in aa_seq_intersection[aa_seq])]))
-                f.write('\n' + aa_seq + '\n')
+                f.write('\n' + aa_seq + mass_spec_seq + '\n')
 
 
 def add_counts_to_mutations_dict(mutation_counts_frequency, mutation_counts_frequency_path):

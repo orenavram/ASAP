@@ -72,7 +72,7 @@ def edit_html(gp, html_path, html_mode, server_main_url, run_number):
                     link = '<a href="outputs/joint/' + chain + '_final.fasta" target="_blank">Final joint fasta</a>'
                     f.write('<li>' + link + ' ;</li>\n\n')
 
-                    link = '<a href="outputs/joint/cdr3_analysis/' + chain + gp.cdr3_annotation_file_suffix.replace(gp.raw_data_file_suffix, 'png') + '" target="_blank">Polarization graph</a>'
+                    link = '<a href="outputs/joint/cdr3_analysis/' + chain + gp.cdr3_annotation_file_suffix.replace(gp.raw_data_file_suffix, 'png') + '" target="_blank">Clonal expansion graph</a>'
                     raw_link = '(<a href="outputs/joint/cdr3_analysis/' + chain + gp.cdr3_annotation_file_suffix + '" target="_blank">raw_data</a>)'
                     f.write('<li>' + link + ' ; ' + raw_link + '</li>\n')
                     link = '<a href="outputs/joint/cdr3_analysis/' + chain + gp.top_cdr3_annotation_file_suffix + '" target="_blank">Top {} clones annotations</a>'.format(gp.top_cdr3_clones_to_further_analyze)

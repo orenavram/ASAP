@@ -26,7 +26,7 @@ create_dir(gp.output_path)
 gp.mixcr_output_paths = []
 gp.parsed_mixcr_output_paths = []
 gp.assignments_paths = []
-gp.top_cdr3_clones_to_polarization_graph = 100
+gp.top_cdr3_clones_to_clonal_expansion_graph = 100
 gp.top_cdr3_clones_to_further_analyze = 10
 gp.sequence_annotation_file_suffix = '_sequence_annotations.' + gp.raw_data_file_suffix
 gp.top_cdr3_annotation_file_suffix = '_top_{}_cdr3_extended_annotations.{}'.format(gp.top_cdr3_clones_to_further_analyze, gp.raw_data_file_suffix)
@@ -67,8 +67,7 @@ edit_html(gp, html_path, html_mode, server_main_url, run_number)
 
 with open(html_path) as f:
     html_content = f.read()
-html_content = html_content.replace(CONSTS.GC.RELOAD_TAG, '')
-html_content = html_content.replace('<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">', '')
+html_content = html_content.replace(CONSTS.GC.RELOAD_TAGS, '')
 
 if succeeded:
     html_content = html_content.replace('RUNNING', 'FINISHED')

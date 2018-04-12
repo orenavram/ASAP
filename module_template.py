@@ -13,7 +13,10 @@ def auxiliary_func2(path):
 
 #etc...
 
+
 if __name__ == '__main__':
+    # This block will be executed only when you run it as your main program.
+    # If this module is being imported from another script, this block won't be executed, however the function will be available...
     if len(argv) < 4: # change the number of arguments according to your script
         logger.error('Usage: python ' + argv[0] + ' <arg1> <arg2> <arg3>...')
         exit()

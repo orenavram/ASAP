@@ -60,15 +60,15 @@ def get_mixcr_cmds(fastq_path, outpath, MMU, chains):
 
     align_cmd = ('java -Xmx4g -Xms3g -jar mixcr.jar align'                      #align command
                  ' -f'                                                          #overwrite output file if already exists
-                 ' -s {}'
+                 ' -s {}'                                                       #consider species (mouse/human)
                  ' --report ' + outpath + '/align_report.txt'                   #create report file
                  ' --library imgt'                                              #use IMGT local library as annotation reference
                  ' -a'                                                          #save reads' ids from fastq files
                  ' ' + fastq1 + ' ' + fastq2 + ''                               #input files- 2 X fastq files
-                 ' ' + vdjca_path).format('mmu' if MMU else 'hsa')              # consider species (mouse/human)
+                 ' ' + vdjca_path).format('mmu' if MMU else 'hsa')
              
     assemble_cmd = ('java -Xmx4g -Xms3g -jar mixcr.jar assemble'                    #assemble command
-                    ' -r ' + outpath + '/assemble_report.txt'                #create report file
+                    ' -r ' + outpath + '/assemble_report.txt'                       #create report file
                     ' -f'                                                           #overwrite output file if already exists
                     ' -i ' + outpath + '/index_file'           #keep mapping between initial reads and final clones
                     ' -OseparateByC=true'                                           #separate by isotypes

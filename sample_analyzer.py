@@ -10,9 +10,10 @@ from mixcr_procedure import mixcr_procedure
 from parse_alignments import parse_alignment_file
 from directory_creator import create_dir
 from runs_aggregator import join_runs_analyses
-from plots_generator import plot_barplot, generate_polarization_histogram
+from plots_generator import plot_barplot, generate_clonal_expansion_histogram
 from text_handler import write_dict_to_file, string_similarity
 from msa_parser import remove_sparse_columns
+
 import logging
 
 from weblogo_generator import generate_weblogo
@@ -69,8 +70,9 @@ def analyze_samples(gp):
         if os.path.exists(done_path):
             logger.info('Skipping join_runs_analysis, output files already exist...')
         else:
+            from aa_sequences import mass_spec_seq
             join_runs_analyses(gp.number_of_runs, gp.run_output_paths, parsed_mixcr_output_path, gp.chains,
-                               gp.sequence_annotation_file_suffix, gp.mutation_count_file_suffix)
+                               gp.sequence_annotation_file_suffix, gp.mutation_count_file_suffix, mass_spec_seq)
             with open(done_path, 'w') as f:
                 pass
     except:
@@ -196,8 +198,8 @@ def analyze_cdr3(gp, parsed_mixcr_output_path, cdr3_analysis_dir):
         cdr3_annotations_path = os.path.join(cdr3_analysis_dir, chain + gp.cdr3_annotation_file_suffix)
         write_cdr3_counts_file(cdr3_annotations_path, most_common_cdr3, cdr3_to_counts, cdr3_to_num_of_different_reads)
 
-        polarization_histogram_path = cdr3_annotations_path.replace(gp.raw_data_file_suffix, 'png')
-        generate_polarization_histogram(cdr3_annotations_path, polarization_histogram_path, gp.top_cdr3_clones_to_polarization_graph)
+        clonal_expansion_histogram_path = cdr3_annotations_path.replace(gp.raw_data_file_suffix, 'png')
+        generate_clonal_expansion_histogram(cdr3_annotations_path, clonal_expansion_histogram_path, gp.top_cdr3_clones_to_clonal_expansion_graph)
 
         handle_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_cdr3, cdr3_to_aa_reads, cdr3_to_counts, chain, gp, k)
 
@@ -240,14 +242,16 @@ def handle_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_c
             # find most similar sequence
             aa_most_similar_to_consesnsus, similarity_rate = find_most_similar_sequence(msa, consensus)
 
+            #try:
             dna_most_similar_to_consesnsus = find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path)
+            #except:
+            #    pass
 
             # add entry to dict
             most_k_common_cdr3_to_entry[cdr3] = [cdr3, str(most_k_common_cdr3_to_counts[cdr3]),
                                                  str(len(most_k_common_cdr3_to_aa_reads[cdr3])), consensus,
                                                  aa_most_similar_to_consesnsus, dna_most_similar_to_consesnsus,
                                                  str(similarity_rate)]
-            # TODO
 
             # generate web logo
             weblogo_file_path = cluster_prefix + '_weblogo.pdf'
@@ -289,10 +293,13 @@ def find_most_similar_sequence(msa, consensus):
 
 
 def find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path):
-    # assuming that the dna sequence appears at the 6th position
+    # assuming that the dna sequence appears at the 6th position in the annotation_file
     '''
     b'QVQLVQSGGGLVQPGRSLRLSCAASGFTFDDYAMHWVRQAPGKGLEWVSGISWNSGSIGYADSVKGRFTISRDNAKNSLYLQMNSLRAEDTALYYCAKDLIVAVPAAAKVSAFDIWGQGTMVTVSS\tIGH\tCAKDLIVAVPAAAKVSAFDIW\tIGHV3\tIGHD6\tIGHJ3\tCCCAGGTCCAGCTGGTGCAGTCTGGGGGAGGCTTGGTACAGCCTGGCAGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTGATGATTATGCCATGCACTGGGTCCGGCAAGCTCCAGGGAAGGGCCTGGAGTGGGTCTCAGGTATTAGTTGGAATAGTGGTAGCATAGGCTATGCGGACTCTGTGAAGGGCCGATTCACCATCTCCAGAGACAACGCCAAGAACTCCCTGTATCTGCAAATGAACAGTCTGAGAGCTGAGGACACGGCCTTGTATTACTGTGCAAAAGATCTTATTGTAGCAGTACCAGCTGCCGCAAAAGTGAGTGCTTTTGATATCTGGGGCCAAGGGACAATGGTCACCGTCTCTTCAGGGAGTGCATCCGCCCCAACCCTCTCTCTCTCTCCTCCGGG\t6\n'
     '''
+    print(subprocess.check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]))
+    print(subprocess.check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).split())
+    print(subprocess.check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).split()[6])
     raw_dna_most_similar_to_consesnsus = subprocess.check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).split()[6]
     dna_most_similar_to_consesnsus = str(raw_dna_most_similar_to_consesnsus)[2:-1] #without ^b' an $'
     logger.info('dna_most_similar_to_consesnsus is {}'.format(dna_most_similar_to_consesnsus))

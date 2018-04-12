@@ -19,7 +19,10 @@ ASAP_URL = 'http://asap.tau.ac.il'
 #ASAP_LOG = '/bioseq/asap/ASAP_runs.log'
 
 RELOAD_INTERVAL = 30
-RELOAD_TAG = '<META HTTP-EQUIV="REFRESH" CONTENT="{}"/>'.format(str(RELOAD_INTERVAL))
+RELOAD_TAGS = """
+    <META HTTP-EQUIV="REFRESH" CONTENT="{}"/>
+    <META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE"/>
+""".format(str(RELOAD_INTERVAL))
 
 # # copy-pasted from email_sender.py
 # def send_email(sender, receiver, subject='', content=''):

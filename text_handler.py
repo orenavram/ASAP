@@ -34,12 +34,16 @@ def write_dict_to_file(out_path, d, delimiter='\t', sort_by=None, reverse=False)
 
 def get_next_relevant_rstriped_line(file_handler):
     while True:
-        line = file_handler.readline().strip()
-        if line!='' and line[0]!='#':
+        line = file_handler.readline()
+        if line == '': #EOF
+            return None
+        line = line.rstrip()
+        if line == '' or line[0] == '#':
+            logger.debug('Skipping irrelevant (i.e., comment/white spaces) line:\n' + line)
+        else:
             logger.info('Parsing next relevant line:\n' + line)
             return line
-        else:
-            logger.debug('Skipping irrelevant (i.e., comment/white spaces) line:\n' + line)
+
 
 def string_similarity(a, b):
     # measure similarity rate of two strings
