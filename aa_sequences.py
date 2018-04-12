@@ -14,7 +14,7 @@ isotype_M_id = 'GSASAPT'
 
 end_j_seq = 'VTVSS' #framework 4
 
-mass_spec_seq = 'BLABLABLA' #'ASTK'
+mass_spec_seq = 'ASTK'
 
 if MMU:
     IGK_id = 'RADAA'

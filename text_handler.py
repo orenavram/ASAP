@@ -37,7 +37,7 @@ def get_next_relevant_rstriped_line(file_handler):
         line = file_handler.readline()
         if line == '': #EOF
             return None
-        line = line.rstrip()
+        line = line.strip()
         if line == '' or line[0] == '#':
             logger.debug('Skipping irrelevant (i.e., comment/white spaces) line:\n' + line)
         else:
