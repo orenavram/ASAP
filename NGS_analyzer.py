@@ -38,17 +38,17 @@ gp.mutation_count_file_suffix = '_mutation_counts_distribution.' + gp.raw_data_f
 succeeded = True
 server_main_url = 'http://asap.tau.ac.il/'
 if os.path.exists('/Users/Oren/'):
+    sys.path.append('./cgi') # this is where GENERAL_CONSTANTS.py is located in my comp
     html_path = os.path.join(gp.working_dir, 'output.html')
     html_mode = 'w'
-    smtp_server = 'mxout.tau.ac.il'
+
 else:
-    sys.path.append('/bioseq/bioSequence_scripts_and_constants')
-    sys.path.append('/bioseq/asap')
-    import ASAP_CONSTANTS as CONSTS
-    smtp_server = CONSTS.GC.SMTP_SERVER
+    sys.path.append('/bioseq/bioSequence_scripts_and_constants') # this is where GENERAL_CONSTANTS.py is located in host-ibis3
+    sys.path.append('/bioseq/asap') # this is where ASAP_CONSTANTS is located in host-ibis3
     html_path = os.path.join(gp.working_dir, 'output.php')
     html_mode = 'a'
 
+import ASAP_CONSTANTS as CONSTS
 
 #try:
 analyze_samples(gp)
@@ -67,7 +67,9 @@ edit_html(gp, html_path, html_mode, server_main_url, run_number)
 
 with open(html_path) as f:
     html_content = f.read()
+
 html_content = html_content.replace(CONSTS.GC.RELOAD_TAGS, '')
+
 
 if succeeded:
     html_content = html_content.replace('RUNNING', 'FINISHED')
@@ -96,7 +98,7 @@ Thanks
 ASAP Team
     '''.format(os.path.join(server_url, run_number, 'output.php'))
 
-    send_email(smtp_server=smtp_server, sender='TAU BioSequence <bioSequence@tauex.tau.ac.il>',
+    send_email(smtp_server=CONSTS.GC.SMTP_SERVER, sender='TAU BioSequence <bioSequence@tauex.tau.ac.il>',
                receiver=addressee, subject='Your ASAP run is ready!', content=email_content)
 
 logger.info(argv[0] + ' is DONE!!')

@@ -52,8 +52,9 @@ def generate_final_fasta_with_mass_spec_sec(aa_seq_intersection, final_fasta_pat
     with open(final_fasta_path, 'w') as f:
         for aa_seq in sequence_to_entry_dict:
             if passes_overlap_minimal_threshold_in_all_runs(aa_seq_intersection[aa_seq], minimal_overlap):
-                aa_read, chain, cdr3, v_type, d_type, j_type, dna_read, isotype, read_frequency = sequence_to_entry_dict[aa_seq]
-                f.write('|'.join(['> {}({})'.format(chain, isotype), cdr3, v_type, d_type, j_type,
+                chain, isotype, dna_read, aa_read, cdr3, v_type, d_type, j_type, read_frequency = sequence_to_entry_dict[aa_seq]
+                f.write('|'.join(['>'+chain, isotype, cdr3, v_type, d_type, j_type,
+                                  str(sum(x for x in aa_seq_intersection[aa_seq])),
                                   ','.join(str(x) for x in aa_seq_intersection[aa_seq])]))
                 f.write('\n' + aa_seq + mass_spec_seq + '\n')
 
@@ -77,7 +78,7 @@ def add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_intersection, ann
             QVQLQESGPGLVKPSETLSLTCTVSGGSISSYYWSWIRQPAGKGLEWIGRIYTSGSTNYNPSLKSRVTMSVDTSKNQFSLKLSSVTAADTAVYYCARTYSGSYYGRFDYWGQGTLVTVSS	IGH	CARTYSGSYYGRFDYW	IGHV4	IGHD1	IGHJ4*02	CCCAGGTGCAGCTGCAGGAGTCGGGCCCAGGACTGGTGAAGCCTTCGGAGACCCTGTCCCTCACCTGCACTGTCTCTGGTGGCTCCATCAGTAGTTACTACTGGAGCTGGATCCGGCAGCCCGCCGGGAAGGGACTGGAGTGGATTGGGCGTATCTATACCAGTGGGAGCACCAACTACAACCCCTCCCTCAAGAGTCGAGTCACCATGTCAGTAGACACGTCCAAGAACCAGTTCTCCCTGAAGCTGAGCTCTGTGACCGCCGCGGACACGGCCGTGTATTACTGTGCGAGAACTTATAGTGGGAGCTACTACGGGCGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGGGAGTGCATCCGCCCCAACCCTCTCTCTCTCTCCTCCAGA	13
             '''
             tokens = line.rstrip().split('\t')
-            aa_seq = tokens[0]
+            aa_seq = tokens[3]
             count = int(tokens[-1])
             if aa_seq not in aa_seq_intersection:
                 aa_seq_intersection[aa_seq] = [0] * number_of_runs  # initialize on first time
@@ -109,7 +110,7 @@ def generate_intersection_plot(number_of_runs, joint_annotation_path, sequence_a
             lines = f.readlines()
         num_of_run_annotations = len(lines)
         logger.info('{} has {} annotations'.format(run, num_of_run_annotations))
-        aa_seqs = [line.split()[0] for line in lines]
+        aa_seqs = [line.split()[3] for line in lines]
         runs_annotations_sets.append(set(aa_seqs))
         percent_of_intersected_annotations_per_run.append(num_of_joint_annotations / num_of_run_annotations * 100)
 

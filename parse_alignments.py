@@ -431,9 +431,6 @@ def edit_stop_codon(read_AA):
     return read_AA
       
     
-'''write entry to FASTA file'''
-#input: output file, read id, read Nuc sequence, headers, alignment entry, read AA sequence, isotype
-#output: none. writing entry information to its proper file 
 def get_meta_data(line, aa_read, dna_read, cdr3, isotype, best_v_family_col, best_d_family_col, best_j_family_col):
 
     # verify legal pairing- by comparing reads' ids
@@ -448,8 +445,8 @@ def get_meta_data(line, aa_read, dna_read, cdr3, isotype, best_v_family_col, bes
         isotype = 'NONE'
 
     if not re.match(chain + 'V\d+', line[best_v_family_col]):
-        print(line)
-        print(line[best_v_family_col])
+        logger.error(line)
+        logger.error(line[best_v_family_col])
     v_type = re.match(chain + 'V\d+', line[best_v_family_col]).group()
     d_type = 'unknown'
     if line[best_d_family_col]: # d assignment is sometimes missing
@@ -457,7 +454,7 @@ def get_meta_data(line, aa_read, dna_read, cdr3, isotype, best_v_family_col, bes
     j_type = re.match(chain + 'J\d+', line[best_j_family_col]).group()
 
 
-    return [aa_read, chain, cdr3, v_type, d_type, j_type, dna_read, isotype]
+    return [chain, isotype, dna_read, aa_read, cdr3, v_type, d_type, j_type]
 
 
 '''write report for procedure (statistics)'''

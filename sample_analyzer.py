@@ -274,7 +274,7 @@ def parse_sequence_annotations_file(annotations_path):
 
     with open(annotations_path) as f:
         for line in f:
-            aa_read, chain, cdr3, v_type, d_type, j_type, dna_read, isotype, read_frequency = line.split('\t')
+            chain, isotype, dna_read, aa_read, cdr3, v_type, d_type, j_type, read_frequency = line.split('\t')
             cdr3_to_counts[cdr3] = cdr3_to_counts.get(cdr3, 0) + int(read_frequency)
             cdr3_to_aa_reads[cdr3] = cdr3_to_aa_reads.get(cdr3, []) + [aa_read]
 
@@ -297,9 +297,6 @@ def find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path):
     '''
     b'QVQLVQSGGGLVQPGRSLRLSCAASGFTFDDYAMHWVRQAPGKGLEWVSGISWNSGSIGYADSVKGRFTISRDNAKNSLYLQMNSLRAEDTALYYCAKDLIVAVPAAAKVSAFDIWGQGTMVTVSS\tIGH\tCAKDLIVAVPAAAKVSAFDIW\tIGHV3\tIGHD6\tIGHJ3\tCCCAGGTCCAGCTGGTGCAGTCTGGGGGAGGCTTGGTACAGCCTGGCAGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTGATGATTATGCCATGCACTGGGTCCGGCAAGCTCCAGGGAAGGGCCTGGAGTGGGTCTCAGGTATTAGTTGGAATAGTGGTAGCATAGGCTATGCGGACTCTGTGAAGGGCCGATTCACCATCTCCAGAGACAACGCCAAGAACTCCCTGTATCTGCAAATGAACAGTCTGAGAGCTGAGGACACGGCCTTGTATTACTGTGCAAAAGATCTTATTGTAGCAGTACCAGCTGCCGCAAAAGTGAGTGCTTTTGATATCTGGGGCCAAGGGACAATGGTCACCGTCTCTTCAGGGAGTGCATCCGCCCCAACCCTCTCTCTCTCTCCTCCGGG\t6\n'
     '''
-    print(subprocess.check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]))
-    print(subprocess.check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).split())
-    print(subprocess.check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).split()[6])
     raw_dna_most_similar_to_consesnsus = subprocess.check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).split()[6]
     dna_most_similar_to_consesnsus = str(raw_dna_most_similar_to_consesnsus)[2:-1] #without ^b' an $'
     logger.info('dna_most_similar_to_consesnsus is {}'.format(dna_most_similar_to_consesnsus))
@@ -329,7 +326,7 @@ def parse_sequence_annotation_file(parsed_mixcr_output_path, assignments_path, s
         with open(chain_data_path) as f:
 
             for line in f:
-                aa_read, chain, cdr3, v_type, d_type, j_type, dna_read, isotype, read_frequency = line.rstrip().split('\t')
+                chain, isotype, dna_read, aa_read, cdr3, v_type, d_type, j_type, read_frequency = line.rstrip().split('\t')
 
                 v_types[v_type] = v_types.get(v_type, 0) + 1
                 d_types[d_type] = d_types.get(d_type, 0) + 1
