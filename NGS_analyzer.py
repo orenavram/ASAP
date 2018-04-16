@@ -53,9 +53,8 @@ import ASAP_CONSTANTS as CONSTS
 #try:
 analyze_samples(gp)
 logger.info('Zipping results...')
-out_path = os.path.join(gp.working_dir, 'outputs')
 if not os.path.exists('/Users/Oren/Dropbox/Projects/wine/outputs.zip'):
-    shutil.make_archive(out_path, 'zip', out_path)
+    shutil.make_archive(gp.output_path, 'zip', gp.output_path)
 else:
     logger.info('Skipping (zip already exists..)')
 

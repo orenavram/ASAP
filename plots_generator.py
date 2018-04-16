@@ -2,6 +2,8 @@ import matplotlib_venn
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from scipy.stats import pearsonr
+
 import logging
 logger = logging.getLogger('main')
 
@@ -132,6 +134,20 @@ def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, minim
     title = ('run1' if 'run1' in out_path else 'run2') + ' isotype distribution\n'
     plt.title(title)
     plt.savefig(out_path)
+    plt.close()    #plt.legend('counts', 'unique')
+
+
+def plot_correlation(x, y, i, j, out_path):
+    A = np.vstack([x, np.ones(len(x))]).T
+    a, b = np.linalg.lstsq(A, y)[0]
+    correlation = pearsonr(x, y)[0]
+    plt.plot(x, y, 'ro', markersize=2, label='V-gene sequence')
+    plt.plot(x, a*x + b, 'b', label='Fitted line (correlation: {})'.format(correlation))
+    plt.xlabel('counts in run' + str(i))
+    plt.ylabel('counts in run' + str(j))
+    plt.title('Pearson correlation of V-gene sequence counts of run{} and run{}'.format(i,j))
+    plt.legend()
+    plt.savefig(out_path, dpi=500)
     plt.close()    #plt.legend('counts', 'unique')
 
 

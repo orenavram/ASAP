@@ -1,5 +1,7 @@
 from weblogolib import *
 from sys import argv
+import logging
+logger = logging.getLogger('main')
 
 def generate_weblogo(in_file, out_file, title = "A Logo Title"):
     # fin = open('/Users/Oren/Dropbox/Projects/wine/outputs/clones_analysis/242/IGH/consensus/1_consensus.mafft.fasta')
