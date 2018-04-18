@@ -9,47 +9,6 @@ logger = logging.getLogger('main')
 
 from text_handler import read_table_to_dict
 
-# def plot_nuc_mut_cnt_dict(chain, in_file_path, raw_data_file_suffix):
-#     '''plot mutation count frequency'''
-#
-#     nuc_mut_cnt_dict = read_table_to_dict(in_file_path, key_type=int, value_type=int)
-#
-#     max_mut_cnt = max(nuc_mut_cnt_dict)  # maximum number of mutations
-#     nuc_mut_cnt_values = range(max_mut_cnt + 1)  # list of numbers up until the maximum
-#
-#     # pad with zeros mutations amounts that are absent
-#     for i in range(max_mut_cnt):
-#         if i not in nuc_mut_cnt_dict:
-#             nuc_mut_cnt_dict[i] = 0
-#
-#     mut_sum = sum(nuc_mut_cnt_dict.values())
-#
-#     # create list of frequencies of mutations amount
-#     nuc_mut_freq = list()
-#     for nuc_mut_cnt in sorted(nuc_mut_cnt_dict):
-#         crnt_freq = round((nuc_mut_cnt_dict[nuc_mut_cnt] / mut_sum) * 100, 3)
-#         nuc_mut_freq.append(crnt_freq)
-#
-#     # set plot parameters
-#     pos = np.arange(len(nuc_mut_cnt_values))
-#     width = 1.0
-#
-#     ax = plt.axes()
-#     ax.set_xticks(pos + (width / 2))
-#     ax.set_xticklabels(nuc_mut_cnt_values)
-#
-#     plt.figure()
-#     plt.title(chain + " Frequency of nucleotide mutations amount")
-#     plt.xlabel("Number of nucleotide mutations")
-#     plt.ylabel("Frequency (%)")
-#     plt.bar(pos, nuc_mut_freq, width, color='b')
-#     plt.tight_layout()
-#
-#     fig_name = in_file_path.replace(raw_data_file_suffix, 'png')
-#
-#     plt.savefig(fig_name)
-#     plt.close('all')
-
 
 def plot_barplot(assignment_file ='/Users/Oren/Dropbox/Projects/wine/outputs/run1/vdj_assignments/IGH_V_counts.txt', raw_data_file_suffix ='txt', key_type = str, value_type=int, as_proportions = True, rotation = None, fontsize = None, ylim=[0, 50]):
     '''plot a simple bar chart of CDR3 lengths and VDJ assignments'''
@@ -103,11 +62,11 @@ def plot_venn(out_path, runs_annotations_sets, runs):
     plt.figure()
     venn(runs_annotations_sets, set_labels=runs)
     plt.title('Venn Diagram')
-    plt.savefig(out_path)
+    plt.savefig(out_path, bbox_inches='tight')
     plt.close()
 
 
-def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, minimal_portion=0.05):
+def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, minimal_portion):
 
     isotypes = sorted(isotype_to_precent_dict, key = isotype_to_precent_dict.get)
     portions = [isotype_to_precent_dict[isotype] for isotype in isotypes]
@@ -133,7 +92,7 @@ def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, minim
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     title = ('run1' if 'run1' in out_path else 'run2') + ' isotype distribution\n'
     plt.title(title)
-    plt.savefig(out_path)
+    plt.savefig(out_path, bbox_inches='tight')
     plt.close()    #plt.legend('counts', 'unique')
 
 
@@ -147,7 +106,7 @@ def plot_correlation(x, y, i, j, out_path):
     plt.ylabel('counts in run' + str(j))
     plt.title('Pearson correlation of V-gene sequence counts of run{} and run{}'.format(i,j))
     plt.legend()
-    plt.savefig(out_path, dpi=500)
+    plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()    #plt.legend('counts', 'unique')
 
 
@@ -170,6 +129,49 @@ def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff)
     plt.savefig(out_path)
     plt.close()    #plt.legend('counts', 'unique')
 
+
+def generate_mutations_boxplots(core_dna_to_num_of_mutations_dict, out_path):
+    fig = plt.figure(figsize=(10,10))
+
+    # Create an axes instance
+    ax = fig.add_subplot(221)
+    data = np.array(list(core_dna_to_num_of_mutations_dict.values()))
+    plot_sub_figure(ax, data, ['Ka', 'Ks'])
+
+    # Create an axes instance
+    ax = fig.add_subplot(222)
+    Ka_Ks = data[:,0]/data[:,1]
+    plot_sub_figure(ax, Ka_Ks, ['Ka/Ks'])
+
+    fig.savefig(out_path, dpi=500, bbox_inches='tight')
+
+
+def plot_sub_figure(ax, data, xticklabels):
+    ## to get fill color
+    bp = ax.boxplot(data, patch_artist=True)
+    ## change outline color, fill color and linewidth of the boxes
+    for box in bp['boxes']:
+        # change outline color
+        box.set(color='#7570b3', linewidth=2)
+        # change fill color
+        box.set(facecolor='#1b9e77')
+
+    ## change color and linewidth of the whiskers
+    for whisker in bp['whiskers']:
+        whisker.set(color='#7570b3', linewidth=2)
+
+    ## change color and linewidth of the caps
+    for cap in bp['caps']:
+        cap.set(color='#7570b3', linewidth=2)
+
+    ## change color and linewidth of the medians
+    for median in bp['medians']:
+        median.set(color='#b2df8a', linewidth=2)
+
+    ## change the style of fliers and their fill
+    for flier in bp['fliers']:
+        flier.set(marker='o', color='#e7298a', alpha=0.5)
+    ax.set_xticklabels(xticklabels)
 
 '''
 if __name__ == '__main__':

@@ -14,7 +14,7 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
     for chain in chains:
         sequence_to_entry_dict = {}
         aa_seq_to_counts_in_each_run = {}
-        mutation_counts_frequency ={}
+        shared_reads = None
 
         for i in range(len(run_output_paths[:-1])): #without joint
             run_output_path = run_output_paths[i]
@@ -22,11 +22,19 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
             annotation_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + sequence_annotation_file_suffix)
             add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, annotation_path, i, number_of_runs)
 
-            mutation_counts_frequency_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + mutation_count_file_suffix)
-            add_counts_to_mutations_dict(mutation_counts_frequency, mutation_counts_frequency_path)
+            core_dna_to_Ka_Ks_dict_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + mutation_count_file_suffix)
+
+            current_run_core_dna_to_Ka_Ks_dict_path = read_table_to_dict(core_dna_to_Ka_Ks_dict_path, value_type=list)
+
+            if shared_reads == None:
+                shared_reads = set(current_run_core_dna_to_Ka_Ks_dict_path.keys())
+            else:
+                shared_reads = shared_reads.intersection(set(current_run_core_dna_to_Ka_Ks_dict_path.keys()))
+
+        joint_core_dna_to_Ka_Ks_dict = dict((key, current_run_core_dna_to_Ka_Ks_dict_path[key]) for key in shared_reads)
 
         #remove entries that do not pass the minimal count threshold in all runs
-        filter_seqs_below_overlap_minimal_threshold(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, minimal_overlap)
+        aa_seq_to_counts_with_less_than_minimal_threshold = filter_seqs_below_overlap_minimal_threshold(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, minimal_overlap)
 
         #generate joint files and plot for each chain
         if sequence_to_entry_dict != {}:
@@ -38,15 +46,14 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
             final_fasta_path = os.path.join(run_output_paths[-1], chain + '_final.fasta')
             generate_final_fasta_with_mass_spec_sec(aa_seq_to_counts_in_each_run, final_fasta_path, sequence_to_entry_dict, mass_spec_seq)
 
-            plot_runs_correlation(aa_seq_to_counts_in_each_run, number_of_runs, run_output_paths[-1], chain)
+            plot_runs_correlation(aa_seq_to_counts_in_each_run, aa_seq_to_counts_with_less_than_minimal_threshold, number_of_runs, run_output_paths[-1], chain)
 
             generate_intersection_plot(number_of_runs, joint_annotation_path, sequence_annotation_file_suffix)
 
         #generate joint mutation counts file for each chain
-        if mutation_counts_frequency != {}:
-            with open(os.path.join(joint_parsed_mixcr_output_path, chain + mutation_count_file_suffix), 'w') as f:
-                for mutation_count in mutation_counts_frequency:
-                    f.write(str(mutation_count) + '\t' + '{:.3f}'.format(mutation_counts_frequency[mutation_count]/len(run_output_paths[:-1])) + '\n')
+        if joint_core_dna_to_Ka_Ks_dict != {}:
+            mutations_file = os.path.join(joint_parsed_mixcr_output_path, chain + mutation_count_file_suffix)
+            write_dict_to_file(mutations_file, joint_core_dna_to_Ka_Ks_dict, value_type=list)
 
 
 def filter_seqs_below_overlap_minimal_threshold(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, minimal_overlap):
@@ -55,14 +62,17 @@ def filter_seqs_below_overlap_minimal_threshold(sequence_to_entry_dict, aa_seq_t
         if not passes_overlap_minimal_threshold_in_all_runs(aa_seq_to_counts_in_each_run[aa_seq], minimal_overlap):
             keys_to_remove.append(aa_seq)
 
+    aa_seq_to_counts_with_less_than_minimal_threshold = {}
     #two loops are necessary because mutating a dict while iterating on it raises an error
     for aa_seq in keys_to_remove:
         logger.debug('Omitting {} {} from joint analysis.'.format(aa_seq, aa_seq_to_counts_in_each_run[aa_seq]))
-        aa_seq_to_counts_in_each_run.pop(aa_seq)
         sequence_to_entry_dict.pop(aa_seq)
+        aa_seq_to_counts_with_less_than_minimal_threshold[aa_seq] = aa_seq_to_counts_in_each_run.pop(aa_seq)
+
+    return aa_seq_to_counts_with_less_than_minimal_threshold
 
 
-def plot_runs_correlation(aa_seq_to_counts_in_each_run, number_of_runs, joint_path, chain):
+def plot_runs_correlation(aa_seq_to_counts_in_each_run, aa_seq_to_counts_with_less_than_minimal_threshold, number_of_runs, joint_path, chain):
     counts_vector_files = [0] * number_of_runs
 
     for i in range(number_of_runs):
@@ -72,6 +82,12 @@ def plot_runs_correlation(aa_seq_to_counts_in_each_run, number_of_runs, joint_pa
     # write counts vector of each run to a file
     for aa_seq in aa_seq_to_counts_in_each_run:
         counts = aa_seq_to_counts_in_each_run[aa_seq]
+        for i in range(number_of_runs):
+            counts_vector_files[i].write(str(counts[i]) + '\n')
+
+    # write counts that are less than the minimal overlapping threshold
+    for aa_seq in aa_seq_to_counts_with_less_than_minimal_threshold:
+        counts = aa_seq_to_counts_with_less_than_minimal_threshold[aa_seq]
         for i in range(number_of_runs):
             counts_vector_files[i].write(str(counts[i]) + '\n')
 
@@ -109,7 +125,6 @@ def add_counts_to_mutations_dict(mutation_counts_frequency, mutation_counts_freq
     if not os.path.exists(mutation_counts_frequency_path):
         logger.info('Can\'t find mutation frequency path:' + mutation_counts_frequency_path)
         return
-    current_run_frequency = read_table_to_dict(mutation_counts_frequency_path)
     for key in current_run_frequency:
         mutation_counts_frequency[key] = mutation_counts_frequency.get(key, 0) + int(current_run_frequency[key])
 

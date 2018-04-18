@@ -10,8 +10,8 @@ from mixcr_procedure import mixcr_procedure
 from parse_alignments import parse_alignment_file
 from directory_creator import create_dir
 from runs_aggregator import join_runs_analyses
-from plots_generator import plot_barplot, generate_clonal_expansion_histogram
-from text_handler import write_dict_to_file, string_similarity
+from plots_generator import plot_barplot, generate_clonal_expansion_histogram, generate_mutations_boxplots
+from text_handler import write_dict_to_file, string_similarity, read_table_to_dict
 from msa_parser import remove_sparse_columns
 
 import logging
@@ -104,13 +104,13 @@ def analyze_samples(gp):
         raise
 
     try:
-        done_path = os.path.join(gp.output_path, 'done_6_' + 'plot_mutation_counts.txt')
+        done_path = os.path.join(gp.output_path, 'done_6_' + 'plot_ka_ks_boxplots.txt')
         if os.path.exists(done_path):
             logger.info('Skipping plot_mutation_counts, output files already exist...')
         else:
-            plot_mutation_counts(gp)
-            with open(done_path, 'w') as f:
-                pass
+            plot_ka_ks_boxplots(gp)
+            #with open(done_path, 'w') as f:
+            #    pass
     except:
         logger.error('Error in plot_mutation_counts')
         raise
@@ -130,19 +130,29 @@ def analyze_samples(gp):
         raise
 
 
-def plot_mutation_counts(gp):
+def plot_ka_ks_boxplots(gp):
     for parsed_mixcr_output_path in gp.parsed_mixcr_output_paths:
         # if gp.debug_run not in parsed_mixcr_output_path:
         #     logger.info('!!DEBUG!! SKIPPING parse_chain_annotation_file for', parsed_mixcr_output_path)
         #     continue
         for chain in gp.chains:
+            Ka_Ks_path = parsed_mixcr_output_path + '/' + chain + gp.mutation_count_file_suffix
+            if os.path.exists(Ka_Ks_path):
+                logger.info('Plotting mutation_counts_frequency_file: {}'.format(Ka_Ks_path))
+                raw_data = read_table_to_dict(Ka_Ks_path, value_type=list)
+                Ka_Ks_box_plot = Ka_Ks_path.replace('txt', 'png')
+                generate_mutations_boxplots(raw_data, Ka_Ks_box_plot)
+            else:
+                logger.info('Skipping plot for {} (no such file...)'.format(Ka_Ks_path))
+
+            '''#old mutation plot before ka_ks
             mutation_counts_frequency_path = parsed_mixcr_output_path + '/' + chain + gp.mutation_count_file_suffix
             logger.info('Plotting mutation_counts_frequency_file: ' + mutation_counts_frequency_path)
             if os.path.exists(mutation_counts_frequency_path):
                 plot_barplot(mutation_counts_frequency_path, gp.raw_data_file_suffix, key_type=int, value_type=float, fontsize=6, rotation=70, ylim=[0,30])
             else:
                 logger.info('No such file: {}. Skipping this plot...'.format(mutation_counts_frequency_path))
-
+            '''
 
 def plot_assignments(gp):
     for assignments_path in gp.assignments_paths:

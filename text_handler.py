@@ -3,31 +3,37 @@ from difflib import SequenceMatcher
 
 logger = logging.getLogger('main')
 
-def read_table_to_dict(file_to_read, key_type = str, value_type = str, d = None, delimiter ='\t', reverse = False, open_operator=open):
+def read_table_to_dict(file_to_read, delimiter ='\t', key_type=str, value_type=str, secondary_delimiter=';', secondary_value_type=float, reverse = False, open_operator=open):
     '''
     parse a delimited file with two columns to a dictionary
     if reverse == 0 keys are taken from the first column o.w., from the second
     open_operator can also be set to gzip.open if the file is zipped
     '''
     logger.debug('Reading dict from: ' + file_to_read)
-    if d == None:
-        d = {}
+
+    d = {}
     with open_operator(file_to_read) as f:
         for line in f:
             if line != '' and not line.isspace():
-                item1, item2 = line.rstrip().split(delimiter)
-                d[key_type(item1)] = value_type(item2)
+                key, value = line.rstrip().split(delimiter)
+                if value_type == list:
+                    value = [secondary_value_type(item) for item in value.split(secondary_delimiter)]
+                d[key_type(key)] = value_type(value)
     if reverse:
         d = dict((d[key],key) for key in d)
     return d #, dict([(barcode_to_name[barcode], barcode) for barcode in barcode_to_name])
 
 
-def write_dict_to_file(out_path, d, delimiter='\t', sort_by=None, reverse=False):
+def write_dict_to_file(out_path, d, delimiter='\t', value_type=str, secondary_delimiter=';', reverse=False, open_operator=open, sort_by=None):
     logger.info('Writing dict to: ' + out_path)
     if d:
-        with open(out_path, 'w') as f:
+        with open_operator(out_path, 'w') as f:
             for key in sorted(d, key=sort_by, reverse=reverse):
-                f.write(delimiter.join([str(key), str(d[key])]) + '\n')
+                if value_type == list:
+                    value = secondary_delimiter.join(str(item) for item in d[key])
+                else:
+                    value = str(d[key])
+                f.write(delimiter.join([str(key), value]) + '\n')
     else:
         logger.info('Skipping. Dictionary is empty...')
 
