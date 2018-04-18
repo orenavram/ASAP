@@ -52,20 +52,21 @@ import ASAP_CONSTANTS as CONSTS
 
 try:
     analyze_samples(gp)
+except Exception as e:
+    error_msg = 'ASAP calculation crashed with the following error:<br>{}<br><br>'.format(e.args[0])
+    succeeded = False
+
+run_number = gp.working_dir.split('/')[-1]
+if succeeded:
     logger.info('Zipping results...')
     if not os.path.exists('/Users/Oren/Dropbox/Projects/wine/outputs.zip'):
         shutil.make_archive(gp.output_path, 'zip', gp.output_path)
     else:
         logger.info('Skipping (zip already exists..)')
-
-    run_number = gp.working_dir.split('/')[-1]
-
     logger.info('Editing html file...')
     edit_success_html(gp, html_path, html_mode, server_main_url, run_number)
-except Exception as e:
-    error_msg = 'ASAP calculation crashed with the following error:<br>{}<br><br>'.format(e.args[0])
+else:
     edit_failure_html(html_path, html_mode, error_msg)
-    succeeded = False
 
 #Change running status
 with open(html_path) as f:
@@ -95,7 +96,7 @@ The results for your ASAP run are ready at:
 Please note: the results will be kept on the server for three months.
         '''.format(os.path.join(server_url, run_number, 'output.php'))
     else:
-        email_content = error_msg
+        email_content = 'ASAP calculation failed. For further information please visit: {}'.format(html_path)
 
     email_content += '\n\nThanks, ASAP Team'
 
