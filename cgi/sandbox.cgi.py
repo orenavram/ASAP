@@ -38,7 +38,7 @@ def write_running_parameters_to_html(output_path, form):
 
 # prints detailed error report on BROWSER when cgi crashes
 # This line MUST appear (as is) BEFORE any error occurs to get a report about the exception!! otherwise you'll get a non-informatvie message like "internal server error"
-cgitb.enable()  # TODO: clarify this line
+cgitb.enable()
 
 # print_hello_world() # for debugging
 form = cgi.FieldStorage()  # extract POSTed object

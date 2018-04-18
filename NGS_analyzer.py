@@ -53,7 +53,7 @@ import ASAP_CONSTANTS as CONSTS
 try:
     analyze_samples(gp)
 except Exception as e:
-    error_msg = 'ASAP calculation crashed with the following error:<br>{}<br><br>'.format(e.args[0])
+    error_msg = 'ASAP calculation crashed with the following error:<br>{}<br><br>'.format(str(e) or type(e).__name__)
     succeeded = False
 
 run_number = gp.working_dir.split('/')[-1]

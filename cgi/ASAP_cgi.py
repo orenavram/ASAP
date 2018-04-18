@@ -1,8 +1,12 @@
 #!/shared/python/anaconda3.5/bin/python
-
+import gzip
 import os, sys
+try:
+    import sh
+except:
+    pass
 import cgi, cgitb
-from time import time
+from time import time, ctime
 from random import randint
 sys.path.append('/bioseq/bioSequence_scripts_and_constants')
 sys.path.append('/bioseq/asap')
@@ -110,31 +114,52 @@ def write_running_parameters_to_html(output_path, run_number, job_title, number_
         f.write('</font>')
 
 
-def process_uploaded_files(run, debug_path =''):
-    if debug_path:
-        #for debugging
-        with open(debug_path, 'a') as f:
-            f.write('uploading file of {}\n'.format(run))
+
+def write_pair_file(debug_path, pair, run_content, run_filename, run_dir):
+    if run_filename.endswith('gz'):
+        #TODO: This option is not working properly. Files are being uploaded but they're non sense :(
+        # open_operator = gzip.open
+        local_file_name = 'R{}.fastq.gz'.format(pair)
+    else:
+        local_file_name = 'R{}.fastq'.format(pair)
+    open_operator = open
+    with open(debug_path, 'a') as f:
+        f.write('{} is being handled with {}\n'.format(local_file_name, str(open_operator)))
+    local_file_path = os.path.join(run_dir, local_file_name)
+    with open_operator(local_file_path, 'wb') as f:
+        f.write(run_content)
+
+    #avoid double zipping:
+    try:
+        if local_file_path.endswith('gz'):
+            sh.gunzip(local_file_path)
+    except:
+        pass
+
+    with open(debug_path, 'a') as f:
+        f.write('R{} was handled successfully\n'.format(pair))
+
+
+def process_uploaded_files(run, debug_path):
+    #for debugging
+    with open(debug_path, 'a') as f:
+        f.write('uploading file of {}\n'.format(run))
     run_R1_filename = form[run + '_R1'].filename
     run_R2_filename = form[run + '_R2'].filename
-    run_R1_content = form[run + '_R1'].value.decode('utf-8')
-    run_R2_content = form[run + '_R2'].value.decode('utf-8')
+    # for debugging
+    with open(debug_path, 'a') as f:
+        f.write('file names are:\n{} (of type {}) and {} (of type {})\n'.format(run_R1_filename, type(form[run + '_R1'].value), run_R2_filename, type(form[run + '_R2'].value),))
+    run_R1_content = form[run + '_R1'].value
+    run_R2_content = form[run + '_R2'].value
+    # for debugging
+    with open(debug_path, 'a') as f:
+        f.write('{} first 100 chars are: {}\n{} first 100 chars are: {}\n'.format(run_R1_filename, run_R1_content[:100], run_R2_filename, run_R2_content[:100]))
     run_dir = os.path.join(wd, 'reads', run)
     create_dir(run_dir)
 
-    with open(os.path.join(run_dir, 'R1.fastq'), 'w') as f:
-        f.write(run_R1_content)
+    write_pair_file(debug_path, '1', run_R1_content, run_R1_filename, run_dir)
 
-    if debug_path:
-        with open(debug_path, 'a') as f:
-            f.write('R1 was uploaded successfully\n')
-
-    with open(os.path.join(run_dir, 'R2.fastq'), 'w') as f:
-        f.write(run_R2_content)
-
-    if debug_path:
-        with open(debug_path, 'a') as f:
-            f.write('R2 was uploaded successfully\n')
+    write_pair_file(debug_path, '2', run_R2_content, run_R2_filename, run_dir)
 
     return run_R1_filename, run_R2_filename
 
@@ -187,7 +212,7 @@ def write_cmds_file(cmds_file, run_number, parameters_file):
 
 # prints detailed error report on BROWSER when cgi crashes
 # This line MUST appear (as is) BEFORE any error occurs to get a report about the exception!! otherwise you'll get a non-informatvie message like "internal server error"
-cgitb.enable() #TODO: clarify this line
+cgitb.enable()
 
 #print_hello_world() # for debugging
 form = cgi.FieldStorage() # extract POSTed object
@@ -226,12 +251,12 @@ chains = 'IGH'
 MMU = 'False'
 len_threshold = '300'
 qlty_threshold = '20'
-sample_number = 'reads' #TODO: infer from the html
-number_of_duplicates = 2 #TODO: infer from the html
+number_of_duplicates = 2 
 """
 
 with open(cgi_debug_path, 'a') as f:
     # form debugging
+    f.write('{}\n{}: A new CGI request has been recieved!\n'.format('#'*50, ctime()))
     f.write('form parameters are:\n')
     for key in form:
         if 'run' not in key:
@@ -292,25 +317,25 @@ for i in range(number_of_duplicates):
 
 if form['example_page'].value == 'yes':
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
-        f.write('Copying example files...\n')
+        f.write('{}: Copying example files...\n'.format(ctime()))
     # copy example data
     os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN1_R1, paths_to_reads_files[0]))
     os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN1_R2, paths_to_reads_files[1]))
     os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN2_R1, paths_to_reads_files[2]))
     os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN2_R2, paths_to_reads_files[3]))
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
-        f.write('Files were copied successfully.\n')
+        f.write('{}: Files were copied successfully.\n'.format(ctime()))
 
 with open(cgi_debug_path, 'a') as f: # for cgi debugging
-    f.write('ls of {} yields:\n{}\n'.format(path_to_reads, os.listdir(path_to_reads)))
+    f.write('{}: ls of {} yields:\n{}\n'.format(ctime(), path_to_reads, os.listdir(path_to_reads)))
 
 with open(cgi_debug_path, 'a') as f: # for cgi debugging
-    f.write('write_running_parameters_to_html...\n')
+    f.write('{}: write_running_parameters_to_html...\n'.format(ctime()))
 
 write_running_parameters_to_html(output_path, run_number, job_title, number_of_duplicates, urls_to_reads_files, MMU, chains)
 
 with open(cgi_debug_path, 'a') as f: # for cgi debugging
-    f.write('Running parameters were written to html successfully.\n')
+    f.write('{}: Running parameters were written to html successfully.\n'.format(ctime()))
 
 
 # This is hidden field that only spammer bots might fill in...
@@ -333,5 +358,7 @@ if user_email != '':
     with open(os.path.join(wd, 'user_email.txt'), 'w') as f:
         f.write(user_email)
 
+with open(cgi_debug_path, 'a') as f: # for cgi debugging
+    f.write('{}: CGI finished running.\n\n'.format(ctime()))
 
 

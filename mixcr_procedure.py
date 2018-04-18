@@ -31,29 +31,27 @@ def mixcr_procedure(path_to_mixcr, fastq_path, outpath, chains, mmu):
 '''assign variables to commands'''
 def get_mixcr_cmds(fastq_path, outpath, MMU, chains):
 
-    #outpath = os.path.join(outpath, 'mixcr')
     if not os.path.exists(outpath):
         os.makedirs(outpath)
 
-    # # server does not use the sample number, e.g., 242_R1.fastq and 242_R2.fastq. only R1.fastq and R2.fastq
-    # if sample.isdigit():
-    #     sample += '_'
-    # elif sample == 'reads': #os.path.join "bug": If any component is an absolute path, all previous path components will be discarded.
-    #     sample = ''
-
-
-    #for debugging
     logger.debug('fastq path: ' + fastq_path)
-    # logger.debug('sample: ' + sample)
     logger.debug('os.path.join(fastq_path, \'R1.fastq\'): ' + os.path.join(fastq_path, 'R1.fastq'))
 
-    fastq1 = os.path.join(fastq_path, 'R1.fastq')
-    fastq2 = os.path.join(fastq_path, 'R2.fastq')
-    logger.info('\n'.join(['fastq files paths are:', fastq1, fastq2]))
+    fastq1 = fastq2 = ''
+    for file_name in os.listdir(fastq_path):
+        if 'R1.fastq' in file_name:
+            fastq1 = os.path.join(fastq_path, file_name)
+        elif 'R2.fastq' in file_name:
+            fastq2 = os.path.join(fastq_path, file_name)
+    logger.debug('fastq files paths are:\n{}\n{}'.format(fastq1, fastq2))
 
-    if not (os.path.exists(fastq1) and os.path.exists(fastq2)):
-        logger.error("One (or more) fastq file(s) does not exist...")
-        raise OSError
+    if not os.path.exists(fastq1):
+        logger.error('R1.fastq is missing...')
+        raise OSError('R1.fastq does not exist...')
+
+    if not os.path.exists(fastq2):
+        logger.error('R2.fastq is missing...')
+        raise OSError('R2.fastq does not exist...')
 
     vdjca_path = os.path.join(outpath, 'alignments.vdjca')
     clones_clns_path = os.path.join(outpath, 'clones.clns')

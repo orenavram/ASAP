@@ -148,7 +148,7 @@ def generate_mutations_boxplots(core_dna_to_num_of_mutations_dict, out_path):
 
 def plot_sub_figure(ax, data, xticklabels):
     ## to get fill color
-    bp = ax.boxplot(data, patch_artist=True)
+    bp = ax.boxplot(data, patch_artist=True, showfliers=False)
     ## change outline color, fill color and linewidth of the boxes
     for box in bp['boxes']:
         # change outline color

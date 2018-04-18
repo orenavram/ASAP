@@ -109,8 +109,8 @@ def analyze_samples(gp):
             logger.info('Skipping plot_mutation_counts, output files already exist...')
         else:
             plot_ka_ks_boxplots(gp)
-            #with open(done_path, 'w') as f:
-            #    pass
+            with open(done_path, 'w') as f:
+                pass
     except:
         logger.error('Error in plot_mutation_counts')
         raise
