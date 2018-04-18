@@ -2,7 +2,7 @@ import os
 import logging
 logger = logging.getLogger('main')
 
-def edit_html(gp, html_path, html_mode, server_main_url, run_number):
+def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
     with open(html_path, html_mode) as f:
         html_finish_header = '<br><br><br><center><H1><a name=finish>ASAP calculation is finished:</a></H1>\n'
         html_finish_header += '<a href=\'outputs.zip\' target=\'_blank\'><h3><b>Zipped full results</b></h3></a></center><br><br>\n'
@@ -131,3 +131,12 @@ def edit_html(gp, html_path, html_mode, server_main_url, run_number):
         html_footer = '<br><br><br>\n<hr>\n<h4 class=footer><p align=\'center\'>Questions and comments are welcome! Please <span class="admin_link"><a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%20' + run_number + '">contact us</a></span></p></h4>\n'
         html_footer += '<div id="bottom_links" align="center"><span class="bottom_link"><a href="' + server_main_url + '" target="_blank">Home</a>&nbsp;|&nbsp<a href="' + server_main_url + 'overview.php" target="_blank">Overview</a>\n</span>\n<br>\n</div>\n</body>\n</html>\n'
         f.write(html_footer)
+
+
+def edit_failure_html(html_path, html_mode, msg):
+    with open(html_path, html_mode) as f:
+        f.write('<br><br><br>')
+        f.write('<center><H1><a name=finish>')
+        f.write(msg)
+        f.write('Please try to re-run your job or contact us for further information')
+        f.write('</a></H1></center>')

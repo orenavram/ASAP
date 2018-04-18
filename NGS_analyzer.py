@@ -11,7 +11,7 @@ from email_sender import send_email
 from sample_analyzer import analyze_samples
 import global_params as gp
 from directory_creator import create_dir
-from html_editor import edit_html
+from html_editor import edit_success_html, edit_failure_html
 
 logger.info('Starting '+argv[0]+'!')
 logger.debug('argv = ' + str(argv))
@@ -50,31 +50,31 @@ else:
 
 import ASAP_CONSTANTS as CONSTS
 
-#try:
-analyze_samples(gp)
-logger.info('Zipping results...')
-if not os.path.exists('/Users/Oren/Dropbox/Projects/wine/outputs.zip'):
-    shutil.make_archive(gp.output_path, 'zip', gp.output_path)
-else:
-    logger.info('Skipping (zip already exists..)')
+try:
+    analyze_samples(gp)
+    logger.info('Zipping results...')
+    if not os.path.exists('/Users/Oren/Dropbox/Projects/wine/outputs.zip'):
+        shutil.make_archive(gp.output_path, 'zip', gp.output_path)
+    else:
+        logger.info('Skipping (zip already exists..)')
 
-run_number = gp.working_dir.split('/')[-1]
-#wd='/Users/Oren/Dropbox/Projects/wine/output'
+    run_number = gp.working_dir.split('/')[-1]
 
-logger.info('Editing html file...')
-edit_html(gp, html_path, html_mode, server_main_url, run_number)
+    logger.info('Editing html file...')
+    edit_success_html(gp, html_path, html_mode, server_main_url, run_number)
+except Exception as e:
+    error_msg = 'ASAP calculation crashed with the following error:<br>{}<br><br>'.format(e.args[0])
+    edit_failure_html(html_path, html_mode, error_msg)
+    succeeded = False
 
+#Change running status
 with open(html_path) as f:
     html_content = f.read()
-
 html_content = html_content.replace(CONSTS.GC.RELOAD_TAGS, '')
-
-
 if succeeded:
     html_content = html_content.replace('RUNNING', 'FINISHED')
 else:
     html_content = html_content.replace('RUNNING', 'FAILED')
-
 with open(html_path, 'w') as f:
     html_content = f.write(html_content)
 
@@ -85,17 +85,19 @@ if os.path.exists(user_email_file):
         addressee = f.read().rstrip()
 
     server_url = 'http://asap.tau.ac.il/results'
-    email_content = '''Hello,
-
+    if succeeded:
+        email_content = '''Hello,
+    
 The results for your ASAP run are ready at:
 {}
 
 
 Please note: the results will be kept on the server for three months.
+        '''.format(os.path.join(server_url, run_number, 'output.php'))
+    else:
+        email_content = error_msg
 
-Thanks
-ASAP Team
-    '''.format(os.path.join(server_url, run_number, 'output.php'))
+    email_content += '\n\nThanks, ASAP Team'
 
     send_email(smtp_server=CONSTS.GC.SMTP_SERVER, sender='TAU BioSequence <bioSequence@tauex.tau.ac.il>',
                receiver=addressee, subject='Your ASAP run is ready!', content=email_content)
