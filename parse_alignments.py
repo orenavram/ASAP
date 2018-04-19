@@ -77,6 +77,8 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             #count total number of entries provided by mixcr alignment
             total_lines += 1
 
+            if not total_lines%1000:
+                logger.debug('total_lines: {}'.format(total_lines))
             # If the first token contains two sequences (separated by a comma) it means that
             # MiXCR was unable to find an overlap between the two paired-end reads.
             if ',' in line_tokens[0]:
@@ -98,7 +100,6 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
 
             # discard low quality reads
             sequencing_quality = line_tokens[quality_col]
-
             #calculate average quality of read
             average_quality = sum([ascii_to_quality_dict[k] for k in sequencing_quality]) / read_len
             if average_quality < qlty_threshold:
@@ -130,24 +131,25 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
                 logger.debug('core_aa is NOT identical to the translated core_dna')
                 logger.debug('core_aa:\n{}'.format(core_aa))
                 logger.debug('translated core_dna:\n{}'.format(Bio.Seq.translate(core_dna)))
-
             #sanity check
             if (core_dna not in dna_read) and (not core_aa.endswith('VTVS_')):
                 logger.debug('dna_read:\n{}'.format(dna_read))
                 logger.debug('core dna:\n{}'.format(core_dna))
-
             #sanity check
             if core_aa[-len(aa.end_j_seq): ] != aa.end_j_seq:
                 logger.debug('end_j_seq after fixation is: {}'.format(core_aa[-len(aa.end_j_seq): ]))
 
-            if not match_with_up_to_k_mismatches(core_aa[-len(aa.end_j_seq): ], aa.end_j_seq):
-                logger.error('No end_j_seq in core_aa:\n{}'.format(core_aa))
-                errors_count_dict['inappropriate_end_j_seq'] += 1
-                continue
-
+            # verify that core_aa is not non-sense
             if '*' in core_aa:
                 logger.debug('line {} in alignment.txt file: STOP codon in core_aa!!!\n{}'.format(total_lines, core_aa))
                 errors_count_dict['stop_codon'] += 1
+                continue
+
+            # verify that there is a proper end_j_seq.
+            # MUST be after making sure that '*' is NOT in core_aa (otherwise it makes problems with the regex).
+            if not match_with_up_to_k_mismatches(core_aa[-len(aa.end_j_seq): ], aa.end_j_seq):
+                logger.info('No end_j_seq in core_aa:\n{}'.format(core_aa))
+                errors_count_dict['inappropriate_end_j_seq'] += 1
                 continue
 
             #no more filtrations after this point!!
@@ -161,14 +163,14 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             # update chain counts
             chain_to_count_dict[chain] += 1
 
-            isotype = get_isotype(dna_read, core_dna, aa.end_j_seq)
-            if chain != 'IGH':
-                logger.info('Changing isotype from ' + isotype + 'to NONE')
-                isotype = 'NONE'
-                #TODO: should these be counted?
-            else:
+
+            if chain == 'IGH':
+                isotype = get_isotype(dna_read, core_dna, aa.end_j_seq)
                 # update isotype counts
                 isotypes_count_dict[isotype] += 1
+            else:
+                #TODO: should these be counted?
+                isotype = 'NONE'
 
             # update aa_sequence counts
             sequences_frequency_counter[core_aa] = sequences_frequency_counter.get(core_aa, 0) + 1
@@ -219,8 +221,9 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
     #TODO: generate A_subisotypes pie chart
 
     #save alignments filtered file for debugging and fast different statistics....
-    with open(alignments_filtered_txt_path, 'w') as f:
-        f.write(alignments_filtered_txt)
+    if False:
+        with open(alignments_filtered_txt_path, 'w') as f:
+            f.write(alignments_filtered_txt)
 
 
 def get_isotype(dna_read, core_dna, end_j_seq):
@@ -269,6 +272,9 @@ def get_end_of_ORF_after_end_j_seq(dna_read, core_dna):
 
 
 def match_with_up_to_k_mismatches(sub_string, string, max_mismatches_allowed = 1, mandatory = -1):
+    if '*' in sub_string:
+        #prevent problems with '*' (stop codons) in substring
+        sub_string = sub_string.replace('*','X')
     match = regex.match('(' + sub_string + '){s<=' + str(max_mismatches_allowed) + '}', string)
     return match and (mandatory<0 or string[mandatory] == sub_string[mandatory])
 

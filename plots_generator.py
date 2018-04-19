@@ -33,7 +33,7 @@ def plot_barplot(assignment_file ='/Users/Oren/Dropbox/Projects/wine/outputs/run
 
     plt.tight_layout()
     save_path = assignment_file.replace(raw_data_file_suffix, 'png')
-    plt.savefig(save_path, dpi=500)
+    plt.savefig(save_path, dpi=500, bbox_inches='tight')
     plt.close()
 
 
@@ -62,7 +62,7 @@ def plot_venn(out_path, runs_annotations_sets, runs):
     plt.figure()
     venn(runs_annotations_sets, set_labels=runs)
     plt.title('Venn Diagram')
-    plt.savefig(out_path, bbox_inches='tight')
+    plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
 
 
@@ -92,7 +92,7 @@ def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, minim
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     title = ('run1' if 'run1' in out_path else 'run2') + ' isotype distribution\n'
     plt.title(title)
-    plt.savefig(out_path, bbox_inches='tight')
+    plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()    #plt.legend('counts', 'unique')
 
 
@@ -126,7 +126,7 @@ def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff)
     plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,0], alpha=0.5)
     plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,1], alpha=0.75)
     plt.title(title)
-    plt.savefig(out_path)
+    plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()    #plt.legend('counts', 'unique')
 
 
