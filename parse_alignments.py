@@ -216,7 +216,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
 
     outfile_pie_chart = outfile_report.replace('log', 'png')
     if isotypes_count_dict:
-        generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict, minimal_portion=0.0)
+        generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict)
 
     #TODO: generate A_subisotypes pie chart
 
@@ -405,7 +405,6 @@ def percent_calculator(fractions, complete):
     if complete != 0:
         for key in fractions:
             percentage[key] = 100 * fractions[key]/complete
-
 
     if sum(fractions.values()) != complete:
         logger.debug('complete: ' + str(complete))

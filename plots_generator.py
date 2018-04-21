@@ -66,34 +66,23 @@ def plot_venn(out_path, runs_annotations_sets, runs):
     plt.close()
 
 
-def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, minimal_portion):
+def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict):
 
-    isotypes = sorted(isotype_to_precent_dict, key = isotype_to_precent_dict.get)
+    isotypes = sorted(isotype_to_precent_dict, key=isotype_to_precent_dict.get, reverse=True)
     portions = [isotype_to_precent_dict[isotype] for isotype in isotypes]
-    others_portion = 0
-    others_index = 0
-    total = sum(portions)
-    for portion in portions:
-        if (others_portion + portion)/total > minimal_portion:
-            break
-        others_portion += portion
-        others_index += 1
 
-    isotypes = isotypes[others_index:]
-    portions = portions[others_index:]
+    portions_percents = [portions[i]/sum(portions) for i in range(len(portions)) if portions[i]!=0]
+    isotypes = [isotypes[i] for i in range(len(isotypes)) if portions[i]!=0]
+    labels = ['{} ({:.3f} %)'.format(isotypes[i], portions_percents[i]) for i in range(len(portions_percents))]
 
-    if others_portion > 0:
-        isotypes.append('others')
-        portions.append(others_portion)
-    #explode = (0, 0.1, 0, 0)  # only "explode" the 2nd slice
-
-    fig1, ax1 = plt.subplots()
-    ax1.pie(portions, labels=isotypes, autopct='%1.1f%%', startangle=0)
-    ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-    title = ('run1' if 'run1' in out_path else 'run2') + ' isotype distribution\n'
+    patches, texts = plt.pie(portions_percents, counterclock=False)
+    plt.legend(patches, labels, loc="best")
+    plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    plt.tight_layout()
+    title = 'run{} isotype distribution'.format(out_path[out_path.find('run')+len('run')])
     plt.title(title)
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
-    plt.close()    #plt.legend('counts', 'unique')
+    plt.close()
 
 
 def plot_correlation(x, y, i, j, out_path):
