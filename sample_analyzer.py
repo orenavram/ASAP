@@ -187,15 +187,15 @@ def parse_sequence_annotation_file(parsed_mixcr_output_path, assignments_path, c
             logger.info('Skipping: ' + chain_data_path + ' (file does not exists)')
             continue
 
-        v_types:{str:int} = {}
-        d_types:{str:int} = {}
-        j_types:{str:int} = {}
-        vd_types:{str:int} = {}
-        vj_types:{str:int} = {}
-        dj_types:{str:int} = {}
-        vdj_types:{str:int} = {}
-        cdr3_len:{int:int} = {}
-        cdr3_frequency_counter:{str:int} = {}
+        v_types = {} #:{str:int}
+        d_types = {} #:{str:int}
+        j_types = {} #:{str:int}
+        vd_types = {} #:{str:int}
+        vj_types = {} #:{str:int}
+        dj_types = {} #:{str:int}
+        vdj_types = {} #:{str:int}
+        cdr3_len = {} #:{int:int}
+        cdr3_frequency_counter = {} #:{str:int}
 
         with open(chain_data_path) as f:
             for i in range(skip_rows):
@@ -308,8 +308,8 @@ def plot_mutation_analyses(gp):
 
 
 def parse_mutations_raw_data(Ka_Ks_path):
-    Ka_Ks_data:{str:[float,float]} = {}
-    mutations_data:{str:int} = {}
+    Ka_Ks_data = {} #:{str:[float,float]}
+    mutations_data = {} #:{str:int}
     raw_data = read_table_to_dict(Ka_Ks_path, value_type=list, skip_rows=1)
     for key in raw_data:
         values = raw_data[key]

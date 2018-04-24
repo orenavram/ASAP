@@ -43,7 +43,7 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
         #generate joint files and plot for each chain
         if sequence_to_entry_dict != {}:
             joint_annotation_path = os.path.join(joint_parsed_mixcr_output_path, chain + sequence_annotation_file_suffix)
-            isotypes_count_dict:{str:int} = {}
+            isotypes_count_dict = {} #:{str:int}
             with open(joint_annotation_path, 'w') as f:
                 for aa_seq in sequence_to_entry_dict:
                     entry = sequence_to_entry_dict[aa_seq]
@@ -78,7 +78,7 @@ def filter_seqs_below_overlap_minimal_threshold(sequence_to_entry_dict, aa_seq_t
         if not passes_overlap_minimal_threshold_in_all_runs(aa_seq_to_counts_in_each_run[aa_seq], minimal_overlap):
             keys_to_remove.append(aa_seq)
 
-    aa_seq_to_counts_with_less_than_minimal_threshold:{str:int} = {}
+    aa_seq_to_counts_with_less_than_minimal_threshold = {} #:{str:int}
     #two loops are necessary because mutating a dict while iterating on it raises an error
     for aa_seq in keys_to_remove:
         logger.debug('Omitting {} {} from joint analysis.'.format(aa_seq, aa_seq_to_counts_in_each_run[aa_seq]))

@@ -68,7 +68,7 @@ def write_cdr3_counts_file(cdr3_annotations_path, most_common_cdr3, cdr3_to_coun
 
 
 def analyze_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_cdr3, cdr3_to_aa_reads, cdr3_to_counts, chain, gp, k):
-    most_k_common_cdr3_to_entry:{str:[str,str]} = {}
+    most_k_common_cdr3_to_entry = {} #:{str:[str,str]}
     most_k_common_cdr3 = most_common_cdr3[:k]
     most_k_common_cdr3_to_counts = {cdr3: cdr3_to_counts[cdr3] for cdr3 in most_k_common_cdr3}
     most_k_common_cdr3_to_aa_reads = {cdr3: cdr3_to_aa_reads[cdr3] for cdr3 in most_k_common_cdr3}
@@ -125,8 +125,8 @@ def analyze_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_
 
 
 def parse_sequence_annotations_file(annotations_path, skip_rows=0):
-    cdr3_to_counts:{str:int} = {}
-    cdr3_to_aa_reads:{str:[str]} = {}
+    cdr3_to_counts = {} #:{str:int}
+    cdr3_to_aa_reads = {} #:{str:[str]}
 
     with open(annotations_path) as f:
         for i in range(skip_rows):

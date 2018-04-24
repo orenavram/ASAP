@@ -41,7 +41,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
     allowed_chain_types = allowed_chain_types + ['unknown'] #do not use += or append here!
 
     total_lines = 1 # Shifted by one because of the header. More convenient when looking in notepad++...
-    sequences_frequency_counter:{str:int} = {}
+    sequences_frequency_counter = {} #:{str:int}
 
     # don't use dict.fromkeys here. Causes a BUG!!!
     chain_to_aa_read_to_meta_data_dict = dict(zip(allowed_chain_types, [{} for chain in allowed_chain_types]))
