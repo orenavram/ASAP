@@ -7,12 +7,11 @@ matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab! to 
 import time
 import Bio.Seq
 import aa_sequences as aa
-from plots_generator import generate_alignment_report_pie_chart, generate_mutations_boxplots
+from plots_generator import generate_alignment_report_pie_chart
 from text_handler import write_dict_to_file, logger
-import traceback
 
 
-def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_annotation_file_suffix, mutation_count_file_suffix, len_threshold, qlty_threshold, allowed_chain_types = ['IGH', 'IGK', 'IGL']):
+def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_annotation_file_suffix, mutations_file_suffix, len_threshold, qlty_threshold, allowed_chain_types):
     '''parse alignment procedure'''
     # input: alignments file, path for output files, length threshold, quality thresholds of total sequence and of CDR3 region
     # output: none. creates output files as specified in "notes" file
@@ -29,8 +28,6 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
     # aa_mutation_col = [28, 30, 32]
     best_v_alignment_col = 33
 
-    # num_of_CDR3_regions=3
-    # num_of_CDR3_regions = len(dna_mutation_col)
 
     # dictionary to convert ASCII code to quality values
     ascii_to_quality_dict = {'!': 0, '"': 1, '#': 2, '$': 3, '%': 4, '&': 5, "'": 6, '(': 7, ')': 8, '*': 9, '+': 10,
@@ -41,33 +38,34 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
 
     t1 = time.time()
 
+    allowed_chain_types = allowed_chain_types + ['unknown'] #do not use += or append here!
+
     total_lines = 1 # Shifted by one because of the header. More convenient when looking in notepad++...
-    sequences_frequency_counter = {}
+    sequences_frequency_counter:{str:int} = {}
 
     # don't use dict.fromkeys here. Causes a BUG!!!
     chain_to_aa_read_to_meta_data_dict = dict(zip(allowed_chain_types, [{} for chain in allowed_chain_types]))
-    chain_to_core_dna_to_Ka_Ks_dict = dict(zip(allowed_chain_types, [{} for chain in allowed_chain_types]))
-    #chain_to_core_dna_to_num_of_non_synonymous_mutations = dict(zip(allowed_chain_types, [{} for chain in allowed_chain_types]))
+    chain_to_core_dna_to_mutations_info_dict = dict(zip(allowed_chain_types, [{} for chain in allowed_chain_types]))
     pseudo_count = 1
     # old code for SHM frequency distribution TODO: delete?
     #chain_to_num_of_mutations_to_counts_dict = dict(zip(allowed_chain_types, [{} for chain in allowed_chain_types]))
 
     #TODO: should the 'unknown' category be in all places where allowed_chain_types is used??
-    chain_to_count_dict = dict.fromkeys(allowed_chain_types + ['unknown'], 0)
+    chain_to_count_dict = dict.fromkeys(allowed_chain_types, 0)
     isotypes_count_dict = dict.fromkeys(['A', 'A1', 'A2', 'D', 'E', 'G', 'M', 'unknown'], 0)
-    errors_count_dict = dict.fromkeys(['cdr', 'len', 'quality', 'not_overlapped', 'inappropriate_end_j_seq', 'stop_codon'], 0)
+    errors_count_dict = dict.fromkeys(['no_overlap', 'too_short_length', 'too_low_quality', 'missing_cdr3', 'nonsense_stop_codon', 'inappropriate_end_j_seq'], 0)
 
     alignments_txt_path = os.path.join(mixcr_output_path, 'alignments.txt')
     alignments_filtered_txt_path = os.path.join(parsed_mixcr_output_path, 'alignments_filtered.txt')
 
-    logger.info('Start parsing {}'.format(alignments_txt_path))
+    logger.info(f'Start parsing {alignments_txt_path}')
     with open(alignments_txt_path) as f:
 
         logger.info('File was opened succssefully.')
         # skip header-related variables- use to extract specified fields from alignments file
         alignments_filtered_txt = f.readline()
 
-        logger.info('First line of file is:\n{}'.format(alignments_filtered_txt))
+        logger.info(f'First line of file is:\n{alignments_filtered_txt}')
 
         #iterate over alignments file line by line            
         for line in f:
@@ -77,25 +75,19 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             #count total number of entries provided by mixcr alignment
             total_lines += 1
 
-            if not total_lines%1000:
-                logger.debug('total_lines: {}'.format(total_lines))
+            if not total_lines%10000:
+                print(f'total_lines: {total_lines}')
             # If the first token contains two sequences (separated by a comma) it means that
             # MiXCR was unable to find an overlap between the two paired-end reads.
             if ',' in line_tokens[0]:
-                errors_count_dict['not_overlapped'] += 1
+                errors_count_dict['no_overlap'] += 1
                 continue
 
-            # verify CDR3 is present and in an ORF
-            cdr3 = line_tokens[AA_seq_CDR3_col]
-            if cdr3 == '' or '*' in cdr3 :
-                errors_count_dict['cdr'] += 1
-                continue
-                
             # discard too short reads
             dna_read = line_tokens[dna_sequence]
             read_len = len(dna_read)
             if read_len < len_threshold:
-                errors_count_dict['len'] += 1
+                errors_count_dict['too_short_length'] += 1
                 continue
 
             # discard low quality reads
@@ -103,7 +95,13 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             #calculate average quality of read
             average_quality = sum([ascii_to_quality_dict[k] for k in sequencing_quality]) / read_len
             if average_quality < qlty_threshold:
-                errors_count_dict['quality'] += 1
+                errors_count_dict['too_low_quality'] += 1
+                continue
+
+            #verify CDR3 is present
+            cdr3 = line_tokens[AA_seq_CDR3_col]
+            if cdr3 == '': # or '*' in cdr3 :
+                errors_count_dict['missing_cdr3'] += 1
                 continue
 
             chain = line_tokens[best_v_family_col][:3]
@@ -121,34 +119,38 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
 
             # this should be the translation of the core_dna
             core_aa = line_tokens[7] + line_tokens[5] + line_tokens[11] + line_tokens[9] + line_tokens[15] + line_tokens[13] + line_tokens[17]
-
             if len(line_tokens[16]) % 3 != 0: # fill partial ORF. Probably a bug in MiXCR
-                core_dna += get_end_of_ORF_after_end_j_seq(dna_read, line_tokens[16])
+                core_dna += get_end_of_ORF_after_core_dna(dna_read, line_tokens[16])
                 core_aa = Bio.Seq.translate(core_dna)
 
             #sanity check
             if core_aa != Bio.Seq.translate(core_dna):
                 logger.debug('core_aa is NOT identical to the translated core_dna')
-                logger.debug('core_aa:\n{}'.format(core_aa))
-                logger.debug('translated core_dna:\n{}'.format(Bio.Seq.translate(core_dna)))
+                logger.debug(f'core_aa:\n{core_aa}')
+                logger.debug(f'translated core_dna:\n{Bio.Seq.translate(core_dna)}')
             #sanity check
             if (core_dna not in dna_read) and (not core_aa.endswith('VTVS_')):
-                logger.debug('dna_read:\n{}'.format(dna_read))
-                logger.debug('core dna:\n{}'.format(core_dna))
+                logger.debug(f'dna_read:\n{dna_read}')
+                logger.debug(f'core dna:\n{core_dna}')
             #sanity check
-            if core_aa[-len(aa.end_j_seq): ] != aa.end_j_seq:
-                logger.debug('end_j_seq after fixation is: {}'.format(core_aa[-len(aa.end_j_seq): ]))
+            if not core_aa.endswith(aa.end_j_seq):
+                logger.debug(f'end_j_seq after fixation is: {core_aa[-len(aa.end_j_seq[0]): ]}')
 
             # verify that core_aa is not non-sense
             if '*' in core_aa:
-                logger.debug('line {} in alignment.txt file: STOP codon in core_aa!!!\n{}'.format(total_lines, core_aa))
-                errors_count_dict['stop_codon'] += 1
+                logger.debug(f'line {total_lines} in alignment.txt file: STOP codon in core_aa!!!\n{core_aa}')
+                errors_count_dict['nonsense_stop_codon'] += 1
                 continue
 
             # verify that there is a proper end_j_seq.
             # MUST be after making sure that '*' is NOT in core_aa (otherwise it makes problems with the regex).
-            if not match_with_up_to_k_mismatches(core_aa[-len(aa.end_j_seq): ], aa.end_j_seq):
-                logger.info('No end_j_seq in core_aa:\n{}'.format(core_aa))
+            has_end_j_seq = False
+            for end_j_seq in aa.end_j_seq: # aa.end_j_seq is a tuple with at least one string
+                if match_with_up_to_k_mismatches(core_aa[-len(end_j_seq): ], end_j_seq):
+                    has_end_j_seq = True
+                    break
+            if not has_end_j_seq:
+                logger.info(f'No end_j_seq in core_aa:\n{core_aa}')
                 errors_count_dict['inappropriate_end_j_seq'] += 1
                 continue
 
@@ -156,7 +158,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             alignments_filtered_txt += line
 
             if chain not in allowed_chain_types:
-                logger.error("chain_type {} not in {}".format(chain, str(allowed_chain_types)))
+                logger.error(f'chain_type {chain} not in {allowed_chain_types}')
                 logger.error(line_tokens)
                 chain = 'unknown'
 
@@ -165,7 +167,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
 
 
             if chain == 'IGH':
-                isotype = get_isotype(dna_read, core_dna, aa.end_j_seq)
+                isotype = get_isotype(dna_read, core_dna, end_j_seq)
                 # update isotype counts
                 isotypes_count_dict[isotype] += 1
             else:
@@ -179,31 +181,31 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             if core_aa not in chain_to_aa_read_to_meta_data_dict[chain]:
                 chain_to_aa_read_to_meta_data_dict[chain][core_aa] = get_meta_data(line_tokens, chain, isotype, core_dna, core_aa, cdr3, best_v_family_col, best_d_family_col, best_j_family_col)
 
-            # set annotation for unique aa_sequence (only for the first time)
-            if core_dna not in chain_to_core_dna_to_Ka_Ks_dict[chain]:
+            # update mutation counts and Ka_Ks for the (unique) dna_sequence (only for the first time)
+            if core_dna not in chain_to_core_dna_to_mutations_info_dict[chain]:
                 #extract mutations field from column number $best_v_alignment_col that looks like this:
                 #1|292|312|21|313|SG5CI8ASG15CSA36CSG90ASA91GDC95I98GSC143TSC148ASC218TSC259A|1288.0
                 mutations_field = line_tokens[best_v_alignment_col].split("|")[5]
-                update_mutation_count(core_dna, mutations_field, chain_to_core_dna_to_Ka_Ks_dict[chain], pseudo_count) # chain_to_core_dna_to_num_of_non_synonymous_mutations[chain], pseudo_count)
-                # old code for SHM frequency distribution TODO: delete?
-                #update_mutation_count(core_dna, line_tokens[best_v_alignment_col], chain_to_num_of_mutations_to_counts_dict[chain], chain_to_core_dna_to_num_of_mutations[chain], chain_to_core_dna_to_num_of_non_synonymous_mutations[chain])
+                update_mutation_count(core_dna, mutations_field, chain_to_core_dna_to_mutations_info_dict[chain], pseudo_count) # chain_to_core_dna_to_num_of_non_synonymous_mutations[chain], pseudo_count)
 
-    #create nucleotide mutation frequency chart
-    for chain in chain_to_core_dna_to_Ka_Ks_dict:
-        core_dna_to_Ka_Ks_dict = chain_to_core_dna_to_Ka_Ks_dict[chain]
-        if core_dna_to_Ka_Ks_dict != {}:
-            mutations_file = parsed_mixcr_output_path + '/' + chain + mutation_count_file_suffix
-            write_dict_to_file(mutations_file, core_dna_to_Ka_Ks_dict, value_type=list)
-            #write_dict_to_file(parsed_mixcr_output_path + '/' + chain + '_non_synonymous' + mutation_count_file_suffix,
-            #                   chain_to_core_dna_to_num_of_non_synonymous_mutations[chain])
 
-            # old code for SHM frequency distribution TODO: delete?
-            #write_dict_to_file(parsed_mixcr_output_path + '/' + chain + mutation_count_file_suffix, chain_to_num_of_mutations_to_counts_dict[chain])
+    # for chain in chain_to_core_dna_to_num_of_mutations:
+    #     core_dna_to_num_of_mutations = chain_to_core_dna_to_num_of_mutations[chain]
+    #     if core_dna_to_num_of_mutations != {}:
+    #         mutation_counts_file = parsed_mixcr_output_path + '/' + chain + mutations_file_suffix
+    #         write_dict_to_file(mutation_counts_file, core_dna_to_num_of_mutations)
+
+    for chain in chain_to_core_dna_to_mutations_info_dict:
+        core_dna_to_mutations_info_dict = chain_to_core_dna_to_mutations_info_dict[chain]
+        if core_dna_to_mutations_info_dict != {}:
+            mutations_info_file = parsed_mixcr_output_path + '/' + chain + mutations_file_suffix
+            write_dict_to_file(mutations_info_file, core_dna_to_mutations_info_dict, value_type=list, header='dna' + '\t' + ';'.join(['Ka_per_codon', 'Ks_per_codon', 'number_of_baspair_mutations']))
 
     for chain in chain_to_aa_read_to_meta_data_dict:
         aa_read_to_meta_data_dict = chain_to_aa_read_to_meta_data_dict[chain]
         if aa_read_to_meta_data_dict != {}:
             with open(parsed_mixcr_output_path + '/' + chain + sequence_annotation_file_suffix, 'w') as f:
+                f.write('\t'.join(['chain', 'isotype', 'dna', 'aa', 'missing_cdr3', 'v_type', 'd_type', 'j_type', 'counts']) + '\n')
                 for core_aa in aa_read_to_meta_data_dict:
                     f.write('\t'.join(aa_read_to_meta_data_dict[core_aa] + [str(sequences_frequency_counter[core_aa])]) + '\n')
 
@@ -259,7 +261,7 @@ def get_isotype(dna_read, core_dna, end_j_seq):
     return 'unknown'
 
 
-def get_end_of_ORF_after_end_j_seq(dna_read, core_dna):
+def get_end_of_ORF_after_core_dna(dna_read, core_dna):
     '''
     used when the length of core_dna is not a multiplication of 3.
     :param dna_read:
@@ -271,30 +273,20 @@ def get_end_of_ORF_after_end_j_seq(dna_read, core_dna):
     return dna_read_after_core_dna[:3-(len(core_dna)%3)]
 
 
-def match_with_up_to_k_mismatches(sub_string, string, max_mismatches_allowed = 1, mandatory = -1):
+def match_with_up_to_k_mismatches(sub_string, string, max_mismatches_allowed = 1, mandatory = None):
+    '''
+    :param sub_string:
+    :param string:
+    :param max_mismatches_allowed:
+    :param mandatory:
+    :return: return a match of substring in string with up to k mismatches where position $mandatory must be a match
+    '''
     if '*' in sub_string:
-        #prevent problems with '*' (stop codons) in substring
+        # prevent problems with '*' (stop codons) in substring
         sub_string = sub_string.replace('*','X')
     match = regex.match('(' + sub_string + '){s<=' + str(max_mismatches_allowed) + '}', string)
-    return match and (mandatory<0 or string[mandatory] == sub_string[mandatory])
+    return match and (mandatory == None or string[mandatory] == sub_string[mandatory])
 
-
-
-'''find (partial )sub-string in string'''
-#find substring(iso id) in another string(read_AA) 
-#allowing "allow_mismatch" miss matches as long as their not in index "must_match" index 
-def get_start_index_of_substring_in_string(sub_string, string, max_mismatches_allowed, mandatory = -1):
-
-    len_sub_string = len(sub_string)
-    for i in range(len(string) - len_sub_string + 1):
-        potential_match = string[i: i+len_sub_string]
-        match = regex.match('(' + sub_string + '){s<=' + str(max_mismatches_allowed) + '}', potential_match)
-        if not match: # in case there's no match
-            continue
-        if mandatory<0 or potential_match[mandatory] == sub_string[mandatory]:
-            return i
-
-    return None
 
     
 # '''trim prefix to stop codon'''
@@ -355,46 +347,66 @@ def write_reports(out_file_path, total_time, errors_count_dict, total_lines, cha
     chain_to_percent_dict = percent_calculator(chain_to_count_dict, sum(chain_to_count_dict.values()))
     isotype_to_precent_dict = percent_calculator(isotypes_count_dict, sum(isotypes_count_dict.values()))
 
-    logger.info('chain_to_count_dict: {}'.format(chain_to_count_dict))
-    logger.info('chain_to_percent_dict: {}'.format(chain_to_percent_dict))
-    logger.info('errors_count_dict: {}'.format(errors_count_dict))
-    logger.info('statistics_precent_dict: {}'.format(statistics_precent_dict))
-    logger.info('isotypes_count_dict: {}'.format(isotypes_count_dict))
+    logger.info(f'chain_to_count_dict: {chain_to_count_dict}')
+    logger.info(f'chain_to_percent_dict: {chain_to_percent_dict}')
+    logger.info(f'errors_count_dict: {errors_count_dict}')
+    logger.info(f'statistics_precent_dict: {statistics_precent_dict}')
+    logger.info(f'isotypes_count_dict: {isotypes_count_dict}')
 
     A_sub_isotypes = ['A', 'A1', 'A2']
     A_sub_isotypes_to_count_dict = dict(
         [(A_sub_isotype, isotypes_count_dict[A_sub_isotype]) for A_sub_isotype in A_sub_isotypes])
     A_count = isotypes_count_dict['A1'] + isotypes_count_dict['A2'] + isotypes_count_dict['A']
-    A_sub_isotype_to_precent_dict = percent_calculator(A_sub_isotypes_to_count_dict, A_count)
+    A_sub_isotypes_to_precent_dict = percent_calculator(A_sub_isotypes_to_count_dict, A_count)
 
+    hours = total_time/3600
+    minutes = (total_time%3600)/60
+    seconds = total_time%60
     with open(out_file_path, 'w') as f:
-        f.write('Total time (seconds) = {:.3f}\n'.format(total_time))
-        f.write('Mixcr alignment file provides {} results\n'.format(total_lines))
-        f.write('% of paired reads with non-sense CDR3 region = {:.3f}\n'.format(statistics_precent_dict['cdr']))
-        f.write('% of entries shorter than specified threshold = {:.3f}\n'.format(statistics_precent_dict['len']))
-        f.write('% of entries with lower quality than specified threshold = {:.3f}\n'.format(statistics_precent_dict['quality']))
-        f.write('% of entries that are not overlapped = {:.3f}\n'.format(statistics_precent_dict['not_overlapped']))
-        f.write('% of entries that have an inappropriate end_j_seq = {:.3f}\n'.format(statistics_precent_dict['inappropriate_end_j_seq']))
-        f.write('% of entries that have a stop codon = {:.3f}\n\n'.format(statistics_precent_dict['stop_codon']))
+        f.write(f'Parsing alignment.txt took {hours}:{minutes}:{seconds} hours\n')
+        f.write(f'Mixcr alignment file provided {total_lines} results\n\n')
 
+        # to keep the filtrations order...
+        errors = ['no_overlap', 'too_short_length', 'too_low_quality', 'missing_cdr3', 'nonsense_stop_codon',
+                  'inappropriate_end_j_seq']
+        f.write('Detailed filtrations:\n')
+        for error in errors:
+            f.write(f'{errors_count_dict[error]} entries with {error} ({statistics_precent_dict[error]:.3f}%)\n')
+        # f.write('{} entries that are not overlapped = {:.3f}\n'.format(errors_count_dict['not_overlapped'], statistics_precent_dict['not_overlapped']))
+        # f.write('% of entries shorter than specified threshold = {:.3f}\n'.format(statistics_precent_dict['len']))
+        # f.write('% of entries with lower quality than specified threshold = {:.3f}\n'.format(statistics_precent_dict['quality']))
+        # f.write('% of entries that have a stop codon = {:.3f}\n\n'.format(statistics_precent_dict['missing_cdr3']))
+        # f.write('% of entries that have a stop codon = {:.3f}\n\n'.format(statistics_precent_dict['stop_codon']))
+        # f.write('% of entries that have an inappropriate end_j_seq = {:.3f}\n'.format(statistics_precent_dict['inappropriate_end_j_seq']))
+        f.write('\n')
+
+        f.write('Chains dispersion:\n')
         for chain in sorted(chain_to_count_dict):
-            f.write('% of {} chains = {:.3f}\n'.format(chain, chain_to_percent_dict[chain]))
-
+            f.write(f'{chain_to_count_dict[chain]} of {chain} chains ({chain_to_percent_dict[chain]:.3f}%)\n')
         f.write('\n')
-        logger.debug('% of A isotype = {:.3f}\n'.format(isotype_to_precent_dict['A']))
-        f.write('% of A isotype = {:.3f}\n'.format(isotype_to_precent_dict['A']))
-        f.write('% of A1 isotype = {:.3f}\n'.format(isotype_to_precent_dict['A1']))
-        f.write('% of A2 isotype = {:.3f}\n'.format(isotype_to_precent_dict['A2']))
-        f.write('% of D isotype = {:.3f}\n'.format(isotype_to_precent_dict['D']))
-        f.write('% of E isotype = {:.3f}\n'.format(isotype_to_precent_dict['E']))
-        f.write('% of G isotype = {:.3f}\n'.format(isotype_to_precent_dict['G']))
-        f.write('% of M isotype = {:.3f}\n'.format(isotype_to_precent_dict['M']))
-        f.write('% of unknown isotypes = {:.3f}\n'.format(isotype_to_precent_dict['unknown']))
 
+        f.write('Isotypes dispersion:\n')
+        for isotype in isotypes_count_dict:
+            f.write(f'{isotypes_count_dict[isotype]} of isotype {isotype} ({isotype_to_precent_dict[isotype]:.3f}%)\n')
         f.write('\n')
-        f.write('% of A isotype (out of A) = {:.3f}\n'.format(A_sub_isotype_to_precent_dict['A']))
-        f.write('% of A1 isotype (out of A) = {:.3f}\n'.format(A_sub_isotype_to_precent_dict['A1']))
-        f.write('% of A2 isotype (out of A) = {:.3f}\n'.format(A_sub_isotype_to_precent_dict['A2']))
+        # logger.debug('% of A isotype = {:.3f}\n'.format(isotype_to_precent_dict['A']))
+        # f.write('% of A isotype = {:.3f}\n'.format(isotype_to_precent_dict['A']))
+        # f.write('% of A1 isotype = {:.3f}\n'.format(isotype_to_precent_dict['A1']))
+        # f.write('% of A2 isotype = {:.3f}\n'.format(isotype_to_precent_dict['A2']))
+        # f.write('% of D isotype = {:.3f}\n'.format(isotype_to_precent_dict['D']))
+        # f.write('% of E isotype = {:.3f}\n'.format(isotype_to_precent_dict['E']))
+        # f.write('% of G isotype = {:.3f}\n'.format(isotype_to_precent_dict['G']))
+        # f.write('% of M isotype = {:.3f}\n'.format(isotype_to_precent_dict['M']))
+        # f.write('% of unknown isotypes = {:.3f}\n'.format(isotype_to_precent_dict['unknown']))
+
+        f.write('"A" sub-isotypes dispersion:\n')
+        for isotype in A_sub_isotypes_to_precent_dict:
+            f.write(f'{isotypes_count_dict[isotype]} of isotype {isotype} ({isotype_to_precent_dict[isotype]:.3f}%)\n')
+        f.write('\n')
+        # f.write('\n')
+        # f.write('% of A isotype (out of A) = {:.3f}\n'.format(A_sub_isotype_to_precent_dict['A']))
+        # f.write('% of A1 isotype (out of A) = {:.3f}\n'.format(A_sub_isotype_to_precent_dict['A1']))
+        # f.write('% of A2 isotype (out of A) = {:.3f}\n'.format(A_sub_isotype_to_precent_dict['A2']))
 
     
 '''calculate perectage for report file'''
@@ -415,9 +427,7 @@ def percent_calculator(fractions, complete):
     return percentage
 
 
-# old code for SHM frequency distribution TODO: delete?
-#def update_mutation_count(dna, mutations_field, mutation_count_frequency_dict, dna_to_num_of_synonymous_mutations, dna_to_num_of_non_synonymous_mutations):
-def update_mutation_count(dna, mutations_of_read, dna_to_num_of_mutations, pseudo_count):#, dna_to_num_of_non_synonymous_mutations, pseudo_count):
+def update_mutation_count(dna, mutations_of_read, dna_to_Ka_Ks_per_codon, pseudo_count):
     # count number of nucleotide mutations
     # for more info regarding the field's format see the bottom of this page:
     # http://mixcr.readthedocs.io/en/latest/appendix.html#ref-encoding
@@ -428,14 +438,14 @@ def update_mutation_count(dna, mutations_of_read, dna_to_num_of_mutations, pseud
         else:
             non_synonymous_mutation += 1
 
-    Ks_per_codon = synonymous_mutation/(len(dna)/3)
-    Ka_per_codon = non_synonymous_mutation/(len(dna)/3)
-    dna_to_num_of_mutations[dna] = [Ka_per_codon, Ks_per_codon]
-
-    #old code for SHM frequency distribution TODO: delete?
     #positions_of_mutations = re.findall('\d+', mutations_of_read)
     #mutations_count = len(positions_of_mutations)
-    #mutation_count_frequency_dict[mutations_count] = mutation_count_frequency_dict.get(mutations_count, 0) + 1
+    #dna_to_num_of_mutations[num_of_substitutions] = dna_to_num_of_mutations.get(num_of_substitutions, 0) + 1
+
+    Ka_per_codon = non_synonymous_mutation/(len(dna)/3)
+    Ks_per_codon = synonymous_mutation/(len(dna)/3)
+    num_of_substitutions = synonymous_mutation + non_synonymous_mutation
+    dna_to_Ka_Ks_per_codon[dna] = [Ka_per_codon, Ks_per_codon, num_of_substitutions]
 
 
 def silent_mutation(match, dna):

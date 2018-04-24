@@ -12,7 +12,7 @@ isotype_E_id = 'ASTQSP'
 isotype_G_id = 'ASTKGPS'
 isotype_M_id = 'GSASAPT'
 
-end_j_seq = 'VTVSS' #framework 4
+end_j_seq = ('VTVSS',) # framework 4
 
 mass_spec_seq = 'ASTK'
 
@@ -23,8 +23,7 @@ if MMU:
     isotype_E_id = 'ASIRNP'
     isotype_G_id = r'AKTT[AP]P'
     isotype_M_id = 'ESQSFP'
-    #todo: handle throught the code
-    #end_j_seq = ('VTVSS', 'LTVSS', 'VTVSA')  # framework 4
+    end_j_seq = ('VTVSS', 'LTVSS', 'VTVSA')  # framework 4
     mass_spec_seq = 'AK'
 
 if not add_mass_spec_seq:

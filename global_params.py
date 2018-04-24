@@ -4,14 +4,12 @@ import os
 import logging
 logger = logging.getLogger('main')
 
-if len(argv)<3:
+if len(argv)<2:
     params_file_path = '/Users/Oren/Dropbox/Projects/wine/parameters.txt'
-    debug_run = ''
-    # debug_run = False
 else:
     params_file_path = argv[1]
-    debug_run = argv[2]
 
+logger.info(f'Parsing parameter file: {params_file_path}')
 
 with open(params_file_path) as f:
 
@@ -52,7 +50,22 @@ with open(params_file_path) as f:
     line = get_next_relevant_rstriped_line(f)
     add_mass_spec_seq = True if line == 'yes' else False
 
+    #Integer that represents the k-top clones to be further analyzed
+    line = get_next_relevant_rstriped_line(f)
+    top_cdr3_clones_to_further_analyze = int(line)
+
 output_path = os.path.join(working_dir, 'outputs')
 
 run_output_paths = []
 
+mixcr_output_paths = []
+parsed_mixcr_output_paths = []
+assignments_paths = []
+cdr3_analysis_paths = []
+top_cdr3_clones_to_clonal_expansion_graph = 100
+top_cdr3_clones_to_further_analyze = min(top_cdr3_clones_to_further_analyze, top_cdr3_clones_to_clonal_expansion_graph)
+sequence_annotation_file_suffix = '_aa_sequence_annotations.' + raw_data_file_suffix
+top_cdr3_annotation_file_suffix = f'_top_{top_cdr3_clones_to_further_analyze}_cdr3_extended_annotations.{raw_data_file_suffix}'
+cdr3_annotation_file_suffix = '_cdr3_annotations.' + raw_data_file_suffix
+mutations_file_suffix = '_mutations.' + raw_data_file_suffix
+#Ka_Ks_file_suffix = '_Ka_Ks_analysis_2.' + raw_data_file_suffix

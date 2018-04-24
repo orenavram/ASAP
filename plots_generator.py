@@ -10,9 +10,10 @@ logger = logging.getLogger('main')
 from text_handler import read_table_to_dict
 
 
-def plot_barplot(assignment_file ='/Users/Oren/Dropbox/Projects/wine/outputs/run1/vdj_assignments/IGH_V_counts.txt', raw_data_file_suffix ='txt', key_type = str, value_type=int, as_proportions = True, rotation = None, fontsize = None, ylim=[0, 50]):
+def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', as_proportions = True, rotation = 90, ylim=[0, 50]):
+    #key_type = str, value_type=int):
     '''plot a simple bar chart of CDR3 lengths and VDJ assignments'''
-    d = read_table_to_dict(assignment_file, key_type=key_type, value_type=value_type)
+    #d = read_table_to_dict(assignment_file, key_type=key_type, value_type=value_type)
 
     x_values = sorted(d)
     y_values = [d[x] for x in x_values]
@@ -27,15 +28,44 @@ def plot_barplot(assignment_file ='/Users/Oren/Dropbox/Projects/wine/outputs/run
     # More colors can be found at https://stackoverflow.com/questions/22408237/named-colors-in-matplotlib
     barplot = sns.barplot(x_values, y_values, color="mediumspringgreen")
     ylim[1] = ylim[1] if ylim[1] > max(y_values) else 1.2*max(y_values)
+    #print(x_label, len(x_values))
+    if len(x_values) < 20:
+        fontsize = 10
+    elif len(x_values) < 60:
+        fontsize = 5
+    else:
+        fontsize = 2
     barplot.set_ylim(ylim)
-    barplot.set_ylabel('Frequency (%)')
     barplot.set_xticklabels(x_values, rotation=rotation, fontsize=fontsize)
+    barplot.set_xlabel(x_label)
+    barplot.set_ylabel(y_label)
+    barplot.set_title(title)
 
     plt.tight_layout()
-    save_path = assignment_file.replace(raw_data_file_suffix, 'png')
-    plt.savefig(save_path, dpi=500, bbox_inches='tight')
+    plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
 
+
+def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff, fontsize=15):
+    title = f'{cutoff} top ranking clones prevalence\n'
+    cols = np.loadtxt(cdr3_annotations_path, usecols=(1, 2), dtype='int')
+    rank = range(1, cutoff+1)
+    for style in plt.style.available:
+        plt.figure(figsize=[25,5])
+        plt.style.use(style)
+        plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,0], label='Reads counts')
+        plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,1], label='Clonal expansion')
+        plt.title(title, fontsize=fontsize)
+        plt.xlabel(f'\nClone number', fontsize=fontsize)
+        plt.ylabel(f'Counts\n', fontsize=fontsize)
+        plt.xticks(range(0,cutoff+1,10), fontsize=fontsize)
+        plt.yticks(fontsize=fontsize)
+        plt.legend(loc='best', fontsize=fontsize)
+        if style=='seaborn-paper':
+            plt.savefig(out_path, dpi=500, bbox_inches='tight')
+        plt.close()
+        if style=='seaborn-paper':
+            break
 
 # def plot_intersection_histogram(runs, y_values, out_path):
 #     '''plot a simple bar chart of CDR3 lengths and VDJ assignments'''
@@ -57,7 +87,7 @@ def plot_venn(out_path, runs_annotations_sets, runs):
     elif len(runs) == 3:
         venn = matplotlib_venn.venn3
     else:
-        logger.error('Can\'t plot venn diagram for {} sets!! (only for 2 or 3 sets)'.format(len(runs)))
+        logger.error(f'Can\'t plot venn diagram for {len(runs)} sets!! (only for 2 or 3 sets)')
         return
     plt.figure()
     venn(runs_annotations_sets, set_labels=runs)
@@ -66,20 +96,22 @@ def plot_venn(out_path, runs_annotations_sets, runs):
     plt.close()
 
 
-def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict):
+def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, run=None):
 
     isotypes = sorted(isotype_to_precent_dict, key=isotype_to_precent_dict.get, reverse=True)
     portions = [isotype_to_precent_dict[isotype] for isotype in isotypes]
 
-    portions_percents = [portions[i]/sum(portions) for i in range(len(portions)) if portions[i]!=0]
+    portions_percents = [100*portions[i]/sum(portions) for i in range(len(portions)) if portions[i]!=0]
     isotypes = [isotypes[i] for i in range(len(isotypes)) if portions[i]!=0]
-    labels = ['{} ({:.3f} %)'.format(isotypes[i], portions_percents[i]) for i in range(len(portions_percents))]
+    labels = [f'{isotypes[i]} ({portions_percents[i]:.3f}%)' for i in range(len(portions_percents))]
 
     patches, texts = plt.pie(portions_percents, counterclock=False)
     plt.legend(patches, labels, loc="best")
     plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     plt.tight_layout()
-    title = 'run{} isotype distribution'.format(out_path[out_path.find('run')+len('run')])
+    if not run:
+        run = 'Replicate '+ out_path[out_path.find('run')+len('run')]
+    title = f'{run} isotype distribution'
     plt.title(title)
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
@@ -90,33 +122,13 @@ def plot_correlation(x, y, i, j, out_path):
     a, b = np.linalg.lstsq(A, y)[0]
     correlation = pearsonr(x, y)[0]
     plt.plot(x, y, 'ro', markersize=2, label='V-gene sequence')
-    plt.plot(x, a*x + b, 'b', label='Fitted line (correlation: {})'.format(correlation))
-    plt.xlabel('counts in run' + str(i))
-    plt.ylabel('counts in run' + str(j))
-    plt.title('Pearson correlation of V-gene sequence counts of run{} and run{}'.format(i,j))
+    plt.plot(x, a*x + b, 'b', label=f'Fitted line (r={correlation:.3f})')
+    plt.xlabel(f'\nCounts in replicate {i}')
+    plt.ylabel(f'Counts in replicate {j}\n')
+    plt.title(f'Pearson correlation of V-gene sequence counts of replicate {i} and replicate {j}')
     plt.legend()
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
-    plt.close()    #plt.legend('counts', 'unique')
-
-
-def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff):
-    #TODO: Add legend where the higherhisto is named "number of reads" and the lower "clonal expansion"
-    #TODO: number of reads
-    #TODO: clonal expansion
-    #old: cdr3_annotations_path='/Users/Oren/Dropbox/Projects/wine/123_IGH_clones.txt'
-    title = 'Top {} common reads distribution VS unique sequences distribution'.format(cutoff)
-    cols = np.loadtxt(cdr3_annotations_path, usecols=(1, 2), dtype='int')
-    rank = range(1, cutoff+1)
-    #for style in plt.style.available:
-    style = 'seaborn-paper'
-    plt.figure()
-    plt.style.use(style)
-    plt.figure(figsize=[25,5])
-    plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,0], alpha=0.5)
-    plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,1], alpha=0.75)
-    plt.title(title)
-    plt.savefig(out_path, dpi=500, bbox_inches='tight')
-    plt.close()    #plt.legend('counts', 'unique')
+    plt.close()
 
 
 def generate_mutations_boxplots(core_dna_to_num_of_mutations_dict, out_path):
@@ -133,6 +145,7 @@ def generate_mutations_boxplots(core_dna_to_num_of_mutations_dict, out_path):
     plot_sub_figure(ax, Ka_Ks, ['Ka/Ks'])
 
     fig.savefig(out_path, dpi=500, bbox_inches='tight')
+    plt.close()
 
 
 def plot_sub_figure(ax, data, xticklabels):

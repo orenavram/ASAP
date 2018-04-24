@@ -1,19 +1,21 @@
 import os, subprocess
 
 from text_handler import read_table_to_dict, write_dict_to_file
-from plots_generator import plot_venn, plot_correlation
+from plots_generator import plot_venn, plot_correlation, generate_alignment_report_pie_chart
 import numpy as np
 
 import logging
 logger = logging.getLogger('main')
 
 
-def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_output_path, chains, sequence_annotation_file_suffix, mutation_count_file_suffix, mass_spec_seq, minimal_overlap = 1):
+def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_output_path, chains, sequence_annotation_file_suffix, mutations_file_suffix, minimal_overlap = 1):
+    from aa_sequences import mass_spec_seq
 
-    logger.info('run_number ' + str(number_of_runs))
+    logger.info('Number of replicates is: ' + str(number_of_runs))
     for chain in chains:
         sequence_to_entry_dict = {}
         aa_seq_to_counts_in_each_run = {}
+        #joint_mutation_counts_dict = {}
         shared_reads = None
 
         for i in range(len(run_output_paths[:-1])): #without joint
@@ -22,16 +24,18 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
             annotation_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + sequence_annotation_file_suffix)
             add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, annotation_path, i, number_of_runs)
 
-            core_dna_to_Ka_Ks_dict_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + mutation_count_file_suffix)
+            mutations_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + mutations_file_suffix)
+            #add_counts_to_mutations_dict(joint_mutation_counts_dict, mutations_path)
 
-            current_run_core_dna_to_Ka_Ks_dict_path = read_table_to_dict(core_dna_to_Ka_Ks_dict_path, value_type=list)
-
+            core_dna_to_to_mutations_info_dict_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + mutations_file_suffix)
+            current_run_core_dna_to_mutations_info_dict_path = read_table_to_dict(core_dna_to_to_mutations_info_dict_path, value_type=list, skip_rows=1)
             if shared_reads == None:
-                shared_reads = set(current_run_core_dna_to_Ka_Ks_dict_path.keys())
+                shared_reads = set(current_run_core_dna_to_mutations_info_dict_path.keys())
             else:
-                shared_reads = shared_reads.intersection(set(current_run_core_dna_to_Ka_Ks_dict_path.keys()))
+                shared_reads = shared_reads.intersection(set(current_run_core_dna_to_mutations_info_dict_path.keys()))
 
-        joint_core_dna_to_Ka_Ks_dict = dict((key, current_run_core_dna_to_Ka_Ks_dict_path[key]) for key in shared_reads)
+        joint_core_dna_to_mutations_info_dict = dict((key, current_run_core_dna_to_mutations_info_dict_path[key]) for key in shared_reads)
+
 
         #remove entries that do not pass the minimal count threshold in all runs
         aa_seq_to_counts_with_less_than_minimal_threshold = filter_seqs_below_overlap_minimal_threshold(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, minimal_overlap)
@@ -39,9 +43,16 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
         #generate joint files and plot for each chain
         if sequence_to_entry_dict != {}:
             joint_annotation_path = os.path.join(joint_parsed_mixcr_output_path, chain + sequence_annotation_file_suffix)
+            isotypes_count_dict:{str:int} = {}
             with open(joint_annotation_path, 'w') as f:
                 for aa_seq in sequence_to_entry_dict:
-                    f.write('\t'.join(sequence_to_entry_dict[aa_seq]) + '\n')
+                    entry = sequence_to_entry_dict[aa_seq]
+                    f.write('\t'.join(entry) + '\n')
+                    isotype = entry[1]
+                    isotypes_count_dict[isotype] = isotypes_count_dict.get(isotype, 0) + 1
+
+            outfile_pie_chart = os.path.join(joint_parsed_mixcr_output_path, 'alignment_report.png')
+            generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict, 'Joint')
 
             final_fasta_path = os.path.join(run_output_paths[-1], chain + '_final.fasta')
             generate_final_fasta_with_mass_spec_sec(aa_seq_to_counts_in_each_run, final_fasta_path, sequence_to_entry_dict, mass_spec_seq)
@@ -51,9 +62,14 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
             generate_intersection_plot(number_of_runs, joint_annotation_path, sequence_annotation_file_suffix)
 
         #generate joint mutation counts file for each chain
-        if joint_core_dna_to_Ka_Ks_dict != {}:
-            mutations_file = os.path.join(joint_parsed_mixcr_output_path, chain + mutation_count_file_suffix)
-            write_dict_to_file(mutations_file, joint_core_dna_to_Ka_Ks_dict, value_type=list)
+        # if joint_mutation_counts_dict != {}:
+        #     mutations_file = os.path.join(joint_parsed_mixcr_output_path, chain + mutations_file_suffix)
+        #     write_dict_to_file(mutations_file, joint_mutation_counts_dict, sort_by=int)
+
+        #generate joint mutation counts file for each chain
+        if joint_core_dna_to_mutations_info_dict != {}:
+            mutations_file = os.path.join(joint_parsed_mixcr_output_path, chain + mutations_file_suffix)
+            write_dict_to_file(mutations_file, joint_core_dna_to_mutations_info_dict, value_type=list, header='\t'.join(['dna', 'Ka_per_codon', 'Ks_per_codon', 'number_of_baspair_mutations']))
 
 
 def filter_seqs_below_overlap_minimal_threshold(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, minimal_overlap):
@@ -62,10 +78,10 @@ def filter_seqs_below_overlap_minimal_threshold(sequence_to_entry_dict, aa_seq_t
         if not passes_overlap_minimal_threshold_in_all_runs(aa_seq_to_counts_in_each_run[aa_seq], minimal_overlap):
             keys_to_remove.append(aa_seq)
 
-    aa_seq_to_counts_with_less_than_minimal_threshold = {}
+    aa_seq_to_counts_with_less_than_minimal_threshold:{str:int} = {}
     #two loops are necessary because mutating a dict while iterating on it raises an error
     for aa_seq in keys_to_remove:
-        logger.debug('Omitting {} {} from joint analysis.'.format(aa_seq, aa_seq_to_counts_in_each_run[aa_seq]))
+        logger.debug(f'Omitting {aa_seq} {aa_seq_to_counts_in_each_run[aa_seq]} from joint analysis.')
         sequence_to_entry_dict.pop(aa_seq)
         aa_seq_to_counts_with_less_than_minimal_threshold[aa_seq] = aa_seq_to_counts_in_each_run.pop(aa_seq)
 
@@ -121,12 +137,13 @@ def generate_final_fasta_with_mass_spec_sec(aa_seq_to_counts_in_each_run, final_
             f.write('\n' + aa_seq + mass_spec_seq + '\n')
 
 
-def add_counts_to_mutations_dict(mutation_counts_frequency, mutation_counts_frequency_path):
+def add_counts_to_mutations_dict(joint_mutation_counts_frequency, mutation_counts_frequency_path):
     if not os.path.exists(mutation_counts_frequency_path):
         logger.info('Can\'t find mutation frequency path:' + mutation_counts_frequency_path)
         return
+    current_run_frequency = read_table_to_dict(mutation_counts_frequency_path, value_type=int, skip_rows=1)
     for key in current_run_frequency:
-        mutation_counts_frequency[key] = mutation_counts_frequency.get(key, 0) + int(current_run_frequency[key])
+        joint_mutation_counts_frequency[key] = joint_mutation_counts_frequency.get(key, 0) + current_run_frequency[key]
 
 
 def add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, annotation_path, i, number_of_runs):
@@ -139,6 +156,8 @@ def add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_to_counts_in_each
             QVQLQESGPGLVKPSETLSLTCTVSGGSISSYYWSWIRQPAGKGLEWIGRIYTSGSTNYNPSLKSRVTMSVDTSKNQFSLKLSSVTAADTAVYYCARTYSGSYYGRFDYWGQGTLVTVSS	IGH	CARTYSGSYYGRFDYW	IGHV4	IGHD1	IGHJ4*02	CCCAGGTGCAGCTGCAGGAGTCGGGCCCAGGACTGGTGAAGCCTTCGGAGACCCTGTCCCTCACCTGCACTGTCTCTGGTGGCTCCATCAGTAGTTACTACTGGAGCTGGATCCGGCAGCCCGCCGGGAAGGGACTGGAGTGGATTGGGCGTATCTATACCAGTGGGAGCACCAACTACAACCCCTCCCTCAAGAGTCGAGTCACCATGTCAGTAGACACGTCCAAGAACCAGTTCTCCCTGAAGCTGAGCTCTGTGACCGCCGCGGACACGGCCGTGTATTACTGTGCGAGAACTTATAGTGGGAGCTACTACGGGCGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCAGGGAGTGCATCCGCCCCAACCCTCTCTCTCTCTCCTCCAGA	13
             '''
             tokens = line.rstrip().split('\t')
+            if tokens[0] == 'chain':
+                continue  # skip header
             aa_seq = tokens[3]
             count = int(tokens[-1])
             if aa_seq not in aa_seq_to_counts_in_each_run:
@@ -170,14 +189,14 @@ def generate_intersection_plot(number_of_runs, joint_annotation_path, sequence_a
         with open(run_annotation_path) as f:
             lines = f.readlines()
         num_of_run_annotations = len(lines)
-        logger.info('{} has {} annotations'.format(run, num_of_run_annotations))
+        logger.info(f'{run} has {num_of_run_annotations} annotations')
         aa_seqs = [line.split()[3] for line in lines]
         runs_annotations_sets.append(set(aa_seqs))
         percent_of_intersected_annotations_per_run.append(num_of_joint_annotations / num_of_run_annotations * 100)
 
     logger.info(percent_of_intersected_annotations_per_run)
     raw_data_path = joint_annotation_path.replace(sequence_annotation_file_suffix, '_runs_intersections.txt')
-    write_dict_to_file(raw_data_path, {i:percent_of_intersected_annotations_per_run[i] for i in range(number_of_runs)})
+    write_dict_to_file(raw_data_path, {(i+1):percent_of_intersected_annotations_per_run[i] for i in range(number_of_runs)}, header='\t'.join(['run_number', 'percent_of_intersected_annotations_with_the_joint']))
 
     out_path = raw_data_path.replace('txt', 'png')
     plot_venn(out_path, runs_annotations_sets, runs)

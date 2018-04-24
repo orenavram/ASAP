@@ -13,6 +13,7 @@ import global_params as gp
 from directory_creator import create_dir
 from html_editor import edit_success_html, edit_failure_html
 
+
 logger.info('Starting '+argv[0]+'!')
 logger.debug('argv = ' + str(argv))
 logger.info('Usage: python3 ' + argv[0] + ' <?parameters_file_name [parameters.txt]>')
@@ -23,16 +24,6 @@ else:
 logger.info('parameter file: ' + parameters_file_name)
 
 create_dir(gp.output_path)
-gp.mixcr_output_paths = []
-gp.parsed_mixcr_output_paths = []
-gp.assignments_paths = []
-gp.top_cdr3_clones_to_clonal_expansion_graph = 100
-gp.top_cdr3_clones_to_further_analyze = 10
-gp.sequence_annotation_file_suffix = '_aa_sequence_annotations.' + gp.raw_data_file_suffix
-gp.top_cdr3_annotation_file_suffix = '_top_{}_cdr3_extended_annotations.{}'.format(gp.top_cdr3_clones_to_further_analyze, gp.raw_data_file_suffix)
-gp.cdr3_annotation_file_suffix = '_cdr3_annotations.' + gp.raw_data_file_suffix
-gp.mutation_count_file_suffix = '_mutation_counts_distribution.' + gp.raw_data_file_suffix
-
 
 #main code!
 succeeded = True
@@ -54,6 +45,7 @@ try:
     analyze_samples(gp)
 except Exception as e:
     error_msg = 'ASAP calculation crashed with the following error:<br>{}<br><br>'.format(str(e) or type(e).__name__)
+    logger.error(error_msg)
     succeeded = False
 
 run_number = gp.working_dir.split('/')[-1]
@@ -87,16 +79,16 @@ if os.path.exists(user_email_file):
 
     server_url = 'http://asap.tau.ac.il/results'
     if succeeded:
-        email_content = '''Hello,
+        email_content = f'''Hello,
     
 The results for your ASAP run are ready at:
-{}
+{os.path.join(server_url, run_number, 'output.php')}
 
 
 Please note: the results will be kept on the server for three months.
-        '''.format(os.path.join(server_url, run_number, 'output.php'))
+        '''
     else:
-        email_content = 'ASAP calculation failed. For further information please visit: {}'.format(html_path)
+        email_content = f'ASAP calculation failed. For further information please visit: {html_path}'
 
     email_content += '\n\nThanks, ASAP Team'
 
@@ -110,7 +102,7 @@ end = time()
 hours = int((end - start) / 3600)
 minutes = int(((end - start) % 3600) / 60)
 seconds = int((end - start) % 60)
-logger.info('Finished joining samples. Took {}:{}:{} hours.'.format(hours, minutes, seconds))
-
-
+logger.info(f'Finished joining samples. Took {hours}:{minutes}:{seconds} hours.')
+with open(os.path.join(gp.output_path, 'time.txt'), 'w') as f:
+    f.write(f'{hours}:{minutes}:{seconds}')
 print('Bye.')

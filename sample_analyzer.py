@@ -1,22 +1,14 @@
 import os
-import subprocess
-
-from Bio import SeqIO
-from Bio.Align import AlignInfo
-from Bio.Align.Generic import Alignment
-from Bio.Alphabet import Gapped, IUPAC
 
 from mixcr_procedure import mixcr_procedure
 from parse_alignments import parse_alignment_file
 from directory_creator import create_dir
 from runs_aggregator import join_runs_analyses
-from plots_generator import plot_barplot, generate_clonal_expansion_histogram, generate_mutations_boxplots
-from text_handler import write_dict_to_file, string_similarity, read_table_to_dict
-from msa_parser import remove_sparse_columns
+from plots_generator import plot_barplot, generate_mutations_boxplots
+from text_handler import write_dict_to_file, read_table_to_dict
+from cdr3_analyzer import analyze_cdr3
 
 import logging
-
-from weblogo_generator import generate_weblogo
 
 logger = logging.getLogger('main')
 
@@ -26,20 +18,20 @@ def analyze_samples(gp):
 
         run = 'run' + str(i)
 
-        mixcr_output_path, parsed_mixcr_output_path, assignments_path = create_sub_working_directories(gp, run)
+        mixcr_output_path, parsed_mixcr_output_path, assignments_path, cdr3_analysis_path = create_sub_working_directories(gp, run)
 
         try:
             done_path = os.path.join(gp.output_path, 'done_1_' + run + '_' + 'mixcr_procedure.txt')
             if os.path.exists(done_path):
                 logger.info('Skipping mixcr_procedure, output files already exist...')
             else:
-                logger.info('Starting mixcr_procedure of {}...'.format(run))
+                logger.info(f'Starting mixcr_procedure of {run}...')
                 fastq_path = os.path.join(gp.working_dir, 'reads', run)
                 mixcr_procedure(gp.path_to_mixcr, fastq_path, mixcr_output_path, gp.chains, gp.MMU)
                 with open(done_path, 'w') as f:
                     pass
-        except:
-            logger.error('Error in MiXCR procedure')
+        except Exception as e:
+            logger.error('Error in MiXCR procedure: {}'.format(str(e)))
             raise
 
         try:
@@ -47,332 +39,89 @@ def analyze_samples(gp):
             if os.path.exists(done_path):
                 logger.info('Skipping parse_alignment_file, output files already exist...')
             else:
-                logger.info('Applying parse alignments procedure of {}...'.format(run))
-                parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, gp.sequence_annotation_file_suffix, gp.mutation_count_file_suffix, gp.len_threshold, gp.sequencing_quality_threshold)
+                logger.info(f'Applying parse alignments procedure of {run}...')
+                parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, gp.sequence_annotation_file_suffix, gp.mutations_file_suffix, gp.len_threshold, gp.sequencing_quality_threshold, gp.chains)
                 with open(done_path, 'w') as f:
                     pass
-        except:
-            logger.error('Error in parse alignments procedure')
-            raise
+        except Exception as e:
+            logger.error('Error in parse alignments procedure: {}'.format(str(e)))
+            raise e
 
+    remove_irrelevant_chains(gp)
 
     try:
+        # TODO: should it be always OR when gp.run_number > 1?
         logger.info('Joining runs...')
         '''
-        joint_run_is_needed = True #TODO: should it be always OR when gp.run_number > 1?
+        joint_run_is_needed = True 
         if joint_run_is_needed:
         '''
-        mixcr_output_path, parsed_mixcr_output_path, assignments_path = create_sub_working_directories(gp, 'joint')
-        gp.parsed_mixcr_output_paths.append(parsed_mixcr_output_path)
-        gp.assignments_paths.append(assignments_path)
+        joint_mixcr_output_path, joint_parsed_mixcr_output_path, joint_assignments_path, joint_cdr3_analysis_path = create_sub_working_directories(gp, 'joint')
 
         done_path = os.path.join(gp.output_path, 'done_3_' + 'join_runs_analysis.txt')
         if os.path.exists(done_path):
             logger.info('Skipping join_runs_analysis, output files already exist...')
         else:
-            from aa_sequences import mass_spec_seq
-            join_runs_analyses(gp.number_of_runs, gp.run_output_paths, parsed_mixcr_output_path, gp.chains,
-                               gp.sequence_annotation_file_suffix, gp.mutation_count_file_suffix, mass_spec_seq)
+            logger.info('Joining runs analysis...')
+            join_runs_analyses(gp.number_of_runs, gp.run_output_paths, joint_parsed_mixcr_output_path, gp.chains,
+                               gp.sequence_annotation_file_suffix, gp.mutations_file_suffix)
             with open(done_path, 'w') as f:
                 pass
-    except:
-        logger.error('Error in join_runs_analysis')
-        raise
+    except Exception as e:
+       logger.error('Error in join_runs_analyses: {}'.format(str(e)))
+       raise
 
     try:
         done_path = os.path.join(gp.output_path, 'done_4_' + 'parse_annotation_files.txt')
         if os.path.exists(done_path):
             logger.info('Skipping parse_annotation_files, output files already exist...')
         else:
+            logger.info('Parsing annotations files...')
             parse_annotation_files(gp)
             with open(done_path, 'w') as f:
                 pass
     except:
-        logger.error('Error in parse_annotation_files')
-        raise
+       logger.error('Error in parse_annotation_files')
+       raise
 
     try:
         done_path = os.path.join(gp.output_path, 'done_5_' + 'plot_assignments.txt')
         if os.path.exists(done_path):
             logger.info('Skipping plot_assignments, output files already exist...')
         else:
+            logger.info('Plotting V(D)J assignments...')
             plot_assignments(gp)
             with open(done_path, 'w') as f:
                 pass
-    except:
-        logger.error('Error in plot_assignments')
-        raise
+    except Exception as e:
+       logger.error('Error in plot_assignments: {}'.format(str(e)))
+       raise
 
     try:
-        done_path = os.path.join(gp.output_path, 'done_6_' + 'plot_ka_ks_boxplots.txt')
+        done_path = os.path.join(gp.output_path, 'done_6_' + 'plot_mutation_analyses.txt')
         if os.path.exists(done_path):
-            logger.info('Skipping plot_mutation_counts, output files already exist...')
+            logger.info('Skipping plot_mutation_analyses, output files already exist...')
         else:
-            plot_ka_ks_boxplots(gp)
+            logger.info('Plotting mutation analyses...')
+            plot_mutation_analyses(gp)
             with open(done_path, 'w') as f:
                 pass
-    except:
-        logger.error('Error in plot_mutation_counts')
-        raise
+    except Exception as e:
+       logger.error('Error in plot_mutation_counts: {}'.format(str(e)))
+       raise
 
     try:
         done_path = os.path.join(gp.output_path, 'done_7_' + 'analyze_cdr3.txt')
         if os.path.exists(done_path):
             logger.info('Skipping analyze_cdr3, output files already exist...')
         else:
-            cdr3_analysis_dir = os.path.join(gp.output_path, 'joint', 'cdr3_analysis')
-            create_dir(cdr3_analysis_dir)
-            analyze_cdr3(gp, parsed_mixcr_output_path, cdr3_analysis_dir)
+            logger.info('Analyzing CDR3s...')
+            analyze_cdr3(gp)
             with open(done_path, 'w') as f:
                 pass
-    except:
-        logger.error('Error in analyze_cdr3')
-        raise
-
-
-def plot_ka_ks_boxplots(gp):
-    for parsed_mixcr_output_path in gp.parsed_mixcr_output_paths:
-        # if gp.debug_run not in parsed_mixcr_output_path:
-        #     logger.info('!!DEBUG!! SKIPPING parse_chain_annotation_file for', parsed_mixcr_output_path)
-        #     continue
-        for chain in gp.chains:
-            Ka_Ks_path = parsed_mixcr_output_path + '/' + chain + gp.mutation_count_file_suffix
-            if os.path.exists(Ka_Ks_path):
-                logger.info('Plotting mutation_counts_frequency_file: {}'.format(Ka_Ks_path))
-                raw_data = read_table_to_dict(Ka_Ks_path, value_type=list)
-                Ka_Ks_box_plot = Ka_Ks_path.replace('txt', 'png')
-                generate_mutations_boxplots(raw_data, Ka_Ks_box_plot)
-            else:
-                logger.info('Skipping plot for {} (no such file...)'.format(Ka_Ks_path))
-
-            '''#old mutation plot before ka_ks
-            mutation_counts_frequency_path = parsed_mixcr_output_path + '/' + chain + gp.mutation_count_file_suffix
-            logger.info('Plotting mutation_counts_frequency_file: ' + mutation_counts_frequency_path)
-            if os.path.exists(mutation_counts_frequency_path):
-                plot_barplot(mutation_counts_frequency_path, gp.raw_data_file_suffix, key_type=int, value_type=float, fontsize=6, rotation=70, ylim=[0,30])
-            else:
-                logger.info('No such file: {}. Skipping this plot...'.format(mutation_counts_frequency_path))
-            '''
-
-def plot_assignments(gp):
-    for assignments_path in gp.assignments_paths:
-        if gp.debug_run not in assignments_path:
-            logger.info('!!DEBUG!! SKIPPING parse_chain_annotation_file for ' + assignments_path)
-            continue
-        for raw_data_file in os.listdir(assignments_path):
-            if not raw_data_file.endswith('_counts.' + gp.raw_data_file_suffix):
-                logger.debug('Skipping ' + raw_data_file)
-                continue
-            assignment_file = os.path.join(assignments_path, raw_data_file)
-
-            logger.info('Plotting assignment_file: ' + assignment_file)
-            if assignment_file.endswith('cdr3_len_counts.' + gp.raw_data_file_suffix):
-                # TODO: maybe this file should be handled separately
-                plot_barplot(assignment_file, gp.raw_data_file_suffix, key_type=int)
-            else:
-                if 'VDJ' in assignment_file:
-                    plot_barplot(assignment_file, gp.raw_data_file_suffix, rotation=70, fontsize=2, ylim=[0, 15])
-                elif 'VD' in assignment_file or 'DJ' in assignment_file or 'VJ' in assignment_file:
-                    plot_barplot(assignment_file, gp.raw_data_file_suffix, rotation=70, fontsize=5, ylim=[0, 25])
-                else:
-                    plot_barplot(assignment_file, gp.raw_data_file_suffix)
-
-
-def parse_annotation_files(gp):
-    for i in range(gp.number_of_runs + 1):  # +1 for the joint analysis (if needed)
-        if i == gp.number_of_runs:
-            run = 'joint run'
-        else:
-            run = 'run' + str(i + 1)
-        if gp.debug_run not in run:
-            logger.info('!!DEBUG!! SKIPPING parse_chain_annotation_file for', run)
-            continue
-        logger.info('Starting parse chain annotation file of ' + run)
-        parse_sequence_annotation_file(gp.parsed_mixcr_output_paths[i], gp.assignments_paths[i],
-                                       gp.sequence_annotation_file_suffix, gp.raw_data_file_suffix)
-
-
-def analyze_cdr3(gp, parsed_mixcr_output_path, cdr3_analysis_dir):
-    k = gp.top_cdr3_clones_to_further_analyze
-    for chain in gp.chains:
-        annotations_path = os.path.join(parsed_mixcr_output_path, chain + gp.sequence_annotation_file_suffix)
-        if not os.path.exists(annotations_path):
-            logger.info('No such file: {}. Skipping its analysis...'.format(annotations_path))
-            continue
-
-        cdr3_to_aa_reads, cdr3_to_counts = parse_sequence_annotations_file(annotations_path)
-        cdr3_to_num_of_different_reads = dict((cdr3, len(cdr3_to_aa_reads[cdr3])) for cdr3 in cdr3_to_aa_reads)
-
-        most_common_cdr3 = sorted(cdr3_to_counts, key=lambda cdr3:(cdr3_to_counts.get(cdr3), cdr3_to_num_of_different_reads.get(cdr3)), reverse=True)
-
-        cdr3_annotations_path = os.path.join(cdr3_analysis_dir, chain + gp.cdr3_annotation_file_suffix)
-        write_cdr3_counts_file(cdr3_annotations_path, most_common_cdr3, cdr3_to_counts, cdr3_to_num_of_different_reads)
-
-        clonal_expansion_histogram_path = cdr3_annotations_path.replace(gp.raw_data_file_suffix, 'png')
-        generate_clonal_expansion_histogram(cdr3_annotations_path, clonal_expansion_histogram_path, gp.top_cdr3_clones_to_clonal_expansion_graph)
-
-        handle_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_cdr3, cdr3_to_aa_reads, cdr3_to_counts, chain, gp, k)
-
-
-def write_cdr3_counts_file(cdr3_annotations_path, most_common_cdr3, cdr3_to_counts, cdr3_to_num_of_different_reads):
-    sum_of_cdr3_counts = sum(cdr3_to_counts.values())
-    sum_of_cdr3_different_reads = sum(cdr3_to_num_of_different_reads.values())
-    with open(cdr3_annotations_path, 'w') as f:
-        for cdr3 in most_common_cdr3:
-            cdr3_counts = cdr3_to_counts[cdr3]
-            cdr3_different_reads = cdr3_to_num_of_different_reads[cdr3]
-            f.write('\t'.join([cdr3, str(cdr3_counts), str(cdr3_different_reads), str(cdr3_counts / sum_of_cdr3_counts),
-                               str(cdr3_different_reads / sum_of_cdr3_different_reads)]) + '\n')
-
-
-def handle_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_cdr3, cdr3_to_aa_reads, cdr3_to_counts, chain, gp, k):
-    most_k_common_cdr3_to_entry = {}
-    most_k_common_cdr3 = most_common_cdr3[:k]
-    most_k_common_cdr3_to_counts = {cdr3: cdr3_to_counts[cdr3] for cdr3 in most_k_common_cdr3}
-    most_k_common_cdr3_to_aa_reads = {cdr3: cdr3_to_aa_reads[cdr3] for cdr3 in most_k_common_cdr3}
-    if most_k_common_cdr3 != []:
-        for i in range(gp.top_cdr3_clones_to_further_analyze):
-            cdr3 = most_k_common_cdr3[i]
-            multiple_sequences = most_k_common_cdr3_to_aa_reads[cdr3]
-            cluster_prefix = os.path.join(cdr3_analysis_dir, 'cluster_' + str(i))
-            ms_path = cluster_prefix + '_ms.fasta'
-            msa_path = cluster_prefix + '_msa.aln'
-
-            try:
-                aln, msa = align_sequences(multiple_sequences, ms_path, msa_path, i)
-            except:
-                print(multiple_sequences)
-                raise
-            summary_align = AlignInfo.SummaryInfo(aln)
-
-            # find consensus sequence by majority rule
-            consensus = summary_align.dumb_consensus(threshold=0, ambiguous='#')
-            consensus = str(consensus)
-
-            # find most similar sequence
-            aa_most_similar_to_consesnsus, similarity_rate = find_most_similar_sequence(msa, consensus)
-
-            #try:
-            dna_most_similar_to_consesnsus = find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path)
-            #except:
-            #    pass
-
-            # add entry to dict
-            most_k_common_cdr3_to_entry[cdr3] = [cdr3, str(most_k_common_cdr3_to_counts[cdr3]),
-                                                 str(len(most_k_common_cdr3_to_aa_reads[cdr3])), consensus,
-                                                 aa_most_similar_to_consesnsus, dna_most_similar_to_consesnsus,
-                                                 str(similarity_rate)]
-
-            # generate web logo
-            weblogo_file_path = cluster_prefix + '_weblogo.pdf'
-            try:
-                generate_weblogo(msa_path, weblogo_file_path)
-            except Exception as e:
-                logger.warning('Couldn\'t generate weblogo {} due to the following reason: {}'.format(msa_path, e.args))
-
-        # write cdr3_to_entry to file
-        top_cdr3_extended_annotations_path = os.path.join(cdr3_analysis_dir, chain + gp.top_cdr3_annotation_file_suffix)
-        with open(top_cdr3_extended_annotations_path, 'w') as f:
-            for cdr3 in most_k_common_cdr3:
-                f.write('\t'.join(most_k_common_cdr3_to_entry[cdr3]) + '\n')
-                # write_dict_to_file(cdr3_annotations_path, most_k_common_cdr3_to_entry, sort_by=most_k_common_cdr3_to_counts.get, reverse=True)
-
-
-def parse_sequence_annotations_file(annotations_path):
-    cdr3_to_counts = {}
-    cdr3_to_aa_reads = {}
-
-    with open(annotations_path) as f:
-        for line in f:
-            chain, isotype, dna_read, aa_read, cdr3, v_type, d_type, j_type, read_frequency = line.split('\t')
-            cdr3_to_counts[cdr3] = cdr3_to_counts.get(cdr3, 0) + int(read_frequency)
-            cdr3_to_aa_reads[cdr3] = cdr3_to_aa_reads.get(cdr3, []) + [aa_read]
-
-    return cdr3_to_aa_reads, cdr3_to_counts
-
-
-def find_most_similar_sequence(msa, consensus):
-    max_similarity = 0
-    max_seq = ''
-    for seq in msa:
-        similarity = round(string_similarity(seq, consensus), 2)
-        if similarity > max_similarity:
-            max_similarity = similarity
-            max_seq = seq
-    return max_seq, max_similarity
-
-
-def find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path):
-    # assuming that the dna sequence appears at the 2nd position in the annotation_file
-    '''
-    b'IGH\tM\tGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t301\nIGH\tM\tGAGGTGCAGCTGGTGGAGTCTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t61\nIGH\tM\tGAGGTGCAGCTGTTGGAGTCTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLLESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t33\nIGH\tM\tGAGGTGCAGCTGGTGGAGACTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLVETGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t31\nIGH\tM\tGAGGTGCAGCTGTTGGAGCCTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLLEPGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t4\nIGH\tM\tGAGGTGCAGCTGTTGGAGACTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLLETGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t24\nIGH\tM\tGAGGTGCAGCTGGTGGAGCCTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLVEPGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t9\n'
-    '''
-    raw_dna_most_similar_to_consesnsus = subprocess.check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).decode('utf-8').split()[2] #check_output returns bytes class object so it needs to be decoded
-    dna_most_similar_to_consesnsus = str(raw_dna_most_similar_to_consesnsus)[2:-1] #without ^"b'" an $"'"
-    logger.info('dna_most_similar_to_consesnsus is {}'.format(dna_most_similar_to_consesnsus))
-    return str(dna_most_similar_to_consesnsus)
-
-
-def parse_sequence_annotation_file(parsed_mixcr_output_path, assignments_path, sequence_annotation_file_suffix, raw_data_file_suffix, allowed_chain_types = ['IGH', 'IGK', 'IGL']):
-
-    for chain in allowed_chain_types:
-
-        chain_data_path = os.path.join(parsed_mixcr_output_path, chain + sequence_annotation_file_suffix)
-
-        if not os.path.exists(chain_data_path):
-            logger.info('Skipping: ' + chain_data_path + ' (file does not exists)')
-            continue
-
-        v_types = {}
-        d_types = {}
-        j_types = {}
-        vd_types = {}
-        vj_types = {}
-        dj_types = {}
-        vdj_types = {}
-        cdr3_len = {}
-        cdr3_frequency_counter = {}
-
-        with open(chain_data_path) as f:
-
-            for line in f:
-                chain, isotype, dna_read, aa_read, cdr3, v_type, d_type, j_type, read_frequency = line.rstrip().split('\t')
-
-                v_types[v_type] = v_types.get(v_type, 0) + 1
-                d_types[d_type] = d_types.get(d_type, 0) + 1
-                j_types[j_type] = j_types.get(j_type, 0) + 1
-                vd_types[v_type+' '+d_type] = vd_types.get(v_type+' '+d_type, 0) + 1
-                vj_types[v_type+' '+j_type] = vj_types.get(v_type+' '+j_type, 0) + 1
-                dj_types[d_type+' '+j_type] = dj_types.get(d_type+' '+j_type, 0) + 1
-                vdj_types[v_type+' '+d_type+' '+j_type] = vdj_types.get(v_type+' '+d_type+' '+j_type, 0) + 1
-                cdr3_len[len(cdr3)] = cdr3_len.get(len(cdr3), 0) + 1
-                cdr3_frequency_counter[cdr3] = cdr3_frequency_counter.get(cdr3, 0) + int(read_frequency)
-
-            v_path = assignments_path + '/' + chain + '_V_counts.' + raw_data_file_suffix
-            write_dict_to_file(v_path, v_types)
-
-            d_path = assignments_path + '/' + chain + '_D_counts.' + raw_data_file_suffix
-            write_dict_to_file(d_path, d_types)
-
-            j_path = assignments_path + '/' + chain + '_J_counts.' + raw_data_file_suffix
-            write_dict_to_file(j_path, j_types)
-
-            vd_path = assignments_path + '/' + chain + '_VD_counts.' + raw_data_file_suffix
-            write_dict_to_file(vd_path, vd_types)
-
-            vj_path = assignments_path + '/' + chain + '_VJ_counts.' + raw_data_file_suffix
-            write_dict_to_file(vj_path, vj_types)
-
-            dj_path = assignments_path + '/' + chain + '_DJ_counts.' + raw_data_file_suffix
-            write_dict_to_file(dj_path, dj_types)
-
-            vdj_path = assignments_path + '/' + chain + '_VDJ_counts.' + raw_data_file_suffix
-            write_dict_to_file(vdj_path, vdj_types)
-
-            cdr3_len_path = assignments_path + '/' + chain + '_cdr3_len_counts.' + raw_data_file_suffix
-            write_dict_to_file(cdr3_len_path, cdr3_len)
-
-            write_dict_to_file(parsed_mixcr_output_path + '/cdr3_frequency_counter.' + raw_data_file_suffix, cdr3_frequency_counter, sort_by=cdr3_frequency_counter.get, reverse=True)
+    except Exception as e:
+       logger.error('Error in analyze_cdr3: {}'.format(str(e)))
+       raise
 
 
 def create_sub_working_directories(global_params, run):
@@ -395,38 +144,182 @@ def create_sub_working_directories(global_params, run):
     create_dir(assignments_path)
     global_params.assignments_paths.append(assignments_path)
 
-    return mixcr_output_path, parsed_mixcr_output_path, assignments_path
+    cdr3_analysis_path = os.path.join(run_output_path, 'cdr3_analysis')
+    create_dir(cdr3_analysis_path)
+    global_params.cdr3_analysis_paths.append(cdr3_analysis_path)
+
+    return mixcr_output_path, parsed_mixcr_output_path, assignments_path, cdr3_analysis_path
 
 
-def align_sequences(multiple_sequences, ms_path, msa_path, cluster_number):
-    # create alignment object from a list of multiple sequences and write it to a file
+def remove_irrelevant_chains(gp):
+    chains_involvement = dict.fromkeys(gp.chains, 0)
+    for chain in gp.chains:
+        for i in range(1, gp.number_of_runs + 1):
+            parsed_mixcr_output_path = os.path.join(gp.output_path, 'run' + str(i), 'parsed_mixcr_output')
+            chain_annotation_file = chain + gp.sequence_annotation_file_suffix
+            if chain_annotation_file in os.listdir(parsed_mixcr_output_path):
+                chains_involvement[chain] += 1
+                break
+    for chain in chains_involvement:
+        if chains_involvement[chain] == 0:
+            # no annotations were extracted for this chain. no point to further analyze it
+            logger.error(f'No annotations were extracted for {chain}. Removing it from chains list...')
+            gp.chains.remove(chain)
 
-    aln = Alignment(Gapped(IUPAC.protein, '-'))
 
-    # write ms to file
-    with open(ms_path, 'w') as f:
-        f.write('\n'.join('>'+str(i) + '\n' + multiple_sequences[i] for i in range(len(multiple_sequences))))
+def parse_annotation_files(gp):
+    for i in range(gp.number_of_runs + 1):  # +1 for the joint analysis (if needed)
+        if i == gp.number_of_runs:
+            run = 'joint run'
+        else:
+            run = 'run' + str(i + 1)
+        logger.info('Starting parse chain annotation file of ' + run)
+        parse_sequence_annotation_file(gp.parsed_mixcr_output_paths[i], gp.assignments_paths[i], gp.cdr3_analysis_paths[i],
+                                       gp.sequence_annotation_file_suffix, gp.raw_data_file_suffix, skip_rows=1)
 
-    if len(multiple_sequences) > 1:
-        # align file
-        logger.info('running mafft:')
-        mafft_cmd = 'mafft ' + ms_path + ' > ' + msa_path
-        logger.info(mafft_cmd)
-        os.system(mafft_cmd)
-        # remove columns with more than 20% gaps
-        remove_sparse_columns(msa_path, msa_path, 0.2)
-    else:
-        logger.info('Only 1 sequence in {}. Skipping mafft and copying ms file as is.'.format(str(cluster_number)))
-        with open(msa_path, 'w') as f:
-            f.write('\n'.join('>' + str(i) + '\n' + multiple_sequences[i] for i in range(len(multiple_sequences))))
 
-    for record in SeqIO.parse(msa_path, 'fasta'):
-        aln.add_sequence(record.id, str(record.seq))
+def parse_sequence_annotation_file(parsed_mixcr_output_path, assignments_path, cdr3_analysis_path, sequence_annotation_file_suffix, raw_data_file_suffix, allowed_chain_types = ['IGH', 'IGK', 'IGL'], skip_rows=0):
+    for chain in allowed_chain_types:
 
-    logger.debug('Alignment is:')
-    msa_str = ''
-    for record in aln._records:
-        msa_str += record.seq._data + '\n'
-    logger.debug(msa_str)
+        chain_data_path = os.path.join(parsed_mixcr_output_path, chain + sequence_annotation_file_suffix)
 
-    return aln, msa_str.split()
+        if not os.path.exists(chain_data_path):
+            logger.info('Skipping: ' + chain_data_path + ' (file does not exists)')
+            continue
+
+        v_types:{str:int} = {}
+        d_types:{str:int} = {}
+        j_types:{str:int} = {}
+        vd_types:{str:int} = {}
+        vj_types:{str:int} = {}
+        dj_types:{str:int} = {}
+        vdj_types:{str:int} = {}
+        cdr3_len:{int:int} = {}
+        cdr3_frequency_counter:{str:int} = {}
+
+        with open(chain_data_path) as f:
+            for i in range(skip_rows):
+                f.readline()
+            for line in f:
+                chain, isotype, dna_read, aa_read, cdr3, v_type, d_type, j_type, read_frequency = line.rstrip().split('\t')
+
+                v_types[v_type] = v_types.get(v_type, 0) + 1
+                d_types[d_type] = d_types.get(d_type, 0) + 1
+                j_types[j_type] = j_types.get(j_type, 0) + 1
+                vd_types[v_type+' '+d_type] = vd_types.get(v_type+' '+d_type, 0) + 1
+                vj_types[v_type+' '+j_type] = vj_types.get(v_type+' '+j_type, 0) + 1
+                dj_types[d_type+' '+j_type] = dj_types.get(d_type+' '+j_type, 0) + 1
+                vdj_types[v_type+' '+d_type+' '+j_type] = vdj_types.get(v_type+' '+d_type+' '+j_type, 0) + 1
+                cdr3_len[len(cdr3)] = cdr3_len.get(len(cdr3), 0) + 1
+                cdr3_frequency_counter[cdr3] = cdr3_frequency_counter.get(cdr3, 0) + int(read_frequency)
+
+            v_path = assignments_path + '/' + chain + '_V_counts.' + raw_data_file_suffix
+            write_dict_to_file(v_path, v_types, header='\t'.join(['V family subgroup', 'counts']))
+
+            d_path = assignments_path + '/' + chain + '_D_counts.' + raw_data_file_suffix
+            write_dict_to_file(d_path, d_types, header='\t'.join(['D family subgroup', 'counts']))
+
+            j_path = assignments_path + '/' + chain + '_J_counts.' + raw_data_file_suffix
+            write_dict_to_file(j_path, j_types, header='\t'.join(['J family subgroup', 'counts']))
+
+            vd_path = assignments_path + '/' + chain + '_VD_counts.' + raw_data_file_suffix
+            write_dict_to_file(vd_path, vd_types, header='\t'.join(['VD combinations', 'counts']))
+
+            vj_path = assignments_path + '/' + chain + '_VJ_counts.' + raw_data_file_suffix
+            write_dict_to_file(vj_path, vj_types, header='\t'.join(['VJ combinations', 'counts']))
+
+            dj_path = assignments_path + '/' + chain + '_DJ_counts.' + raw_data_file_suffix
+            write_dict_to_file(dj_path, dj_types, header='\t'.join(['DJ combinations', 'counts']))
+
+            vdj_path = assignments_path + '/' + chain + '_VDJ_counts.' + raw_data_file_suffix
+            write_dict_to_file(vdj_path, vdj_types, header='\t'.join(['VDJ combinations', 'counts']))
+
+            cdr3_len_path = cdr3_analysis_path + '/' + chain + '_cdr3_len_counts.' + raw_data_file_suffix
+            write_dict_to_file(cdr3_len_path, cdr3_len, header='\t'.join(['length_of_CDR3', 'counts']))
+
+            write_dict_to_file(cdr3_analysis_path + '/cdr3_frequency_counter.' + raw_data_file_suffix, cdr3_frequency_counter, sort_by=cdr3_frequency_counter.get, reverse=True, header='\t'.join(['CDR3', 'counts']))
+
+
+def plot_assignments(gp):
+    for assignments_path in gp.assignments_paths:
+        for raw_data_file in os.listdir(assignments_path):
+            if not raw_data_file.endswith(gp.raw_data_file_suffix):
+                continue #avoid reading png files when re-running
+            assignment_file = os.path.join(assignments_path, raw_data_file)
+            plot_path = assignment_file.replace(gp.raw_data_file_suffix, 'png')
+            logger.info('Plotting assignment_file: ' + assignment_file)
+            d = read_table_to_dict(assignment_file, value_type=int, skip_rows=1)
+
+            if 'VDJ' in assignment_file:
+                plot_barplot(d, plot_path, ylim=[0, 15], x_label='\nV(D)J subgroups combinations')
+                # plot_barplot(assignment_file, gp.raw_data_file_suffix)
+            elif 'VD' in assignment_file:
+                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nVD subgroups combinations')
+            elif 'DJ' in assignment_file:
+                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nDJ subgroups combinations')
+            elif 'VJ' in assignment_file:
+                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nVJ subgroups combinations')
+            elif 'V' in assignment_file:
+                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nV subgroups')
+            elif 'D' in assignment_file:
+                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nD subgroups')
+            elif 'J' in assignment_file:
+                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nJ subgroups')
+            else:
+                logger.error('Skipping non-assignment file: ' + raw_data_file)
+
+
+def plot_mutation_analyses(gp):
+    for parsed_mixcr_output_path in gp.parsed_mixcr_output_paths:
+        for chain in gp.chains:
+
+            mutations_path = parsed_mixcr_output_path + '/' + chain + gp.mutations_file_suffix
+            if os.path.exists(mutations_path):
+                dna_to_Ka_Ks_dict, dna_to_mutation_counts = parse_mutations_raw_data(mutations_path)
+                logger.info(f'Plotting mutations_file: {mutations_path}')
+
+                mutation_counts_to_frequency = get_values_frequency(dna_to_mutation_counts)
+                mutation_counts_to_frequency_plot = mutations_path.replace(gp.raw_data_file_suffix, '1.png')
+                plot_barplot(mutation_counts_to_frequency, mutation_counts_to_frequency_plot, ylim=[0,30], x_label='\nNumber of basepair mutations')
+
+                Ka_Ks_box_plot = mutations_path.replace(gp.raw_data_file_suffix, '2.png')
+                generate_mutations_boxplots(dna_to_Ka_Ks_dict, Ka_Ks_box_plot)
+            else:
+                logger.info(f'Skipping plot for {mutations_path} (no such file...)')
+
+            # mutation_counts_path = parsed_mixcr_output_path + '/' + chain + gp.mutations_file_suffix
+            # if os.path.exists(mutation_counts_path):
+            #     logger.info('Plotting mutation_counts_file: {}'.format(mutation_counts_path))
+            #     #raw_data = read_table_to_dict(mutation_counts_path, key_type=int, value_type=int)
+            #     mutation_counts_plot = mutation_counts_path.replace('txt', 'png')
+            #     plot_barplot(mutation_counts_path, gp.raw_data_file_suffix, key_type=int, value_type=float, fontsize=6, ylim=[0,30])
+            # else:
+            #     logger.info('Skipping plot for {} (no such file...)'.format(mutation_counts_path))
+
+
+            '''#old mutation plot before ka_ks
+            mutation_counts_frequency_path = parsed_mixcr_output_path + '/' + chain + gp.mutations_file_suffix
+            logger.info('Plotting mutation_counts_frequency_file: ' + mutation_counts_frequency_path)
+            if os.path.exists(mutation_counts_frequency_path):
+                plot_barplot(mutation_counts_frequency_path, gp.raw_data_file_suffix, key_type=int, value_type=float, fontsize=6, rotation=70, ylim=[0,30])
+            else:
+                logger.info('No such file: {}. Skipping this plot...'.format(mutation_counts_frequency_path))
+            '''
+
+
+def parse_mutations_raw_data(Ka_Ks_path):
+    Ka_Ks_data:{str:[float,float]} = {}
+    mutations_data:{str:int} = {}
+    raw_data = read_table_to_dict(Ka_Ks_path, value_type=list, skip_rows=1)
+    for key in raw_data:
+        values = raw_data[key]
+        Ka_Ks_data[key] = values[:2]
+        mutations_data[key] = int(values[2])
+    return Ka_Ks_data, mutations_data
+
+
+def get_values_frequency(d):
+    result = {}
+    for value in d.values():
+        result[value] = result.get(value, 0) + 1
+    return result

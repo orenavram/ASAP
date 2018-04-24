@@ -3,31 +3,34 @@ from difflib import SequenceMatcher
 
 logger = logging.getLogger('main')
 
-def read_table_to_dict(file_to_read, delimiter ='\t', key_type=str, value_type=str, secondary_delimiter=';', secondary_value_type=float, reverse = False, open_operator=open):
+def read_table_to_dict(file_to_read, skip_rows=0, delimiter ='\t', key_type=str, value_type=str, secondary_delimiter=';', secondary_value_type=float, values_to_keys=False, open_operator=open):
     '''
     parse a delimited file with two columns to a dictionary
-    if reverse == 0 keys are taken from the first column o.w., from the second
+    if values_to_keys == 0 keys are taken from the first column o.w., from the second
     open_operator can also be set to gzip.open if the file is zipped
     '''
     logger.debug('Reading dict from: ' + file_to_read)
-
     d = {}
     with open_operator(file_to_read) as f:
+        for i in range(skip_rows):
+            f.readline()
         for line in f:
             if line != '' and not line.isspace():
                 key, value = line.rstrip().split(delimiter)
                 if value_type == list:
                     value = [secondary_value_type(item) for item in value.split(secondary_delimiter)]
                 d[key_type(key)] = value_type(value)
-    if reverse:
+    if values_to_keys:
         d = dict((d[key],key) for key in d)
-    return d #, dict([(barcode_to_name[barcode], barcode) for barcode in barcode_to_name])
+    return d
 
 
-def write_dict_to_file(out_path, d, delimiter='\t', value_type=str, secondary_delimiter=';', reverse=False, open_operator=open, sort_by=None):
+def write_dict_to_file(out_path, d, delimiter='\t', value_type=str, secondary_delimiter=';', reverse=False, open_operator=open, sort_by=None, header=''):
     logger.info('Writing dict to: ' + out_path)
     if d:
         with open_operator(out_path, 'w') as f:
+            if header:
+                f.write(header + '\n')
             for key in sorted(d, key=sort_by, reverse=reverse):
                 if value_type == list:
                     value = secondary_delimiter.join(str(item) for item in d[key])
