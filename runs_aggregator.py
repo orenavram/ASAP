@@ -81,7 +81,7 @@ def filter_seqs_below_overlap_minimal_threshold(sequence_to_entry_dict, aa_seq_t
     aa_seq_to_counts_with_less_than_minimal_threshold:{str:int} = {}
     #two loops are necessary because mutating a dict while iterating on it raises an error
     for aa_seq in keys_to_remove:
-        logger.debug(f'Omitting {aa_seq} {aa_seq_to_counts_in_each_run[aa_seq]} from joint analysis.')
+        logger.debug('Omitting {} {} from joint analysis.'.format(aa_seq, aa_seq_to_counts_in_each_run[aa_seq]))
         sequence_to_entry_dict.pop(aa_seq)
         aa_seq_to_counts_with_less_than_minimal_threshold[aa_seq] = aa_seq_to_counts_in_each_run.pop(aa_seq)
 
@@ -189,7 +189,7 @@ def generate_intersection_plot(number_of_runs, joint_annotation_path, sequence_a
         with open(run_annotation_path) as f:
             lines = f.readlines()
         num_of_run_annotations = len(lines)
-        logger.info(f'{run} has {num_of_run_annotations} annotations')
+        logger.info('{} has {} annotations'.format(run, num_of_run_annotations))
         aa_seqs = [line.split()[3] for line in lines]
         runs_annotations_sets.append(set(aa_seqs))
         percent_of_intersected_annotations_per_run.append(num_of_joint_annotations / num_of_run_annotations * 100)

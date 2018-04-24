@@ -58,14 +58,14 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
     alignments_txt_path = os.path.join(mixcr_output_path, 'alignments.txt')
     alignments_filtered_txt_path = os.path.join(parsed_mixcr_output_path, 'alignments_filtered.txt')
 
-    logger.info(f'Start parsing {alignments_txt_path}')
+    logger.info('Start parsing {}'.format(alignments_txt_path))
     with open(alignments_txt_path) as f:
 
         logger.info('File was opened succssefully.')
         # skip header-related variables- use to extract specified fields from alignments file
         alignments_filtered_txt = f.readline()
 
-        logger.info(f'First line of file is:\n{alignments_filtered_txt}')
+        logger.info('First line of file is:\n{}'.format(alignments_filtered_txt))
 
         #iterate over alignments file line by line            
         for line in f:
@@ -76,7 +76,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             total_lines += 1
 
             if not total_lines%10000:
-                print(f'total_lines: {total_lines}')
+                print('total_lines: {}'.format(total_lines))
             # If the first token contains two sequences (separated by a comma) it means that
             # MiXCR was unable to find an overlap between the two paired-end reads.
             if ',' in line_tokens[0]:
@@ -126,19 +126,19 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             #sanity check
             if core_aa != Bio.Seq.translate(core_dna):
                 logger.debug('core_aa is NOT identical to the translated core_dna')
-                logger.debug(f'core_aa:\n{core_aa}')
-                logger.debug(f'translated core_dna:\n{Bio.Seq.translate(core_dna)}')
+                logger.debug('core_aa:\n{}'.format(core_aa))
+                logger.debug('translated core_dna:\n{}'.format(Bio.Seq.translate(core_dna)))
             #sanity check
             if (core_dna not in dna_read) and (not core_aa.endswith('VTVS_')):
-                logger.debug(f'dna_read:\n{dna_read}')
-                logger.debug(f'core dna:\n{core_dna}')
+                logger.debug('dna_read:\n{}'.format(dna_read))
+                logger.debug('core dna:\n{}'.format(core_dna))
             #sanity check
             if not core_aa.endswith(aa.end_j_seq):
-                logger.debug(f'end_j_seq after fixation is: {core_aa[-len(aa.end_j_seq[0]): ]}')
+                logger.debug('end_j_seq after fixation is: {}'.format(core_aa[-len(aa.end_j_seq[0]): ]))
 
             # verify that core_aa is not non-sense
             if '*' in core_aa:
-                logger.debug(f'line {total_lines} in alignment.txt file: STOP codon in core_aa!!!\n{core_aa}')
+                logger.debug('line {} in alignment.txt file: STOP codon in core_aa!!!\n{}'.format(total_lines, core_aa))
                 errors_count_dict['nonsense_stop_codon'] += 1
                 continue
 
@@ -150,7 +150,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
                     has_end_j_seq = True
                     break
             if not has_end_j_seq:
-                logger.info(f'No end_j_seq in core_aa:\n{core_aa}')
+                logger.info('No end_j_seq in core_aa:\n{}'.format(core_aa))
                 errors_count_dict['inappropriate_end_j_seq'] += 1
                 continue
 
@@ -158,7 +158,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             alignments_filtered_txt += line
 
             if chain not in allowed_chain_types:
-                logger.error(f'chain_type {chain} not in {allowed_chain_types}')
+                logger.error('chain_type {} not in {}'.format(chain, allowed_chain_types))
                 logger.error(line_tokens)
                 chain = 'unknown'
 
@@ -347,11 +347,11 @@ def write_reports(out_file_path, total_time, errors_count_dict, total_lines, cha
     chain_to_percent_dict = percent_calculator(chain_to_count_dict, sum(chain_to_count_dict.values()))
     isotype_to_precent_dict = percent_calculator(isotypes_count_dict, sum(isotypes_count_dict.values()))
 
-    logger.info(f'chain_to_count_dict: {chain_to_count_dict}')
-    logger.info(f'chain_to_percent_dict: {chain_to_percent_dict}')
-    logger.info(f'errors_count_dict: {errors_count_dict}')
-    logger.info(f'statistics_precent_dict: {statistics_precent_dict}')
-    logger.info(f'isotypes_count_dict: {isotypes_count_dict}')
+    logger.info('chain_to_count_dict: {}'.format(chain_to_count_dict))
+    logger.info('chain_to_percent_dict: {}'.format(chain_to_percent_dict))
+    logger.info('errors_count_dict: {}'.format(errors_count_dict))
+    logger.info('statistics_precent_dict: {}'.format(statistics_precent_dict))
+    logger.info('isotypes_count_dict: {}'.format(isotypes_count_dict))
 
     A_sub_isotypes = ['A', 'A1', 'A2']
     A_sub_isotypes_to_count_dict = dict(
@@ -363,15 +363,15 @@ def write_reports(out_file_path, total_time, errors_count_dict, total_lines, cha
     minutes = (total_time%3600)/60
     seconds = total_time%60
     with open(out_file_path, 'w') as f:
-        f.write(f'Parsing alignment.txt took {hours}:{minutes}:{seconds} hours\n')
-        f.write(f'Mixcr alignment file provided {total_lines} results\n\n')
+        f.write('Parsing alignment.txt took {}:{}:{} hours\n'.format(hours,minutes,seconds))
+        f.write('Mixcr alignment file provided {} results\n\n'.format(total_lines))
 
         # to keep the filtrations order...
         errors = ['no_overlap', 'too_short_length', 'too_low_quality', 'missing_cdr3', 'nonsense_stop_codon',
                   'inappropriate_end_j_seq']
         f.write('Detailed filtrations:\n')
         for error in errors:
-            f.write(f'{errors_count_dict[error]} entries with {error} ({statistics_precent_dict[error]:.3f}%)\n')
+            f.write('{} entries with {} ({:.3f}%)\n'.format(errors_count_dict[error], error, statistics_precent_dict[error]))
         # f.write('{} entries that are not overlapped = {:.3f}\n'.format(errors_count_dict['not_overlapped'], statistics_precent_dict['not_overlapped']))
         # f.write('% of entries shorter than specified threshold = {:.3f}\n'.format(statistics_precent_dict['len']))
         # f.write('% of entries with lower quality than specified threshold = {:.3f}\n'.format(statistics_precent_dict['quality']))
@@ -382,12 +382,12 @@ def write_reports(out_file_path, total_time, errors_count_dict, total_lines, cha
 
         f.write('Chains dispersion:\n')
         for chain in sorted(chain_to_count_dict):
-            f.write(f'{chain_to_count_dict[chain]} of {chain} chains ({chain_to_percent_dict[chain]:.3f}%)\n')
+            f.write('{} of {} chains ({:.3f}%)\n'.format(chain_to_count_dict[chain], chain, chain_to_percent_dict[chain]))
         f.write('\n')
 
         f.write('Isotypes dispersion:\n')
         for isotype in isotypes_count_dict:
-            f.write(f'{isotypes_count_dict[isotype]} of isotype {isotype} ({isotype_to_precent_dict[isotype]:.3f}%)\n')
+            f.write('{} of isotype {} ({:.3f}%)\n'.format(isotypes_count_dict[isotype], isotype, isotype_to_precent_dict[isotype]))
         f.write('\n')
         # logger.debug('% of A isotype = {:.3f}\n'.format(isotype_to_precent_dict['A']))
         # f.write('% of A isotype = {:.3f}\n'.format(isotype_to_precent_dict['A']))
@@ -401,7 +401,7 @@ def write_reports(out_file_path, total_time, errors_count_dict, total_lines, cha
 
         f.write('"A" sub-isotypes dispersion:\n')
         for isotype in A_sub_isotypes_to_precent_dict:
-            f.write(f'{isotypes_count_dict[isotype]} of isotype {isotype} ({isotype_to_precent_dict[isotype]:.3f}%)\n')
+            f.write('{} of isotype {} ({:.3f}%)\n'.format(isotypes_count_dict[isotype], isotype, isotype_to_precent_dict[isotype]))
         f.write('\n')
         # f.write('\n')
         # f.write('% of A isotype (out of A) = {:.3f}\n'.format(A_sub_isotype_to_precent_dict['A']))

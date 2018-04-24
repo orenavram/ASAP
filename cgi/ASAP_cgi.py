@@ -130,11 +130,8 @@ def write_pair_file(debug_path, pair, run_content, run_filename, run_dir):
         f.write(run_content)
 
     #avoid double zipping:
-    try:
-        if local_file_path.endswith('gz'):
-            sh.gunzip(local_file_path)
-    except:
-        pass
+    if local_file_path.endswith('gz'):
+        sh.gunzip(local_file_path)
 
     with open(debug_path, 'a') as f:
         f.write('R{} was handled successfully\n'.format(pair))
@@ -185,6 +182,9 @@ def prepare_parameters_file(parameters_file, parameters):
 
     #Integer that represents minimal threshold for reads' average quality
     #(reads with average quality lower than that are filtered out)
+    {}
+
+    #Integer that represents the k-top clones to be further analyzed
     {}
 
     #String that indicates whether the samples originated in mice (and not human)
@@ -269,12 +269,13 @@ chains = ','.join(form.getlist('chains'))
 MMU = form['MMU'].value
 len_threshold = form['len_threshold'].value
 qlty_threshold = form['qlty_threshold'].value
+number_of_clones_to_analyze = form['number_of_clones_to_analyze'].value
 raw_data_suffix = 'xls'
 if form['raw_data_suffix'].value == 'txt':
     raw_data_suffix = 'txt'
 add_mass_spec_seq = 'no'
-#if form['add_mass_spec_seq'].value == 'yes': #TODO: add checkbox to the server!!!! otherwise it will crash (undefined...)
-if 'add_mass_spec_seq' in form: #TODO: add checkbox to the server!!!! otherwise it will crash (undefined...)
+#if this option is unchecked, it won't be send in the json (i.e., form['add_mass_spec_seq'].value might not work...)
+if 'add_mass_spec_seq' in form:
     add_mass_spec_seq = 'yes'
 job_title = ''
 if form['Job_Title_txt'].value != '':
@@ -344,7 +345,7 @@ confirm_email_add = form['confirm_email_add'].value  # if it is contain a value 
 #TODO: ADD INPUT VERIFICATION BEFORE JOB SUBMISSION
 
 parameters_file = os.path.join(wd, 'parameters.txt')
-parameters = [wd, CONSTS.GC.MiXCR_dir, number_of_duplicates, chains, len_threshold, qlty_threshold, MMU, raw_data_suffix, add_mass_spec_seq]
+parameters = [wd, CONSTS.GC.MiXCR_dir, number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, add_mass_spec_seq]
 prepare_parameters_file(parameters_file, parameters)
 
 cmds_file = os.path.join(wd, 'qsub.cmds')

@@ -67,7 +67,7 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
                 cdr3_analysis_raw_file = os.path.join(gp.output_path, run, 'cdr3_analysis', chain + gp.top_cdr3_annotation_file_suffix)
                 if os.path.exists(cdr3_analysis_raw_file):
                     top_cdr3_analysis_html_path = os.path.join(gp.output_path, run, chain + gp.top_cdr3_annotation_file_suffix).replace(gp.raw_data_file_suffix, 'html')
-                    link = '<a href="' + top_cdr3_analysis_html_path + f'" target="_blank">Top {gp.top_cdr3_clones_to_further_analyze} clones annotations</a>'
+                    link = '<a href="' + top_cdr3_analysis_html_path + '" target="_blank">Top {} clones annotations</a>'.format(gp.top_cdr3_clones_to_further_analyze)
                     raw_link = '(<a href="outputs/'+run+'/cdr3_analysis/' + chain + gp.top_cdr3_annotation_file_suffix + '" target="_blank">raw_data</a>)'
                     f.write('<li>' + link + ' ; ' + raw_link + '</li>\n')
                     edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_main_url, run_number, chain, run)
@@ -81,7 +81,7 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
                         if 'correlation' in correlation_file:
                             #correlation_path = os.path.join(joint_path, correlation_file)
                             c_runs = correlation_file.split('_')[:2] #e.g., 'run1_run2_IGH_correlation.png'
-                            link = '<a href="outputs/'+run+'/' + correlation_file + f'" target="_blank">Correlation of {c_runs[0]} and {c_runs[1]}</a>'
+                            link = '<a href="outputs/'+run+'/' + correlation_file + '" target="_blank">Correlation of {} and {}</a>'.format(*c_runs)
                             f.write('<li>' + link + ' ;</li>\n')
 
                     link = '<a href="outputs/'+run+'/' + chain + '_final.fasta" target="_blank">Final '+run+' fasta</a>'

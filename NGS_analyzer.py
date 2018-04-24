@@ -79,16 +79,15 @@ if os.path.exists(user_email_file):
 
     server_url = 'http://asap.tau.ac.il/results'
     if succeeded:
-        email_content = f'''Hello,
+        email_content = '''Hello,
     
 The results for your ASAP run are ready at:
-{os.path.join(server_url, run_number, 'output.php')}
-
+{}
 
 Please note: the results will be kept on the server for three months.
-        '''
+        '''.format(os.path.join(server_url, run_number, 'output.php'))
     else:
-        email_content = f'ASAP calculation failed. For further information please visit: {html_path}'
+        email_content = 'ASAP calculation failed. For further information please visit: {}'.format(html_path)
 
     email_content += '\n\nThanks, ASAP Team'
 
@@ -102,7 +101,7 @@ end = time()
 hours = int((end - start) / 3600)
 minutes = int(((end - start) % 3600) / 60)
 seconds = int((end - start) % 60)
-logger.info(f'Finished joining samples. Took {hours}:{minutes}:{seconds} hours.')
+logger.info('Finished joining samples. Took {}:{}:{} hours.'.format(hours, minutes, seconds))
 with open(os.path.join(gp.output_path, 'time.txt'), 'w') as f:
-    f.write(f'{hours}:{minutes}:{seconds}')
+    f.write('{}:{}:{}'.format(hours, minutes, seconds))
 print('Bye.')

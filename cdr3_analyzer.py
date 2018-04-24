@@ -24,7 +24,7 @@ def plot_cdr3_length_distributions(gp):
         for chain in gp.chains:
             cdr3_len_file = os.path.join(cdr3_analysis_dir, chain + '_cdr3_len_counts.' + gp.raw_data_file_suffix)
             if not os.path.exists(cdr3_len_file):
-                logger.info(f'Skipping: {cdr3_len_file} (file does not exists)')
+                logger.info('Skipping: {} (file does not exists)'.format(cdr3_len_file))
                 continue
             plot_path = cdr3_len_file.replace(gp.raw_data_file_suffix, 'png')
             logger.info('Plotting cdr3_len_file: ' + cdr3_len_file)
@@ -39,7 +39,7 @@ def analyze_top_clones(gp):
         for chain in gp.chains:
             annotations_path = os.path.join(gp.parsed_mixcr_output_paths[i], chain + gp.sequence_annotation_file_suffix)
             if not os.path.exists(annotations_path):
-                logger.info(f'No such file: {annotations_path}. Skipping its analysis...')
+                logger.info('No such file: {}. Skipping its analysis...'.format(annotations_path))
                 continue
 
             cdr3_to_aa_reads, cdr3_to_counts = parse_sequence_annotations_file(annotations_path, skip_rows=1)
@@ -72,7 +72,7 @@ def analyze_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_
     most_k_common_cdr3 = most_common_cdr3[:k]
     most_k_common_cdr3_to_counts = {cdr3: cdr3_to_counts[cdr3] for cdr3 in most_k_common_cdr3}
     most_k_common_cdr3_to_aa_reads = {cdr3: cdr3_to_aa_reads[cdr3] for cdr3 in most_k_common_cdr3}
-    top_clones_path = os.path.join(cdr3_analysis_dir, chain + f'_top_{k}_clones')
+    top_clones_path = os.path.join(cdr3_analysis_dir, chain + '_top_{}_clones'.format(k))
     create_dir(top_clones_path)
     if most_k_common_cdr3 != []:
         for i in range(gp.top_cdr3_clones_to_further_analyze):
@@ -112,7 +112,7 @@ def analyze_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_
             try:
                 generate_weblogo(msa_path, weblogo_file_path)
             except Exception as e:
-                logger.warning(f'Couldn\'t generate weblogo {msa_path} due to the following reason: {e.args}')
+                logger.warning('Couldn\'t generate weblogo {} due to the following reason: {}'.format(msa_path, e.args))
 
         # write cdr3_to_entry to file
         top_cdr3_extended_annotations_path = os.path.join(cdr3_analysis_dir, chain + gp.top_cdr3_annotation_file_suffix)
@@ -157,7 +157,7 @@ def find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path):
     '''
     raw_dna_most_similar_to_consesnsus = check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).decode('utf-8').split()[2] #check_output returns bytes class object so it needs to be decoded
     dna_most_similar_to_consesnsus = str(raw_dna_most_similar_to_consesnsus)[2:-1] #without ^"b'" an $"'"
-    logger.info(f'dna_most_similar_to_consesnsus is {dna_most_similar_to_consesnsus}')
+    logger.info('dna_most_similar_to_consesnsus is {}'.format(dna_most_similar_to_consesnsus))
     return str(dna_most_similar_to_consesnsus)
 
 
@@ -179,7 +179,7 @@ def align_sequences(multiple_sequences, ms_path, msa_path, cluster_number):
         # remove columns with more than 20% gaps
         remove_sparse_columns(msa_path, msa_path, 0.2)
     else:
-        logger.info(f'Only 1 sequence in {cluster_number}. Skipping mafft and copying ms file as is.')
+        logger.info('Only 1 sequence in {}. Skipping mafft and copying ms file as is.'.format(cluster_number))
         with open(msa_path, 'w') as f:
             f.write('\n'.join('>' + str(i) + '\n' + multiple_sequences[i] for i in range(len(multiple_sequences))))
 

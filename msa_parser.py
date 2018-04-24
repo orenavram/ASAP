@@ -17,7 +17,7 @@ def parse_msa(in_path):
 
 def remove_sparse_columns(in_path, out_path, maximal_gap_frequency_allowed_per_column=0.2):
     maximal_gap_frequency_allowed_per_column = float(maximal_gap_frequency_allowed_per_column)
-    logger.info(f'Removing sparse column (gaps frequency > {maximal_gap_frequency_allowed_per_column}) from {in_path}')
+    logger.info('Removing sparse column (gaps frequency > {}) from {}'.format(maximal_gap_frequency_allowed_per_column, in_path))
     headers, sequences = parse_msa(in_path)
     logger.debug('SEQUENCES: '+str(sequences))
     cleaned_sequences = [''] * len(sequences)
@@ -28,7 +28,7 @@ def remove_sparse_columns(in_path, out_path, maximal_gap_frequency_allowed_per_c
             for i in range(len(cleaned_sequences)): # add j'th column
                 cleaned_sequences[i] += sequences[i][j]
         else:
-            logger.debug(f'Removing column #{j}: {column_j}')
+            logger.debug('Removing column #{}: {}'.format(j, column_j))
 
     result = ''
     for i in range(len(cleaned_sequences)):
@@ -37,7 +37,7 @@ def remove_sparse_columns(in_path, out_path, maximal_gap_frequency_allowed_per_c
     with open(out_path, 'w') as f:
         f.write(result)
 
-    logger.info(f'Shortened from {len(sequences[0])} to {len(cleaned_sequences[0])} columns')
+    logger.info('Shortened from {} to {} columns'.format(len(sequences[0]), len(cleaned_sequences[0])))
 
 
 if __name__ == '__main__':

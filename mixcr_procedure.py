@@ -43,7 +43,7 @@ def get_mixcr_cmds(fastq_path, outpath, MMU, chains):
             fastq1 = os.path.join(fastq_path, file_name)
         elif 'R2.fastq' in file_name:
             fastq2 = os.path.join(fastq_path, file_name)
-    logger.debug(f'fastq files paths are:\n{fastq1}\n{fastq2}')
+    logger.debug('fastq files paths are:\n{}\n{}'.format(fastq1, fastq2))
 
     if not os.path.exists(fastq1):
         logger.error('R1.fastq is missing...')
@@ -58,12 +58,12 @@ def get_mixcr_cmds(fastq_path, outpath, MMU, chains):
 
     align_cmd = ('java -Xmx4g -Xms3g -jar mixcr.jar align'                      #align command
                  ' -f'                                                          #overwrite output file if already exists
-                 f' -s {"mmu" if MMU else "hsa"}'                                                       #consider species (mouse/human)
+                 ' -s {}'                                                       #consider species (mouse/human)
                  ' --report ' + outpath + '/align_report.txt'                   #create report file
                  ' --library imgt'                                              #use IMGT local library as annotation reference
                  ' -a'                                                          #save reads' ids from fastq files
                  ' ' + fastq1 + ' ' + fastq2 + ''                               #input files- 2 X fastq files
-                 ' ' + vdjca_path)
+                 ' ' + vdjca_path).format("mmu" if MMU else "hsa")
              
     assemble_cmd = ('java -Xmx4g -Xms3g -jar mixcr.jar assemble'                    #assemble command
                     ' -r ' + outpath + '/assemble_report.txt'                       #create report file

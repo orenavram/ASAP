@@ -25,7 +25,7 @@ def analyze_samples(gp):
             if os.path.exists(done_path):
                 logger.info('Skipping mixcr_procedure, output files already exist...')
             else:
-                logger.info(f'Starting mixcr_procedure of {run}...')
+                logger.info('Starting mixcr_procedure of {}...'.format(run))
                 fastq_path = os.path.join(gp.working_dir, 'reads', run)
                 mixcr_procedure(gp.path_to_mixcr, fastq_path, mixcr_output_path, gp.chains, gp.MMU)
                 with open(done_path, 'w') as f:
@@ -39,7 +39,7 @@ def analyze_samples(gp):
             if os.path.exists(done_path):
                 logger.info('Skipping parse_alignment_file, output files already exist...')
             else:
-                logger.info(f'Applying parse alignments procedure of {run}...')
+                logger.info('Applying parse alignments procedure of {}...'.format(run))
                 parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, gp.sequence_annotation_file_suffix, gp.mutations_file_suffix, gp.len_threshold, gp.sequencing_quality_threshold, gp.chains)
                 with open(done_path, 'w') as f:
                     pass
@@ -163,7 +163,7 @@ def remove_irrelevant_chains(gp):
     for chain in chains_involvement:
         if chains_involvement[chain] == 0:
             # no annotations were extracted for this chain. no point to further analyze it
-            logger.error(f'No annotations were extracted for {chain}. Removing it from chains list...')
+            logger.error('No annotations were extracted for {}. Removing it from chains list...'.format(chain))
             gp.chains.remove(chain)
 
 
@@ -276,7 +276,7 @@ def plot_mutation_analyses(gp):
             mutations_path = parsed_mixcr_output_path + '/' + chain + gp.mutations_file_suffix
             if os.path.exists(mutations_path):
                 dna_to_Ka_Ks_dict, dna_to_mutation_counts = parse_mutations_raw_data(mutations_path)
-                logger.info(f'Plotting mutations_file: {mutations_path}')
+                logger.info('Plotting mutations_file: {}'.format(mutations_path))
 
                 mutation_counts_to_frequency = get_values_frequency(dna_to_mutation_counts)
                 mutation_counts_to_frequency_plot = mutations_path.replace(gp.raw_data_file_suffix, '1.png')
@@ -285,7 +285,7 @@ def plot_mutation_analyses(gp):
                 Ka_Ks_box_plot = mutations_path.replace(gp.raw_data_file_suffix, '2.png')
                 generate_mutations_boxplots(dna_to_Ka_Ks_dict, Ka_Ks_box_plot)
             else:
-                logger.info(f'Skipping plot for {mutations_path} (no such file...)')
+                logger.info('Skipping plot for {} (no such file...)'.format(mutations_path))
 
             # mutation_counts_path = parsed_mixcr_output_path + '/' + chain + gp.mutations_file_suffix
             # if os.path.exists(mutation_counts_path):

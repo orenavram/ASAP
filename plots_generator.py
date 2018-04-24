@@ -47,7 +47,7 @@ def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', a
 
 
 def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff, fontsize=15):
-    title = f'{cutoff} top ranking clones prevalence\n'
+    title = '{} top ranking clones prevalence\n'.format(cutoff)
     cols = np.loadtxt(cdr3_annotations_path, usecols=(1, 2), dtype='int')
     rank = range(1, cutoff+1)
     for style in plt.style.available:
@@ -56,8 +56,8 @@ def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff,
         plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,0], label='Reads counts')
         plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,1], label='Clonal expansion')
         plt.title(title, fontsize=fontsize)
-        plt.xlabel(f'\nClone number', fontsize=fontsize)
-        plt.ylabel(f'Counts\n', fontsize=fontsize)
+        plt.xlabel('\nClone number', fontsize=fontsize)
+        plt.ylabel('Counts\n', fontsize=fontsize)
         plt.xticks(range(0,cutoff+1,10), fontsize=fontsize)
         plt.yticks(fontsize=fontsize)
         plt.legend(loc='best', fontsize=fontsize)
@@ -87,7 +87,7 @@ def plot_venn(out_path, runs_annotations_sets, runs):
     elif len(runs) == 3:
         venn = matplotlib_venn.venn3
     else:
-        logger.error(f'Can\'t plot venn diagram for {len(runs)} sets!! (only for 2 or 3 sets)')
+        logger.error('Can\'t plot venn diagram for {} sets!! (only for 2 or 3 sets)'.format(len(runs)))
         return
     plt.figure()
     venn(runs_annotations_sets, set_labels=runs)
@@ -103,7 +103,7 @@ def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, run=N
 
     portions_percents = [100*portions[i]/sum(portions) for i in range(len(portions)) if portions[i]!=0]
     isotypes = [isotypes[i] for i in range(len(isotypes)) if portions[i]!=0]
-    labels = [f'{isotypes[i]} ({portions_percents[i]:.3f}%)' for i in range(len(portions_percents))]
+    labels = ['{} ({:.3f}%)'.format(isotypes[i], portions_percents[i]) for i in range(len(portions_percents))]
 
     patches, texts = plt.pie(portions_percents, counterclock=False)
     plt.legend(patches, labels, loc="best")
@@ -111,7 +111,7 @@ def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, run=N
     plt.tight_layout()
     if not run:
         run = 'Replicate '+ out_path[out_path.find('run')+len('run')]
-    title = f'{run} isotype distribution'
+    title = '{} isotype distribution'.format(run)
     plt.title(title)
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
@@ -122,10 +122,10 @@ def plot_correlation(x, y, i, j, out_path):
     a, b = np.linalg.lstsq(A, y)[0]
     correlation = pearsonr(x, y)[0]
     plt.plot(x, y, 'ro', markersize=2, label='V-gene sequence')
-    plt.plot(x, a*x + b, 'b', label=f'Fitted line (r={correlation:.3f})')
-    plt.xlabel(f'\nCounts in replicate {i}')
-    plt.ylabel(f'Counts in replicate {j}\n')
-    plt.title(f'Pearson correlation of V-gene sequence counts of replicate {i} and replicate {j}')
+    plt.plot(x, a*x + b, 'b', label='Fitted line (r={:.3f})'.format(correlation))
+    plt.xlabel('\nCounts in replicate {}'.format(i))
+    plt.ylabel('Counts in replicate {}\n'.format(j))
+    plt.title('Pearson correlation of V-gene sequence counts of replicate {} and replicate {}'.format(i, j))
     plt.legend()
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
