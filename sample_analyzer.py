@@ -50,10 +50,10 @@ def analyze_samples(gp):
     remove_irrelevant_chains(gp)
 
     try:
-        # TODO: should it be always OR when gp.run_number > 1?
         logger.info('Joining runs...')
+        # TODO: uncomment this block once final_fasta is implemented for each file
         '''
-        joint_run_is_needed = True 
+        joint_run_is_needed = gp.run_number > 1 
         if joint_run_is_needed:
         '''
         joint_mixcr_output_path, joint_parsed_mixcr_output_path, joint_assignments_path, joint_cdr3_analysis_path = create_sub_working_directories(gp, 'joint')

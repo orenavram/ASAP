@@ -47,10 +47,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
     chain_to_aa_read_to_meta_data_dict = dict(zip(allowed_chain_types, [{} for chain in allowed_chain_types]))
     chain_to_core_dna_to_mutations_info_dict = dict(zip(allowed_chain_types, [{} for chain in allowed_chain_types]))
     pseudo_count = 1
-    # old code for SHM frequency distribution TODO: delete?
-    #chain_to_num_of_mutations_to_counts_dict = dict(zip(allowed_chain_types, [{} for chain in allowed_chain_types]))
 
-    #TODO: should the 'unknown' category be in all places where allowed_chain_types is used??
     chain_to_count_dict = dict.fromkeys(allowed_chain_types, 0)
     isotypes_count_dict = dict.fromkeys(['A', 'A1', 'A2', 'D', 'E', 'G', 'M', 'unknown'], 0)
     errors_count_dict = dict.fromkeys(['no_overlap', 'too_short_length', 'too_low_quality', 'missing_cdr3', 'nonsense_stop_codon', 'inappropriate_end_j_seq'], 0)
@@ -171,7 +168,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
                 # update isotype counts
                 isotypes_count_dict[isotype] += 1
             else:
-                #TODO: should these be counted?
+                #No need to count these
                 isotype = 'NONE'
 
             # update aa_sequence counts
@@ -220,10 +217,8 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
     if isotypes_count_dict:
         generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict)
 
-    #TODO: generate A_subisotypes pie chart
-
     #save alignments filtered file for debugging and fast different statistics....
-    if False:
+    if True:
         with open(alignments_filtered_txt_path, 'w') as f:
             f.write(alignments_filtered_txt)
 

@@ -9,6 +9,7 @@ from text_handler import string_similarity, read_table_to_dict
 from subprocess import check_output
 from directory_creator import create_dir
 from logging import getLogger
+import re
 logger = getLogger('main')
 
 import os
@@ -74,54 +75,49 @@ def analyze_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_
     most_k_common_cdr3_to_aa_reads = {cdr3: cdr3_to_aa_reads[cdr3] for cdr3 in most_k_common_cdr3}
     top_clones_path = os.path.join(cdr3_analysis_dir, chain + '_top_{}_clones'.format(k))
     create_dir(top_clones_path)
-    if most_k_common_cdr3 != []:
-        for i in range(gp.top_cdr3_clones_to_further_analyze):
-            cdr3 = most_k_common_cdr3[i]
-            multiple_sequences = most_k_common_cdr3_to_aa_reads[cdr3]
-            cluster_prefix = os.path.join(top_clones_path, 'cluster_' + str(i))
-            ms_path = cluster_prefix + '_ms.fasta'
-            msa_path = cluster_prefix + '_msa.aln'
+    for i in range(len(most_k_common_cdr3)):
+        cdr3 = most_k_common_cdr3[i]
+        multiple_sequences = most_k_common_cdr3_to_aa_reads[cdr3]
+        cluster_prefix = os.path.join(top_clones_path, 'cluster_' + str(i))
+        ms_path = cluster_prefix + '_ms.fasta'
+        msa_path = cluster_prefix + '_msa.aln'
 
-            try:
-                aln, msa = align_sequences(multiple_sequences, ms_path, msa_path, i)
-            except:
-                print(multiple_sequences)
-                raise
-            summary_align = AlignInfo.SummaryInfo(aln)
+        ms, msa = align_sequences(multiple_sequences, ms_path, msa_path, i)
+        # CONSENSUS must be picked from the ms rather than the msa (otherwise there will be a bug in the grep!!)
+        summary_align = AlignInfo.SummaryInfo(ms)
 
-            # find consensus sequence by majority rule
-            consensus = summary_align.dumb_consensus(threshold=0, ambiguous='#')
-            consensus = str(consensus)
+        # find consensus sequence by majority rule
+        consensus = summary_align.dumb_consensus(threshold=0, ambiguous='_')
+        consensus = str(consensus)
 
-            # find most similar sequence
-            aa_most_similar_to_consesnsus, similarity_rate = find_most_similar_sequence(msa, consensus)
+        # find most similar sequence
+        aa_most_similar_to_consesnsus, similarity_rate = find_most_similar_sequence(multiple_sequences, consensus)
 
-            #try:
-            dna_most_similar_to_consesnsus = find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path)
-            #except:
-            #    pass
+        #try:
+        dna_most_similar_to_consesnsus = find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path)
+        #except:
+        #    pass
 
-            # add entry to dict
-            most_k_common_cdr3_to_entry[cdr3] = [cdr3, str(most_k_common_cdr3_to_counts[cdr3]),
-                                                 str(len(most_k_common_cdr3_to_aa_reads[cdr3])), consensus,
-                                                 aa_most_similar_to_consesnsus, dna_most_similar_to_consesnsus,
-                                                 str(similarity_rate)]
+        # add entry to dict
+        most_k_common_cdr3_to_entry[cdr3] = [cdr3, str(most_k_common_cdr3_to_counts[cdr3]),
+                                             str(len(most_k_common_cdr3_to_aa_reads[cdr3])), consensus,
+                                             aa_most_similar_to_consesnsus, dna_most_similar_to_consesnsus,
+                                             str(similarity_rate)]
 
-            # generate web logo
-            weblogo_file_path = cluster_prefix + '_weblogo.pdf'
-            try:
-                generate_weblogo(msa_path, weblogo_file_path)
-            except Exception as e:
-                logger.warning('Couldn\'t generate weblogo {} due to the following reason: {}'.format(msa_path, e.args))
+        # generate web logo
+        weblogo_file_path = cluster_prefix + '_weblogo.pdf'
+        try:
+            generate_weblogo(msa_path, weblogo_file_path)
+        except Exception as e:
+            logger.warning('Couldn\'t generate weblogo {} due to the following reason: {}'.format(msa_path, e.args))
 
-        # write cdr3_to_entry to file
-        top_cdr3_extended_annotations_path = os.path.join(cdr3_analysis_dir, chain + gp.top_cdr3_annotation_file_suffix)
-        with open(top_cdr3_extended_annotations_path, 'w') as f:
-            #TODO: CHECK THAT THESE HEADERS AND DATA ARE CORRECT!!
-            f.write('\t'.join(['cdr3', 'cdr3_counts',  'aa_counts', 'consensus', 'aa_most_similar_to_consesnsus', 'dna_most_similar_to_consesnsus', 'similarity_rate']))
-            for cdr3 in most_k_common_cdr3:
-                f.write('\t'.join(most_k_common_cdr3_to_entry[cdr3]) + '\n')
-                # write_dict_to_file(cdr3_annotations_path, most_k_common_cdr3_to_entry, sort_by=most_k_common_cdr3_to_counts.get, reverse=True)
+    # write cdr3_to_entry to file
+    top_cdr3_extended_annotations_path = os.path.join(cdr3_analysis_dir, chain + gp.top_cdr3_annotation_file_suffix)
+    with open(top_cdr3_extended_annotations_path, 'w') as f:
+        f.write('\t'.join(['cdr3', 'cdr3_counts',  'aa_counts', 'consensus', 'aa_most_similar_to_consesnsus', 'dna_most_similar_to_consesnsus', 'similarity_rate']) + '\n')
+        for cdr3 in most_k_common_cdr3:
+            f.write('\t'.join(most_k_common_cdr3_to_entry[cdr3]) + '\n')
+            # write_dict_to_file(cdr3_annotations_path, most_k_common_cdr3_to_entry, sort_by=most_k_common_cdr3_to_counts.get, reverse=True)
 
 
 def parse_sequence_annotations_file(annotations_path, skip_rows=0):
@@ -155,7 +151,18 @@ def find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path):
     '''
     b'IGH\tM\tGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t301\nIGH\tM\tGAGGTGCAGCTGGTGGAGTCTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t61\nIGH\tM\tGAGGTGCAGCTGTTGGAGTCTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLLESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t33\nIGH\tM\tGAGGTGCAGCTGGTGGAGACTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLVETGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t31\nIGH\tM\tGAGGTGCAGCTGTTGGAGCCTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLLEPGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t4\nIGH\tM\tGAGGTGCAGCTGTTGGAGACTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLLETGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t24\nIGH\tM\tGAGGTGCAGCTGGTGGAGCCTGGGGGAGGCTTGGTACAGCCTGGGGGGTCCCTGAGACTCTCCTGTGCAGCCTCTGGATTCACCTTTAGCAGCTATGCCATGAGCTGGGTCCGCCAGGCTCCAGGGAAGGGGCTGGAGTGGGTCTCAACTATTAGTGGTAGTGGTGGTAGCACATTCTACGCAGACTCCGTGAAGGGCCGGTTCACCATCTCCAGAGACAATTCCAAGAACACGCTGTATCTGCAAATGAACAGCCTGAGAGCCGAGGACACGGCCATATATTACTGTGTCAAGGTGTCCGGGGGTTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA\tEVQLVEPGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSTISGSGGSTFYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAIYYCVKVSGGFDYWGQGTLVTVSS\tCVKVSGGFDYW\tIGHV3\tIGHD3\tIGHJ4\t9\n'
     '''
-    raw_dna_most_similar_to_consesnsus = check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).decode('utf-8').split()[2] #check_output returns bytes class object so it needs to be decoded
+    #print(check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).decode('utf-8'))
+    #print(check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).decode('utf-8').split())
+    #CAUSES A BUG. NEED A FLEXIBLE SEARCH!
+    # raw_dna_most_similar_to_consesnsus = check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).decode('utf-8').split()[2] #check_output returns bytes class object so it needs to be decoded
+    #
+    # aa_most_similar_to_consesnsus_pattern = '.*'+aa_most_similar_to_consesnsus.replace('_', '[A-Z]')+'.*'
+    # with open(annotations_path) as f:
+    #     txt=f.read()
+    # match = re.search(aa_most_similar_to_consesnsus_pattern, txt)
+    # if not match:
+    #     prin('no match for
+    raw_dna_most_similar_to_consesnsus = check_output(['grep', aa_most_similar_to_consesnsus, annotations_path]).decode('utf-8').split()[2]  # check_output returns bytes class object so it needs to be decoded
     dna_most_similar_to_consesnsus = str(raw_dna_most_similar_to_consesnsus)[2:-1] #without ^"b'" an $"'"
     logger.info('dna_most_similar_to_consesnsus is {}'.format(dna_most_similar_to_consesnsus))
     return str(dna_most_similar_to_consesnsus)
@@ -176,14 +183,15 @@ def align_sequences(multiple_sequences, ms_path, msa_path, cluster_number):
         mafft_cmd = 'mafft ' + ms_path + ' > ' + msa_path
         logger.info(mafft_cmd)
         os.system(mafft_cmd)
+        #avoid removing sparse columns!! causes a bug when trying to grep from annotations!!
         # remove columns with more than 20% gaps
-        remove_sparse_columns(msa_path, msa_path, 0.2)
+        # remove_sparse_columns(msa_path, msa_path, 0.2)
     else:
         logger.info('Only 1 sequence in {}. Skipping mafft and copying ms file as is.'.format(cluster_number))
         with open(msa_path, 'w') as f:
             f.write('\n'.join('>' + str(i) + '\n' + multiple_sequences[i] for i in range(len(multiple_sequences))))
 
-    for record in SeqIO.parse(msa_path, 'fasta'):
+    for record in SeqIO.parse(ms_path, 'fasta'):
         aln.add_sequence(record.id, str(record.seq))
 
     logger.debug('Alignment is:')
