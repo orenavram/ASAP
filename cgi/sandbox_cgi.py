@@ -29,8 +29,8 @@ def write_running_parameters_to_html(output_path, form):
 
         f.write("""<font face=Verdana><u><h4>Running Parameters:</h4></u></font>""")
         for key in form:
-            if 'run' not in key:
-                f.write('<ul>{} = {}<br></ul>'.format(key, form[key]))
+            #if 'run' not in key:
+            f.write('<ul>{} = {}<br></ul>'.format(key, form[key]))
         f.write('<br><br>')
         f.write('</body></html>')
 

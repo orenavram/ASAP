@@ -26,7 +26,7 @@ def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', a
     logger.debug(y_values)
 
     # More colors can be found at https://stackoverflow.com/questions/22408237/named-colors-in-matplotlib
-    barplot = sns.barplot(x_values, y_values, color="mediumspringgreen")
+    barplot = sns.barplot(x_values, y_values, color='mediumslateblue')
     ylim[1] = ylim[1] if ylim[1] > max(y_values) else 1.2*max(y_values)
     #print(x_label, len(x_values))
     if len(x_values) < 20:
@@ -151,29 +151,30 @@ def generate_mutations_boxplots(core_dna_to_num_of_mutations_dict, out_path):
 def plot_sub_figure(ax, data, xticklabels):
     ## to get fill color
     bp = ax.boxplot(data, patch_artist=True, showfliers=False)
+    ax.set_xticklabels(xticklabels)
+
     ## change outline color, fill color and linewidth of the boxes
     for box in bp['boxes']:
         # change outline color
-        box.set(color='#7570b3', linewidth=2)
+        box.set(color='lightgrey', linewidth=2)
         # change fill color
-        box.set(facecolor='#1b9e77')
+        box.set(facecolor='seagreen')
 
     ## change color and linewidth of the whiskers
     for whisker in bp['whiskers']:
-        whisker.set(color='#7570b3', linewidth=2)
+        whisker.set(color='lightgrey', linewidth=2)
 
     ## change color and linewidth of the caps
     for cap in bp['caps']:
-        cap.set(color='#7570b3', linewidth=2)
+        cap.set(color='lightgrey', linewidth=2)
 
     ## change color and linewidth of the medians
     for median in bp['medians']:
         median.set(color='#b2df8a', linewidth=2)
 
-    ## change the style of fliers and their fill
-    for flier in bp['fliers']:
-        flier.set(marker='o', color='#e7298a', alpha=0.5)
-    ax.set_xticklabels(xticklabels)
+    # ## change the style of fliers and their fill
+    # for flier in bp['fliers']:
+    #     flier.set(marker='o', color='#e7298a', alpha=0.5)
 
 '''
 if __name__ == '__main__':
