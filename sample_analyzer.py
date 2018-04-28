@@ -251,20 +251,20 @@ def plot_assignments(gp):
             d = read_table_to_dict(assignment_file, value_type=int, skip_rows=1)
 
             if 'VDJ' in assignment_file:
-                plot_barplot(d, plot_path, ylim=[0, 15], x_label='\nV(D)J subgroups combinations')
+                plot_barplot(d, plot_path, x_label='\nV(D)J subgroups combinations')
                 # plot_barplot(assignment_file, gp.raw_data_file_suffix)
             elif 'VD' in assignment_file:
-                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nVD subgroups combinations')
+                plot_barplot(d, plot_path, x_label='\nVD subgroups combinations')
             elif 'DJ' in assignment_file:
-                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nDJ subgroups combinations')
+                plot_barplot(d, plot_path, x_label='\nDJ subgroups combinations')
             elif 'VJ' in assignment_file:
-                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nVJ subgroups combinations')
+                plot_barplot(d, plot_path, x_label='\nVJ subgroups combinations')
             elif 'V' in assignment_file:
-                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nV subgroups')
+                plot_barplot(d, plot_path, x_label='\nV subgroups')
             elif 'D' in assignment_file:
-                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nD subgroups')
+                plot_barplot(d, plot_path, x_label='\nD subgroups')
             elif 'J' in assignment_file:
-                plot_barplot(d, plot_path, ylim=[0, 25], x_label='\nJ subgroups')
+                plot_barplot(d, plot_path, x_label='\nJ subgroups')
             else:
                 logger.error('Skipping non-assignment file: ' + raw_data_file)
 
@@ -280,7 +280,7 @@ def plot_mutation_analyses(gp):
 
                 mutation_counts_to_frequency = get_values_frequency(dna_to_mutation_counts)
                 mutation_counts_to_frequency_plot = mutations_path.replace(gp.raw_data_file_suffix, '1.png')
-                plot_barplot(mutation_counts_to_frequency, mutation_counts_to_frequency_plot, ylim=[0,30], x_label='\nNumber of basepair mutations')
+                plot_barplot(mutation_counts_to_frequency, mutation_counts_to_frequency_plot, x_label='\nNumber of basepair mutations')
 
                 Ka_Ks_box_plot = mutations_path.replace(gp.raw_data_file_suffix, '2.png')
                 generate_mutations_boxplots(dna_to_Ka_Ks_dict, Ka_Ks_box_plot)

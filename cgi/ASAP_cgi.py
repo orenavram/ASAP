@@ -33,86 +33,147 @@ def print_hello_world(output_path = '', run_number = 'NO_RUN_NUMBER'):
 def write_html_prefix(output_path, run_number):
     # ESCAPE CURLY BRACES BY DOUBLING THEM!! {{ or }}
     with open(output_path, 'w') as f:
-        f.write(
-            """
-<?php
-$path = "{0}";
-set_include_path(get_include_path().PATH_SEPARATOR.$path);
-include ("templates/definitions.tpl");
-?>
-<HTML>
-<HEAD>
-    {1}
-    <TITLE>ASAP Run #{2} </TITLE>
-    <link rel="icon" href="/ASAP_icon.gif">
-    
-    <style type="text/css">
-    #menu {{
-    
-    text-decoration: none;
-            color: white;
-    font-size: 12px;
-    font-weight: 700;
-    }}
-    
-    ul.in_progress {{
-        list-style-image: url('{3}/inprogress.gif');
-        padding-bottom: 0 em;
-    }}
-    
-    ul.finished {{
-        list-style-image: url('{3}/finished.gif');
-    }}
-    </style>
-    <link rel="stylesheet" type="text/css" href="{3}/ASAP.css">
-    <script src="{3}/clmenu.js" type="text/javascript"></script>
-    <link href="{3}/clmenu.css" type="text/css" rel="stylesheet" />
+        f.write('''<html><head>{0}
+<title>ASAP Job {1}</title>
+<link rel="shortcut icon" type="image/x-icon" href="{2}/pics/ASAP_logo.gif" />
 
-</HEAD>
-        """.format(CONSTS.ASAP_HTML_DIR, CONSTS.GC.RELOAD_TAGS, run_number, CONSTS.GC.ASAP_URL))
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
+
+<link rel="stylesheet" href="{2}/css/general.css">
+
+</head><body>
+<nav role="navigation" class="navbar navbar-fixed-top">
+    <div class="jumbotron" id="jumbo">
+        <div class="container">
+            <div class="row" id="title-row">
+                <div class="col-md-1">
+                </div>
+                <div class="col-md-1">
+                    <img src="{2}/pics/ASAP_logo.gif" id="antibody_image" class="img-rounded">
+                </div>
+                <div class="col-md-9">
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span id="asap-title">ASAP</span>&nbsp;&nbsp;&nbsp;&nbsp;<span id="sub-title"><b>A</b> web server for Ig-<b>S</b>eq <b>A</b>nalysis <b>P</b>ipeline</span><br>
+                </div>
+            </div>
+        </div>       
+    </div>
+</nav>
+<div id="behind-nav-bar-results">
+</div>
+'''.format(CONSTS.GC.RELOAD_TAGS, run_number, CONSTS.GC.ASAP_URL))
+#             """
+# <?php
+# $path = "{0}";
+# set_include_path(get_include_path().PATH_SEPARATOR.$path);
+# include ("templates/definitions.tpl");
+# ?>
+# <HTML>
+# <HEAD>
+#     {1}
+#     <TITLE>ASAP Run #{2} </TITLE>
+#     <link rel="icon" href="/ASAP_icon.gif">
+#
+#     <style type="text/css">
+#     #menu {{
+#
+#     text-decoration: none;
+#             color: white;
+#     font-size: 12px;
+#     font-weight: 700;
+#     }}
+#
+#     ul.in_progress {{
+#         list-style-image: url('{3}/inprogress.gif');
+#         padding-bottom: 0 em;
+#     }}
+#
+#     ul.finished {{
+#         list-style-image: url('{3}/finished.gif');
+#     }}
+#     </style>
+#     <link rel="stylesheet" type="text/css" href="{3}/ASAP.css">
+#     <script src="{3}/clmenu.js" type="text/javascript"></script>
+#     <link href="{3}/clmenu.css" type="text/css" rel="stylesheet" />
+#
+# </HEAD>
+#         """.format(CONSTS.ASAP_HTML_DIR, CONSTS.GC.RELOAD_TAGS, run_number, CONSTS.GC.ASAP_URL))
 
 
 def write_info_paragraph_to_html(output_path):
     with open(output_path, 'a') as f:
-        f.write("""<H1 align=center>ASAP Job Status - <FONT color='red'>RUNNING</FONT></h1>
-<p>
-    <font face=Verdana>
-      ASAP is now processing your request.<br>
-
-      This page will be automatically updated every {} seconds. You can also reload it manually.<br>
-      Once the job has finished, several links to the output files will appear below.
-      <br><br>
-      If you wish to view these results at a later time without recalculating
-      them, please bookmark this page. The results will be kept in the server for three months.
-    </font>
-</p>""".format(CONSTS.GC.RELOAD_INTERVAL))
+        f.write("""<br><div class="container" style="font-size: 20px;" align="justify"> 
+<H1 align=center>Job Status - <FONT color='red'>RUNNING</FONT></h1>
+<br>ASAP is now processing your request. This page will be automatically updated every {} seconds (until the job is done). You can also reload it manually. Once the job has finished, several links to the output files will appear below. A link to this page was sent to your email in case you wish to view these results at a later time without recalculating them. Please note that the results will be kept in the server for three months.
+</div>
+<br>""".format(CONSTS.GC.RELOAD_INTERVAL))
 
 
-def write_running_parameters_to_html(output_path, run_number, job_title, number_of_duplicates, urls_to_reads_files, MMU, chains):
+def write_running_parameters_to_html(output_path, run_number, job_title, number_of_duplicates, urls_to_reads_files, MMU, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, add_mass_spec_seq):
 
     with open(output_path, 'a') as f:
 
-        f.write("""<font face=Verdana><u><h4>Running Parameters:</h4></u>""")
+        #regular params row
+        f.write("""<div class="container"><u><h3>Running Parameters:</h3></u><br>""")
 
+        f.write('<div class="row" style="font-size: 20px;">')
         if job_title != '':
-            f.write('Job title: <b>{}</b><br><br>'.format(job_title))
+            f.write('<div class="col-md-3">')
+            f.write('<b>Job title:</b>{}<br><br>'.format(job_title))
+            f.write('</div>')
 
+        f.write('<div class="col-md-3">')
+        f.write('<b>Organism: </b>{}'.format(MMU))
+        f.write('</div>')
+
+        f.write('<div class="col-md-3">')
+        f.write('<b>Chains: </b>{}<br>'.format(chains))
+        f.write('</div>')
+
+        f.write('</div><br>')
+
+        f.write('<div class="row" style="font-size: 20px;">')
         for i in range(number_of_duplicates):
             # show only path suffix... http://asap.tau.ac.il/results/1520442230/reads/run1/242_R1.fastq
             R1_url = urls_to_reads_files[i * 2].split(run_number)[-1].lstrip('/')
             R2_url = urls_to_reads_files[i * 2 + 1].split(run_number)[-1].lstrip('/')
-
+            f.write('<div class="col-md-4">')
             f.write('<b>Run {} sequence data:</b><br>'.format(i + 1))
-            f.write('<ul>')
             f.write('R1 = <a href=\"{}\" target=_blank>{}</A><br>'.format(urls_to_reads_files[i * 2], R1_url))
             f.write('R2 = <a href=\"{}\" target=_blank>{}</A><br>'.format(urls_to_reads_files[i * 2 + 1], R2_url))
-            f.write('</ul>')
+            f.write('</div>')
 
-        f.write('<b>Organism: </b>{}<br><br>'.format(MMU))
-        f.write('<b>Chains: </b>{}<br>'.format(chains))
+        f.write('</div>')
 
-        f.write('</font>')
+        #Advanced params row
+        f.write('<br><u><h3>Advanced Parameters:</h3></u><br>')
 
+        f.write('<div class="row">')
+        f.write('<div class="col-md-2">')
+        f.write('<b>Min read length: </b>{}<br>'.format(len_threshold))
+        f.write('</div>')
+
+        f.write('<div class="col-md-2">')
+        f.write('<b>Min read quality: </b>{}<br>'.format(qlty_threshold))
+        f.write('</div>')
+
+        f.write('<div class="col-md-2">')
+        f.write('<b>Raw data format: </b>{}<br>'.format(raw_data_suffix))
+        f.write('</div>')
+
+        f.write('<div class="col-md-2">')
+        f.write('<b>Add mass_spec: </b>{}<br>'.format(add_mass_spec_seq))
+        f.write('</div>')
+
+        f.write('<div class="col-md-3">')
+        f.write('<b>#clones to analyze: </b>{}<br>'.format(number_of_clones_to_analyze))
+        f.write('</div>')
+
+        f.write('</div></div>')
 
 
 def write_pair_file(debug_path, pair, run_content, run_filename, run_dir):
@@ -218,11 +279,8 @@ cgitb.enable()
 form = cgi.FieldStorage() # extract POSTed object
 
 run_number = str(round(time())) + str(randint(1000, 9999))  # adding 4 random figures to prevent users see data that are not their's
-debug_mode = False
-if debug_mode:
+if False:
     run_number = 'debug'#str(round(time())) + str(randint(1000,9999)) # adding 4 random figures to prevent users see data that are not their's
-if form['example_page'].value == 'yes':
-    run_number = 'example'
 
 results_url = os.path.join(CONSTS.ASAP_RESULTS_URL, run_number)
 output_url = os.path.join(results_url, 'output.php')
@@ -257,13 +315,19 @@ number_of_duplicates = 2
 with open(cgi_debug_path, 'a') as f:
     # form debugging
     f.write('{}\n{}: A new CGI request has been recieved!\n'.format('#'*50, ctime()))
-    f.write('form parameters are:\n')
-    for key in form:
+    f.write('These are the keys that the CGI received:\n{}\n\n'.format('; '.join(sorted(form.keys()))))
+    f.write('Form values are:\n')
+    for key in sorted(form.keys()):
         if 'run' not in key:
             f.write('{} = {}\n'.format(key, form[key]))
+    # for key in sorted(form.keys()):
+    #     if 'run' in key:
+    #         f.write('100 first characters of {} = '.format(key))
+    #         f.write('{}\n'.format(form[key].value[:100]))
     f.write('\n\n')
 
 #extract form's values:
+user_email = form['email'].value.strip()
 example_page = form['example_page'].value
 chains = ','.join(form.getlist('chains'))
 MMU = form['MMU'].value
@@ -278,8 +342,8 @@ add_mass_spec_seq = 'no'
 if 'add_mass_spec_seq' in form:
     add_mass_spec_seq = 'yes'
 job_title = ''
-if form['Job_Title_txt'].value != '':
-    job_title = form['Job_Title_txt'].value.strip()
+if form['job_title'].value != '':
+    job_title = form['job_title'].value.strip()
 
 if example_page == 'no':
     # handling uploaded files:
@@ -310,17 +374,25 @@ for i in range(number_of_duplicates):
     run = 'run' + str(i + 1)
     path_to_reads = os.path.join(wd, 'reads', run)
     url_to_reads = os.path.join(results_url, 'reads', run)
+    with open(cgi_debug_path, 'a') as f: # for cgi debugging
+        f.write('{}: Creating path for reads...\n'.format(ctime()))
     create_dir(path_to_reads)
     paths_to_reads_files.append(os.path.join(path_to_reads, 'R1.fastq'))
     paths_to_reads_files.append(os.path.join(path_to_reads, 'R2.fastq'))
     urls_to_reads_files.append(os.path.join(url_to_reads, 'R1.fastq'))
     urls_to_reads_files.append(os.path.join(url_to_reads, 'R2.fastq'))
 
-if form['example_page'].value == 'yes':
+if example_page == 'yes':
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write('{}: Copying example files...\n'.format(ctime()))
     # copy example data
+    with open(cgi_debug_path, 'a') as f: # for cgi debugging
+        f.write('Fetching: rsync -ravz {} {}\n'.format(CONSTS.EXAMPLE_FILE_RUN1_R1, paths_to_reads_files[0]))
     os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN1_R1, paths_to_reads_files[0]))
+    with open(cgi_debug_path, 'a') as f: # for cgi debugging
+        f.write('{}: ls of {} yields:\n{}\n'.format(ctime(), os.path.join(wd, 'reads', 'run1'), os.listdir(path_to_reads)))
+    with open(cgi_debug_path, 'a') as f: # for cgi debugging
+        f.write('Fetching: rsync -ravz {} {}\n'.format(CONSTS.EXAMPLE_FILE_RUN1_R2, paths_to_reads_files[1]))
     os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN1_R2, paths_to_reads_files[1]))
     os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN2_R1, paths_to_reads_files[2]))
     os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN2_R2, paths_to_reads_files[3]))
@@ -333,14 +405,14 @@ with open(cgi_debug_path, 'a') as f: # for cgi debugging
 with open(cgi_debug_path, 'a') as f: # for cgi debugging
     f.write('{}: write_running_parameters_to_html...\n'.format(ctime()))
 
-write_running_parameters_to_html(output_path, run_number, job_title, number_of_duplicates, urls_to_reads_files, MMU, chains)
+write_running_parameters_to_html(output_path, run_number, job_title, number_of_duplicates, urls_to_reads_files, MMU, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, add_mass_spec_seq)
 
 with open(cgi_debug_path, 'a') as f: # for cgi debugging
     f.write('{}: Running parameters were written to html successfully.\n'.format(ctime()))
 
 
 # This is hidden field that only spammer bots might fill in...
-confirm_email_add = form['confirm_email_add'].value  # if it is contain a value it is a spammer.
+confirm_email_add = form['confirm_email'].value  # if it is contain a value it is a spammer.
 
 #TODO: ADD INPUT VERIFICATION BEFORE JOB SUBMISSION
 
@@ -354,7 +426,6 @@ write_cmds_file(cmds_file, run_number, parameters_file)
 queue_name = 'bioseq'
 os.system('ssh bioseq@lecs2 python /bioseq/bioSequence_scripts_and_constants/q_submitter.py {} {} {} > {}'.format(cmds_file, wd, queue_name, cmds_file.replace('cmds', 'log')))
 
-user_email = form['email_add'].value.strip()
 if user_email != '':
     with open(os.path.join(wd, 'user_email.txt'), 'w') as f:
         f.write(user_email)

@@ -10,6 +10,10 @@
 #THIS IS SANDBOX!!!!!!
 #THIS IS SANDBOX!!!!!!
 
+# The apache sometimes says: "[Sat Apr 28 11:22:27.659177 2018] [http:error] [pid 29692] [client 132.66.1.18:21082]
+# AH02429: Response header name '<!--' contains invalid characters, aborting request, referer: http://localhost:63343/webpage/index.html"
+# but it's not always the real reason!! It may happen when trying to get undefined form key!! For more details see:
+# https://stackoverflow.com/questions/45375693/apache2-response-header-name-contains-invalid-characters-aborting-reque
 import os, sys
 import cgi, cgitb
 
@@ -28,9 +32,14 @@ def write_running_parameters_to_html(output_path, form):
     with open(output_path, 'a') as f:
 
         f.write("""<font face=Verdana><u><h4>Running Parameters:</h4></u></font>""")
-        for key in form:
-            #if 'run' not in key:
-            f.write('<ul>{} = {}<br></ul>'.format(key, form[key]))
+        f.write('These are the keys that the CGI received:<br>{}<br><br>'.format('; '.join(sorted(form.keys()))))
+        for key in sorted(form.keys()):
+            if 'run' not in key:
+                f.write('{} = {}<br>'.format(key, form[key]))
+        for key in sorted(form.keys()):
+            if 'run' in key:
+                f.write('100 first characters of {} = '.format(key))
+                f.write('{}<br>'.format(form[key].value[:100]))
         f.write('<br><br>')
         f.write('</body></html>')
 

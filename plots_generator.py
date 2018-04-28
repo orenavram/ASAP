@@ -10,7 +10,7 @@ logger = logging.getLogger('main')
 from text_handler import read_table_to_dict
 
 
-def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', as_proportions = True, rotation = 90, ylim=[0, 50]):
+def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', as_proportions = True, rotation = 90):
     #key_type = str, value_type=int):
     '''plot a simple bar chart of CDR3 lengths and VDJ assignments'''
     #d = read_table_to_dict(assignment_file, key_type=key_type, value_type=value_type)
@@ -27,7 +27,7 @@ def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', a
 
     # More colors can be found at https://stackoverflow.com/questions/22408237/named-colors-in-matplotlib
     barplot = sns.barplot(x_values, y_values, color='mediumslateblue')
-    ylim[1] = ylim[1] if ylim[1] > max(y_values) else 1.2*max(y_values)
+    ylim = [0, 1.2*max(y_values)]
     #print(x_label, len(x_values))
     if len(x_values) < 20:
         fontsize = 10
@@ -111,7 +111,7 @@ def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, run=N
     plt.tight_layout()
     if not run:
         run = 'Replicate '+ out_path[out_path.find('run')+len('run')]
-    title = '{} isotype distribution'.format(run)
+    title = '{} isotype distribution\n'.format(run)
     plt.title(title)
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
@@ -126,7 +126,7 @@ def plot_correlation(x, y, i, j, out_path):
     plt.xlabel('\nCounts in replicate {}'.format(i))
     plt.ylabel('Counts in replicate {}\n'.format(j))
     plt.title('Pearson correlation of V-gene sequence counts of replicate {} and replicate {}'.format(i, j))
-    plt.legend()
+    plt.legend(loc='best')
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
 
