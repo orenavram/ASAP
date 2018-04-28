@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<div id="loadingMask" style="width: 100%; height: 100%; position: fixed; background: #ffffff;"></div>
+<html lang="en">
+<head>
+    <title>ASAP</title>
+    <!--<meta charset="utf-8">-->
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+
+    <link rel="shortcut icon" type="image/x-icon" href="pics/ASAP_logo.gif" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
+
+    <!--files for the select tag-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/i18n/defaults-*.min.js"></script>
+
+    <!--files for the checkbox tag (toggle)-->
+    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
+
+    <link rel="stylesheet" href="css/general.css">
+    <link rel="stylesheet" href="css/nav.css">
+
+    <!--<link href='https://fonts.googleapis.com/css?family=Kalam' rel='stylesheet'>-->
+
+    <!--<script src="https://code.jquery.com/jquery-1.10.2.js"></script>-->
+    <!--<script> $(function(){-->
+        <!--$("head").load("header.html");-->
+        <!--$('#loadingMask').fadeOut();});-->
+    <!--</script>-->
+
+    <!--for hiding the advanced options by default-->
+    <script>
+        function myFunction() {
+            var x = document.getElementById("advanced");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+        }
+    </script>
+
+</head>
+<body>
+<nav role="navigation" class="navbar navbar-inverse navbar-fixed-top" id="nav">
+    <div class="jumbotron" id="jumbo">
+        <div class="container">
+            <div class="row" id="title-row">
+                <div class="col-md-1">
+                </div>
+                <div class="col-md-1">
+                    <img src="pics/ASAP_logo.gif" id="antibody_image" class="img-rounded">
+                </div>
+                <div class="col-md-9">
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span id="asap-title">ASAP</span>&nbsp;&nbsp;&nbsp;&nbsp;<span id="sub-title"><b>A</b> web server for Ig-<b>S</b>eq <b>A</b>nalysis <b>P</b>ipeline</span><br>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" id="nav_container">
+        <div class="row">
+            <div class="col-md-1">
+            </div>
+            <div class="col-md-10">
+                <ul class="nav navbar-nav" id="menu-nav">
+                    <li class="active">
+                        <a href="index.html">Home</a>
+                    </li>
+                    <li>
+                        <a href="overview.html">Overview</a>
+                    </li>
+                    <li>
+                        <a href="gallery.html">Gallery</a>
+                    </li>
+                    <li>
+                        <a href="terms.html">Terms of Use</a>
+                    </li>
+                    <li>
+                        <a href="credits.html">Credits</a>
+                    </li>
+                    <li>
+                        <a href="https://english.tau.ac.il/" id="tau-link" target="_blank">
+                            <img src=pics/TAU_LOGO.png id="tau-logo">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+<div id="behind-nav-bar">
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" id="basic">
+            <form id="ASAP_form" action="http://asap.tau.ac.il/cgi-bin/ASAP_cgi.py" method="post" ENCTYPE="multipart/form-data">
+                    <input type="hidden" name="example_page" value="no">
+                    <div id="please-note" align="justify">Please notice that heavy files (i.e., larger than 100MB) may require up to half an hour until they are fully uploaded (depending on your network speed). It is possible and recommended to upload zipped fastq files (in gzip format).</div>
+                    <br><br>
+                    <div class="form-group">
+                        <b>Replicate 1:</b>
+                        <label class="btn btn-default btn-file">
+                            <div name="file_button"></div> <input type="file" name="run1_R1" required>  <!--onchange="$('#upload-file-info').val($(this).val());"-->
+                        </label>
+                        <label class="btn btn-default btn-file">
+                            <div name="file_button"></div> <input type="file" name="run1_R2" required>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <b>Replicate 2:</b>
+                        <label class="btn btn-default btn-file">
+                            <div name="file_button"></div> <input type="file" name="run2_R1">  <!--onchange="$('#upload-file-info').val($(this).val());"-->
+                        </label>
+                        <label class="btn btn-default btn-file">
+                            <div name="file_button"></div> <input type="file" name="run2_R2">
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <b>Replicate 3:</b>
+                        <label class="btn btn-default btn-file">
+                            <div name="file_button"></div> <input type="file" name="run3_R1">  <!--onchange="$('#upload-file-info').val($(this).val());"-->
+                        </label>
+                        <label class="btn btn-default btn-file">
+                            <div name="file_button"></div> <input type="file" name="run3_R2">
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Chains:
+                            <input type="checkbox" name="chains" value="IGH" checked/> IGH
+                            <input type="checkbox" name="chains" value="IGK"/> IGK
+                            <input type="checkbox" name="chains" value="IGL"/> IGL
+                        </label>
+                        <!--
+                            <span class="help-block">This is some help text that breaks onto a new line and may extend more than one line.</span>
+                        -->
+                    </div>
+                    <div class="form-group">
+                        <b>Organism: </b>
+                        <select name="MMU" class="selectpicker" data-width="auto">
+                            <option value="Human" selected>Human
+                            <option value="Mouse">Mouse
+                        </select>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-4">
+                            <label for="email">Email:</label>
+                            <input type="email" required class="form-control" id="email" name="email" placeholder="We'll send you a link to the results">
+                            <input class="form-control" name="confirm_email" type="hidden">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="job_title">A descriptive job title:</label>
+                            <input type="text" class="form-control" id="job_title" name="job_title" placeholder="(optional)">
+                        </div>
+                    </div>
+                    <br>
+                    <button type="button" class="btn btn-warning" onclick="myFunction()">Advanced options</button>
+                    <div id="advanced" style="display:none;">
+                        <br>
+                        <div class="form-group row">
+                            <div class="col-md-5">
+                                <label for="len_threshold">Minimal (DNA) read length:</label>
+                                <input type="number" class="form-control" min="0" step="1" max="500" id="len_threshold" name="len_threshold" value="300" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="qlty_threshold">Minimal read average quality:</label>
+                                <input type="number" class="form-control" min="0" step="1" max="30" id="qlty_threshold" name="qlty_threshold" value="20" required>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-5">
+                                <label for="number_of_clones_to_analyze">Number of clones to analyze:</label>
+                                <input type="number" class="form-control" min="0" step="1" max="100" id="number_of_clones_to_analyze" name="number_of_clones_to_analyze" value="20" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="raw_data_suffix">Raw data format:</label>
+                                <input type="text" class="form-control" id="raw_data_suffix" name="raw_data_suffix" value="xls" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="add_mass_spec_seq">Add mass_spec sequence to final fasta file? </label>
+                            <input type="checkbox" id="add_mass_spec_seq" name="add_mass_spec_seq" value="yes" checked data-toggle="toggle">
+                            <br><label for="add_mass_spec_seq">(ASTK for human, AK for mouse)</label>
+                        </div>
+                    </div>
+                    <br><br>
+                    <button type="reset" class="btn btn-danger">Reset</button>
+                    <button type="submit" class="btn btn-success">Submit</button>
+                    <a href="index_example.html"><button type="button" class="btn btn-info">Load Example</button></a>
+                    <!--<a href="index.html"><button type="button" class="btn btn-info">Clear Example</button></a>-->
+                    <br><br>
+
+            </form>
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+</div>
+
+
+<!--
+    <div class="g-recaptcha" data-sitekey="6LfNOC8UAAAAAO2gQKB2YGqhURSiwZqU1avn5hHb"></div>
+        <noscript>
+            <div style="width: 302px; height: 352px;">
+            <div style="width: 302px; height: 352px; position: relative;">
+            <div style="width: 302px; height: 352px; position: absolute;">
+            <iframe src="https://www.google.com/recaptcha/api/fallback?k=6LfNOC8UAAAAAO2gQKB2YGqhURSiwZqU1avn5hHb"
+                    frameborder="0" scrolling="no"
+                    style="width: 302px; height:352px; border-style: none;">
+            </iframe>
+            </div>
+            <div style="width: 250px; height: 80px; position: absolute; border-style: none;
+                        bottom: 21px; left: 25px; margin: 0px; padding: 0px; right: 25px;">
+            <textarea id="g-recaptcha-response" name="g-recaptcha-response"
+                      class="g-recaptcha-response"
+                      style="width: 250px; height: 80px; border: 1px solid #c1c1c1;
+                      margin: 0px; padding: 0px; resize: none;" value="">
+            </textarea>
+            </div>
+            </div>
+            </div>
+        </noscript>
+-->
+<!--&lt;!&ndash;run1&ndash;&gt;-->
+<!--<script>-->
+    <!--var run1_R1_button = document.getElementById('run1_R1_button');-->
+    <!--var run1_R1_text = document.getElementById('run1_R1_text');-->
+
+    <!--run1_R1_button.addEventListener('change', show_run1_R1 );-->
+
+    <!--function show_run1_R1(event) {-->
+
+        <!--// the change event gives us the input it occurred in-->
+        <!--var input = event.srcElement;-->
+
+        <!--// the input has an array of files in the `files` property, each one has a name that you can use. We're just using the name here.-->
+        <!--if (input.files[0]){-->
+            <!--run1_R1_text.textContent = input.files[0].name-->
+        <!--}else{-->
+            <!--run1_R1_text.textContent = 'R1'-->
+        <!--}-->
+        <!--// use fileName however fits your app best, i.e. add it into a div-->
+    <!--}-->
+    <!--var run1_R2_button = document.getElementById('run1_R2_button');-->
+    <!--var run1_R2_text = document.getElementById('run1_R2_text');-->
+
+    <!--run1_R2_button.addEventListener('change', show_run1_R2 );-->
+
+    <!--function show_run1_R2(event) {-->
+
+        <!--// the change event gives us the input it occurred in-->
+        <!--var input = event.srcElement;-->
+
+        <!--// the input has an array of files in the `files` property, each one has a name that you can use. We're just using the name here.-->
+        <!--if (input.files[0]){-->
+            <!--run1_R2_text.textContent = input.files[0].name-->
+        <!--}else{-->
+            <!--run1_R2_text.textContent = 'R2'-->
+        <!--}-->
+        <!--// use fileName however fits your app best, i.e. add it into a div-->
+    <!--}-->
+<!--</script>-->
+
+<!--&lt;!&ndash;run2&ndash;&gt;-->
+<!--<script>-->
+    <!--var run2_R1_button = document.getElementById('run2_R1_button');-->
+    <!--var run2_R1_text = document.getElementById('run2_R1_text');-->
+
+    <!--run2_R1_button.addEventListener('change', show_run2_R1 );-->
+
+    <!--function show_run2_R1(event) {-->
+
+        <!--// the change event gives us the input it occurred in-->
+        <!--var input = event.srcElement;-->
+
+        <!--// the input has an array of files in the `files` property, each one has a name that you can use. We're just using the name here.-->
+        <!--if (input.files[0]){-->
+            <!--run2_R1_text.textContent = input.files[0].name-->
+        <!--}else{-->
+            <!--run2_R1_text.textContent = 'R1'-->
+        <!--}-->
+        <!--// use fileName however fits your app best, i.e. add it into a div-->
+    <!--}-->
+    <!--var run2_R2_button = document.getElementById('run2_R2_button');-->
+    <!--var run2_R2_text = document.getElementById('run2_R2_text');-->
+
+    <!--run2_R2_button.addEventListener('change', show_run2_R2 );-->
+
+    <!--function show_run2_R2(event) {-->
+
+        <!--// the change event gives us the input it occurred in-->
+        <!--var input = event.srcElement;-->
+
+        <!--// the input has an array of files in the `files` property, each one has a name that you can use. We're just using the name here.-->
+        <!--if (input.files[0]){-->
+            <!--run2_R2_text.textContent = input.files[0].name-->
+        <!--}else{-->
+            <!--run2_R2_text.textContent = 'R2'-->
+        <!--}-->
+        <!--// use fileName however fits your app best, i.e. add it into a div-->
+    <!--}-->
+<!--</script>-->
+
+<!--&lt;!&ndash;run3&ndash;&gt;-->
+<!--<script>-->
+    <!--var run3_R1_button = document.getElementById('run3_R1_button');-->
+    <!--var run3_R1_text = document.getElementById('run3_R1_text');-->
+
+    <!--run3_R1_button.addEventListener('change', show_run3_R1 );-->
+
+    <!--function show_run3_R1(event) {-->
+
+        <!--// the change event gives us the input it occurred in-->
+        <!--var input = event.srcElement;-->
+
+        <!--// the input has an array of files in the `files` property, each one has a name that you can use. We're just using the name here.-->
+        <!--if (input.files[0]){-->
+            <!--run3_R1_text.textContent = input.files[0].name-->
+        <!--}else{-->
+            <!--run3_R1_text.textContent = 'R1'-->
+        <!--}-->
+        <!--// use fileName however fits your app best, i.e. add it into a div-->
+    <!--}-->
+    <!--var run3_R2_button = document.getElementById('run3_R2_button');-->
+    <!--var run3_R2_text = document.getElementById('run3_R2_text');-->
+
+    <!--run3_R2_button.addEventListener('change', show_run3_R2 );-->
+
+    <!--function show_run3_R2(event) {-->
+
+        <!--// the change event gives us the input it occurred in-->
+        <!--var input = event.srcElement;-->
+
+        <!--// the input has an array of files in the `files` property, each one has a name that you can use. We're just using the name here.-->
+        <!--if (input.files[0]){-->
+            <!--run3_R2_text.textContent = input.files[0].name-->
+        <!--}else{-->
+            <!--run3_R2_text.textContent = 'R2'-->
+        <!--}-->
+        <!--// use fileName however fits your app best, i.e. add it into a div-->
+    <!--}-->
+<!--</script>-->
+
+</body>
+</html>

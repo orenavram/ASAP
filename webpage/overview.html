@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<!--<meta charset="utf-8">-->
+	<!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+
+	<link rel="shortcut icon" type="image/x-icon" href="pics/ASAP_logo.gif" />
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
+
+	<!--files for the select tag-->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/i18n/defaults-*.min.js"></script>
+
+	<!--files for the checkbox tag (toggle)-->
+	<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
+
+	<link rel="stylesheet" href="css/general.css">
+	<link rel="stylesheet" href="css/nav.css">
+
+	<!--<link href='https://fonts.googleapis.com/css?family=Kalam' rel='stylesheet'>-->
+
+	<title>ASAP Overview</title>
+	<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+	<!--<script> $(function(){-->
+		<!--$("head").load("header.html");-->
+		<!--$('#loadingMask').fadeOut();});-->
+	<!--</script>-->
+</head>
+<body>
+<nav role="navigation" class="navbar navbar-inverse navbar-fixed-top">
+	<nav role="navigation" class="navbar navbar-inverse navbar-fixed-top" id="nav">
+		<div class="jumbotron" id="jumbo">
+			<div class="container">
+				<div class="row" id="title-row">
+					<div class="col-md-1">
+					</div>
+					<div class="col-md-1">
+						<img src="pics/ASAP_logo.gif" id="antibody_image" class="img-rounded">
+					</div>
+					<div class="col-md-9">
+						&nbsp;&nbsp;&nbsp;&nbsp;<span id="asap-title">ASAP</span>&nbsp;&nbsp;&nbsp;&nbsp;<span id="sub-title"><b>A</b> web server for Ig-<b>S</b>eq <b>A</b>nalysis <b>P</b>ipeline</span><br>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="container" id="nav_container">
+			<div class="row">
+				<div class="col-md-1">
+				</div>
+				<div class="col-md-10">
+					<ul class="nav navbar-nav" id="menu-nav">
+						<li>
+							<a href="index.html">Home</a>
+						</li>
+						<li class="active">
+							<a href="overview.html">Overview</a>
+						</li>
+						<li>
+							<a href="gallery.html">Gallery</a>
+						</li>
+						<li>
+							<a href="terms.html">Terms of Use</a>
+						</li>
+						<li>
+							<a href="credits.html">Credits</a>
+						</li>
+						<li>
+							<a href="https://english.tau.ac.il/" id="tau-link" target="_blank">
+								<img src=pics/TAU_LOGO.png id="tau-logo">
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</nav>
+</nav>
+<div id="behind-nav-bar">
+</div>
+<div class="container" id="overview_container">
+	<div class="row">
+		<div class="col-md-1">
+		</div>
+		<div class="col-md-10" align="justify">
+			<h2>Introduction</h2>
+			Next-generation sequencing (NGS) of antibody V genes has emerged as a powerful tool in systems
+			immunology by providing qualitative and quantitative molecular measures on antibody polyclonal
+			composition [<a href="#ref1">1-3</a>]. Reproducible and robust information on antibody
+			repertoires is invaluable for basic and applied immunology studies. However, major computational
+			challenges exist when analyzing antibody sequences. For example, error handling, computing
+			somatic hypermutation levels, and V(D)J family assignments.
+
+			<br><br>
+
+			<h2>What is ASAP?</h2>
+			ASAP webserver is user-friendly, free and open to all users and there is no login requirement.
+			ASAP facilitates bioinformatics analyses on NGS antibody V gene data. One of the strengths of
+			ASAP is that it allows analyzing experimental replicates, which is valuable for increasing the
+			signal to noise ratio. Another major component is to upload the NGS data as obtained from the
+			sequencing machine without any need for preprocessing. ASAP is applicable for researchers that
+			are interested to address basic questions related to B cell development and differentiation as
+			well as applied researchers.
+
+			<br><br>
+
+			<h2>Input</h2>
+			Paired-end (R1 and R2) from one or more datasets (up to three replicates) in
+			<a href="https://en.wikipedia.org/wiki/fastq">Fastq format</a>. These datasets can be derived
+			from high throughput sequencing of human or murine antibody V genes. Default parameters are
+			pre-defined thus enabling the usage by non-expert users. However, advanced users can further
+			select parameters to customize their analysis.
+
+			<br><br>
+			<img src="pics/flow.jpg" id="flow">
+			<br><br>
+
+			<h2>Output and methodology<br></h2>
+			By far the highest diversity in antibodies occurs within the CDR3 region, which
+			is overwhelmingly responsible for antigen recognition
+			[<a href="#ref4">4</a>,<a href="#ref5">5</a>].
+			The CDR3 is thus considered as a unique identifier of antibody clones. Our methodology is
+			divided into individual and joint parts.
+			The individual part applies standard approaches of antibody V gene sequences filtration and
+			annotation using germline sequences from the <a href="http://www.imgt.org/">international
+			immunogenetics information system</a> (IMGT) [<a href="#ref6">6</a>]. The ASAP webserver uses
+			MiXCR [<a href="#ref7">7</a>] for the initial paired-end assembly and germline annotation and
+			ASAP further filters and preforms statistical calculations of somatic hypermutation rates, CDR3
+			lengths distribution, somatic hyphermutation, V(D)J family assignments and V(D)J recombination
+			linkage.
+			<br>
+			<br>
+			In the joint part of the ASAP webserver, additional information is obtained by analyzing the
+			commonalities and differences between multiple experimental repeats. ASAP examines the V gene
+			sequences and their frequency in each replicate to determine which sequences are less likely to
+			be a result of a sample preparation derived and/or sequencing errors. ASAP provides information
+			regarding the intersection of data between replicates and the correlation between samples. It
+			also  consolidates a final database (FASTA format) of all sequences passing the inclusion
+			criteria. The final file includes also meta-data regarding the germline family usage and the
+			prevalence of the sequences in all replicates.
+			<br>
+			All these analyses are presented graphically, as can be demonstrated in our
+			<a href="gallery.html">gallery section</a>.
+
+
+
+			<br><br>
+
+			<h2>References</h2>
+			<li><a href="http://www.pnas.org/content/111/6/2259" target="_blank" id="ref1">Lavinder, J. J. et al. <i>Proc Natl Acad Sci USA</i> 111, 2259-2264 (2014).</a></li>
+			<br>
+			<li><a href="http://www.pnas.org/content/110/8/2993" target="_blank" id="ref2">Wine, Y. et al. <i>Proc Natl Acad Sci USA</i> 110, 2993-2998 (2013).</a></li>
+			<br>
+			<li><a href="http://www.nature.com/articles/nbt.2782" target="_blank" id="ref3">Georgiou, G. et al. <i>Nat Biotech</i> 32, 158-168 (2014).</a></li>
+			<br>
+			<li><a href="https://www.sciencedirect.com/science/article/pii/S1074761300000066" target="_blank" id="ref4">Xu, J. L. et al. <i>Immunity</i> 13, 37-45 (2000).</a></li>
+			<br>
+			<li><a href="https://www.ncbi.nlm.nih.gov/books/NBK10757/" target="_blank" id="ref5">Murphy, K. et al. <i>Janeway's immunobiology</i>.  (Garland Science, 2012).</a></li>
+			<br>
+			<li><a href="https://academic.oup.com/nar/article/27/1/209/1234872" target="_blank" id="ref6">Lefranc, M.-P. et al. <i>Nucleic Acids Research</i> 27, 209-212 (1999).</a></li>
+			<br>
+			<li><a href="https://www.nature.com/articles/nmeth.3364" target="_blank" id="ref7">Bolotin, D. A. et al. <i>Nature Methods</i> 12, 380 (2015).</a></li>
+
+			<br><br>
+		</div>
+	</div>
+</div>
+</body>
+</html>
+
+
+
+
+
+
+

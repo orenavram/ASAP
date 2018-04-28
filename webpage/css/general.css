@@ -1,0 +1,76 @@
+#title-row{
+    padding-top: 10px;
+}
+
+#jumbo{
+    /*font-family: 'Kalam';*/
+    /*font-family: "PT Sans";*/
+    margin-bottom: 0px;
+    padding: 5px;
+    background-color: #9DD5FC;
+    /*font-family: "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;*/
+}
+
+#antibody_image{
+    width: 82px;
+    height: 67px;
+}
+
+#asap-title{
+    margin-top: 10px;
+    font-size: 60px;
+
+}
+
+#sub-title{
+    font-size: 30px;
+}
+
+#nav_container{
+    /*font-family: 'Kalam';*/
+    /*font-family: "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;*/
+    /*font-family: "PT Sans";*/
+    font-size: 30px;
+    padding-top: 10px;
+    line-height: 60px;
+}
+
+#ASAP_form{
+    padding-top: 20px;
+}
+
+#overview_container, #gallery_container{
+    /*font-family: 'Kalam';*/
+    /*font-family: "Sans";*/
+    /*font-family: "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;*/
+    font-size: 20px;
+}
+
+#basic{
+    /*font-family: 'Kalam';*/
+    /*font-family: "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;*/
+    font-size: 20px;
+}
+
+#flow{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+body{
+    font-family: Futura;
+    /*font-family: 'Kalam';*/
+}
+
+#file-button {
+    width: 150px;
+}
+
+#please-note{
+    color: red;
+}
+
+#behind-nav-bar-results{
+    padding: 60px;
+}

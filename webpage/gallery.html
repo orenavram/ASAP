@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>ASAP Gallery</title>
+    <!--<meta charset="utf-8">-->
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+
+    <link rel="shortcut icon" type="image/x-icon" href="pics/ASAP_logo.gif" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
+
+    <!--files for the select tag-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/i18n/defaults-*.min.js"></script>
+
+    <!--files for the checkbox tag (toggle)-->
+    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
+
+    <link rel="stylesheet" href="css/general.css">
+    <link rel="stylesheet" href="css/nav.css">
+
+    <!--<link href='https://fonts.googleapis.com/css?family=Kalam' rel='stylesheet'>-->
+
+    <!--<script src="https://code.jquery.com/jquery-1.10.2.js"></script>-->
+    <!--<script> $(function(){-->
+        <!--$("head").load("header.html");-->
+        <!--$('#loadingMask').fadeOut();});-->
+    <!--</script>-->
+</head>
+<body>
+<nav role="navigation" class="navbar navbar-inverse navbar-fixed-top">
+    <nav role="navigation" class="navbar navbar-inverse navbar-fixed-top" id="nav">
+        <div class="jumbotron" id="jumbo">
+            <div class="container">
+                <div class="row" id="title-row">
+                    <div class="col-md-1">
+                    </div>
+                    <div class="col-md-1">
+                        <img src="pics/ASAP_logo.gif" id="antibody_image" class="img-rounded">
+                    </div>
+                    <div class="col-md-9">
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span id="asap-title">ASAP</span>&nbsp;&nbsp;&nbsp;&nbsp;<span id="sub-title"><b>A</b> web server for Ig-<b>S</b>eq <b>A</b>nalysis <b>P</b>ipeline</span><br>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container" id="nav_container">
+            <div class="row">
+                <div class="col-md-1">
+                </div>
+                <div class="col-md-10">
+                    <ul class="nav navbar-nav" id="menu-nav">
+                        <li>
+                            <a href="index.html">Home</a>
+                        </li>
+                        <li>
+                            <a href="overview.html">Overview</a>
+                        </li>
+                        <li class="active">
+                            <a href="gallery.html">Gallery</a>
+                        </li>
+                        <li>
+                            <a href="terms.html">Terms of Use</a>
+                        </li>
+                        <li>
+                            <a href="credits.html">Credits</a>
+                        </li>
+                        <li>
+                            <a href="https://english.tau.ac.il/" id="tau-link" target="_blank">
+                                <img src=pics/TAU_LOGO.png id="tau-logo">
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+</nav>
+<div id="behind-nav-bar">
+</div>
+<div class="container" id="gallery_container">
+    <h2></h2>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            A pie chart showing the distribution of isotypes in a specific NGS replicate
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            <img src="pics/alignment_report.png" style="height: 70%; width: 70%;">
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br><br><br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            The number of non-synonymous (Ka) and synonymous (Ks) mutations and their ratios (Ka/Ks), based on comparison to the germline genes. The Y axis is the number of mutations per codon. Each dot represents a unique V gene nucleotide sequence.
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            <img src="pics/IGH_mutations.2.png" style="height: 100%; width: 100%;">
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br><br><br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            A histogram showing the frequency of the number of base pair mutations in a NGS replicate. The x axis represents the number of mutations (both synonymous and non-synonymous) defined by comparison to the germline genes.
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            <img src="pics/IGH_mutations.1.png" style="height: 70%; width: 70%;">
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br><br><br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            The distribution of CDR3 length (number of amino acids) in a NGS replicate.
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            <img src="pics/IGH_cdr3_len_counts.png" style="height: 70%; width: 70%;">
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br><br><br>
+    <!--<div class="row">-->
+        <!--<div class="col-md-1">-->
+        <!--</div>-->
+        <!--<div class="col-md-10" align="justify">-->
+            <!--The distribution of V subgroups in a replicate. Shown is the distribution of the super families for the heavy chain of IgG-->
+        <!--</div>-->
+        <!--<div class="col-md-1">-->
+        <!--</div>-->
+    <!--</div>-->
+    <!--<br>-->
+    <!--<div class="row">-->
+        <!--<div class="col-md-1">-->
+        <!--</div>-->
+        <!--<div class="col-md-10" align="justify">-->
+            <!--<img src="pics/IGH_V_counts.png" style="height: 40%; width: 40%;">-->
+        <!--</div>-->
+        <!--<div class="col-md-1">-->
+        <!--</div>-->
+    <!--</div>-->
+    <!--<br><br><br>-->
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            The distribution of the V(D)J combinations in a NGS replicate. Shown are the frequencies of the various combinations between the V and J subgroups.
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            <img src="pics/IGH_VJ_counts.png" style="height: 70%; width: 70%;">
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br><br><br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            Clonal expansion. The X axis shows the most prevalent 100 clones. For each clone, the Y axis represents the number of V gene amino acid reads supporting each clone (in blue) and the number of contributing unique V gene amino acid sequences (in green).
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            <img src="pics/IGH_cdr3_annotations.png" style="height: 100%; width: 100%;">
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br><br><br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            Sequence logo of one of the top (i.e., most expanded) clones.
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            <img src="pics/weblogo.png" style="height: 60%; width: 60%;">
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br><br><br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            Pearson correlation between two NGS replicates. Each dot represents a unique amino acid V gene. The X and Y axes indicate the number of times each such read appears in the first and the second replicate, respectively
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            <img src="pics/run1_run2_IGH_correlation.png" style="height: 100%; width: 100%;">
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br><br><br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            Venn diagram showing the number of V gene amino acid sequences that are shared among NGS replicates.
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-10" align="justify">
+            <img src="pics/IGH_runs_intersections.png" style="height: 90%; width: 90%;">
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+    <br><br><br>
+</div>
+</body>
+</html>
