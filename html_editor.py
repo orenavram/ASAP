@@ -94,7 +94,7 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
         f.write('</table></div>')
         html_footer = '<br><br><br>\n<hr>\n<h4 class=footer><p align=\'center\'>Questions and comments are welcome! Please <span class="admin_link"><a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%20' + run_number + '">contact us</a></span></p></h4>\n'
         # html_footer += '<div id="bottom_links" align="center"><span class="bottom_link"><a href="' + server_main_url + '" target="_blank">Home</a>&nbsp;|&nbsp<a href="' + server_main_url + 'overview.html" target="_blank">Overview</a>\n</span>\n<br>\n</div>\n</body>\n</html>\n'
-        html_footer += '<br><br><br>'
+        html_footer += '<br><br><br>\n</body>\n</html>\n'
         f.write(html_footer)
 
 
@@ -123,5 +123,6 @@ def edit_failure_html(html_path, html_mode, msg):
         f.write('<br><br><br>')
         f.write('<center><h2>')
         f.write('<font color="red">{}</font>'.format(msg))
-        f.write('Please try to re-run your job or contact us for further information')
+        f.write('Please try to re-run your job or <a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%2015249296875723">contact us</a> for further information')
         f.write('</h2></center><br><br>')
+        f.write('\n</body>\n</html>\n')

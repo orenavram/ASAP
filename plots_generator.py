@@ -90,8 +90,8 @@ def plot_venn(out_path, runs_annotations_sets, runs):
         logger.error('Can\'t plot venn diagram for {} sets!! (only for 2 or 3 sets)'.format(len(runs)))
         return
     plt.figure()
-    venn(runs_annotations_sets, set_labels=runs)
-    plt.title('Venn Diagram')
+    venn(runs_annotations_sets, set_labels=[x.title() for x in runs])
+    plt.title('The intersection between the different runs')
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
 

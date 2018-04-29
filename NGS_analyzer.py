@@ -4,7 +4,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('main')
 
-import sys, os
+import sys, os, traceback
 argv = sys.argv
 import shutil
 from email_sender import send_email

@@ -5,12 +5,13 @@ try:
     import sh
 except:
     pass
-import cgi, cgitb
+import cgi, cgitb, traceback
 from time import time, ctime
 from random import randint
 sys.path.append('/bioseq/bioSequence_scripts_and_constants')
 sys.path.append('/bioseq/asap')
 
+from email_sender import send_email
 from directory_creator import create_dir
 import ASAP_CONSTANTS as CONSTS
 
@@ -300,137 +301,147 @@ print('Location: ' + output_url) #Redirects to the results url. MUST appear befo
 print('Content-Type: text/html\n')  # For more details see https://www.w3.org/International/articles/http-charset/index#scripting
 sys.stdout.flush() #must be flushed immediately!!!
 
-write_info_paragraph_to_html(output_path)
+# Send me a notification email every time there's a new request
+send_email(smtp_server=CONSTS.GC.SMTP_SERVER, sender='TAU BioSequence <bioSequence@tauex.tau.ac.il>',
+           receiver='orenavram@gmail.com', subject='ASAP - A new job has been submitted: {}'.format(run_number), content=os.path.join(CONSTS.GC.ASAP_URL,'results',run_number))
 
-"""
-#hardcoded values for debugging
-example_page = 'yes'
-chains = 'IGH'
-MMU = 'False'
-len_threshold = '300'
-qlty_threshold = '20'
-number_of_duplicates = 2 
-"""
+try:
+    write_info_paragraph_to_html(output_path)
 
-with open(cgi_debug_path, 'a') as f:
-    # form debugging
-    f.write('{}\n{}: A new CGI request has been recieved!\n'.format('#'*50, ctime()))
-    f.write('These are the keys that the CGI received:\n{}\n\n'.format('; '.join(sorted(form.keys()))))
-    f.write('Form values are:\n')
-    for key in sorted(form.keys()):
-        if 'run' not in key:
-            f.write('{} = {}\n'.format(key, form[key]))
-    # for key in sorted(form.keys()):
-    #     if 'run' in key:
-    #         f.write('100 first characters of {} = '.format(key))
-    #         f.write('{}\n'.format(form[key].value[:100]))
-    f.write('\n\n')
+    with open(cgi_debug_path, 'a') as f:
+        # form debugging
+        f.write('{}\n{}: A new CGI request has been recieved!\n'.format('#'*50, ctime()))
+        f.write('These are the keys that the CGI received:\n{}\n\n'.format('; '.join(sorted(form.keys()))))
+        f.write('Form values are:\n')
+        for key in sorted(form.keys()):
+            if 'run' not in key:
+                f.write('{} = {}\n'.format(key, form[key]))
+        # for key in sorted(form.keys()):
+        #     if 'run' in key:
+        #         f.write('100 first characters of {} = '.format(key))
+        #         f.write('{}\n'.format(form[key].value[:100]))
+        f.write('\n\n')
 
-#extract form's values:
-user_email = form['email'].value.strip()
-example_page = form['example_page'].value
-chains = ','.join(form.getlist('chains'))
-MMU = form['MMU'].value
-len_threshold = form['len_threshold'].value
-qlty_threshold = form['qlty_threshold'].value
-number_of_clones_to_analyze = form['number_of_clones_to_analyze'].value
-raw_data_suffix = 'xls'
-if form['raw_data_suffix'].value == 'txt':
-    raw_data_suffix = 'txt'
-add_mass_spec_seq = 'no'
-#if this option is unchecked, it won't be send in the json (i.e., form['add_mass_spec_seq'].value might not work...)
-if 'add_mass_spec_seq' in form:
-    add_mass_spec_seq = 'yes'
-job_title = ''
-if form['job_title'].value != '':
-    job_title = form['job_title'].value.strip()
+    #extract form's values:
+    user_email = form['email'].value.strip()
+    example_page = form['example_page'].value
+    chains = ','.join(form.getlist('chains'))
+    MMU = form['MMU'].value
+    len_threshold = form['len_threshold'].value
+    qlty_threshold = form['qlty_threshold'].value
+    number_of_clones_to_analyze = form['number_of_clones_to_analyze'].value
+    raw_data_suffix = 'xls'
+    if form['raw_data_suffix'].value == 'txt':
+        raw_data_suffix = 'txt'
+    add_mass_spec_seq = 'no'
+    #if this option is unchecked, it won't be send in the json (i.e., form['add_mass_spec_seq'].value might not work...)
+    if 'add_mass_spec_seq' in form:
+        add_mass_spec_seq = 'yes'
+    job_title = ''
+    if form['job_title'].value != '':
+        job_title = form['job_title'].value.strip()
 
-if example_page == 'no':
-    # handling uploaded files:
-    number_of_duplicates = 1
+    if example_page == 'no':
+        # handling uploaded files:
+        number_of_duplicates = 1
 
-    #at least one run should exist:
-    run1_R1_filename, run1_R2_filename = process_uploaded_files('run1', cgi_debug_path)
+        #at least one run should exist:
+        run1_R1_filename, run1_R2_filename = process_uploaded_files('run1', cgi_debug_path)
 
-    # additional files might not exist
-    run2_R1_filename, run2_R2_filename, run3_R1_filename, run3_R2_filename, = '', '', '', ''
-    if form['run2_R1'].filename != '': #handle run2 if any
-        run2_R1_filename, run2_R2_filename = process_uploaded_files('run2', cgi_debug_path)
-        number_of_duplicates += 1
-    if form['run3_R1'].filename != '': #handle run3 if any
-        run3_R1_filename, run3_R2_filename = process_uploaded_files('run3', cgi_debug_path)
-        number_of_duplicates += 1
-else:
-    # no files to handle, just copy them to the example folder (if needed).
-    number_of_duplicates = 2
+        # additional files might not exist
+        run2_R1_filename, run2_R2_filename, run3_R1_filename, run3_R2_filename, = '', '', '', ''
+        if form['run2_R1'].filename != '': #handle run2 if any
+            run2_R1_filename, run2_R2_filename = process_uploaded_files('run2', cgi_debug_path)
+            number_of_duplicates += 1
+        if form['run3_R1'].filename != '': #handle run3 if any
+            run3_R1_filename, run3_R2_filename = process_uploaded_files('run3', cgi_debug_path)
+            number_of_duplicates += 1
+    else:
+        # no files to handle, just copy them to the example folder (if needed).
+        number_of_duplicates = 2
 
-
-with open(cgi_debug_path, 'a') as f: # for cgi debugging
-    f.write('Number of duplicates is {}\n'.format(number_of_duplicates))
-
-paths_to_reads_files = []
-urls_to_reads_files = []
-for i in range(number_of_duplicates):
-    run = 'run' + str(i + 1)
-    path_to_reads = os.path.join(wd, 'reads', run)
-    url_to_reads = os.path.join(results_url, 'reads', run)
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
-        f.write('{}: Creating path for reads...\n'.format(ctime()))
-    create_dir(path_to_reads)
-    paths_to_reads_files.append(os.path.join(path_to_reads, 'R1.fastq'))
-    paths_to_reads_files.append(os.path.join(path_to_reads, 'R2.fastq'))
-    urls_to_reads_files.append(os.path.join(url_to_reads, 'R1.fastq'))
-    urls_to_reads_files.append(os.path.join(url_to_reads, 'R2.fastq'))
+        f.write('Number of duplicates is {}\n'.format(number_of_duplicates))
 
-if example_page == 'yes':
+    paths_to_reads_files = []
+    urls_to_reads_files = []
+    for i in range(number_of_duplicates):
+        run = 'run' + str(i + 1)
+        path_to_reads = os.path.join(wd, 'reads', run)
+        url_to_reads = os.path.join(results_url, 'reads', run)
+        with open(cgi_debug_path, 'a') as f: # for cgi debugging
+            f.write('{}: Creating path for reads...\n'.format(ctime()))
+        create_dir(path_to_reads)
+        paths_to_reads_files.append(os.path.join(path_to_reads, 'R1.fastq'))
+        paths_to_reads_files.append(os.path.join(path_to_reads, 'R2.fastq'))
+        urls_to_reads_files.append(os.path.join(url_to_reads, 'R1.fastq'))
+        urls_to_reads_files.append(os.path.join(url_to_reads, 'R2.fastq'))
+
+    if example_page == 'yes':
+        with open(cgi_debug_path, 'a') as f: # for cgi debugging
+            f.write('{}: Copying example files...\n'.format(ctime()))
+        # copy example data
+        with open(cgi_debug_path, 'a') as f: # for cgi debugging
+            f.write('Fetching: rsync -ravz {} {}\n'.format(CONSTS.EXAMPLE_FILE_RUN1_R1, paths_to_reads_files[0]))
+        os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN1_R1, paths_to_reads_files[0]))
+        with open(cgi_debug_path, 'a') as f: # for cgi debugging
+            f.write('{}: ls of {} yields:\n{}\n'.format(ctime(), os.path.join(wd, 'reads', 'run1'), os.listdir(path_to_reads)))
+        with open(cgi_debug_path, 'a') as f: # for cgi debugging
+            f.write('Fetching: rsync -ravz {} {}\n'.format(CONSTS.EXAMPLE_FILE_RUN1_R2, paths_to_reads_files[1]))
+        os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN1_R2, paths_to_reads_files[1]))
+        os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN2_R1, paths_to_reads_files[2]))
+        os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN2_R2, paths_to_reads_files[3]))
+        with open(cgi_debug_path, 'a') as f: # for cgi debugging
+            f.write('{}: Files were copied successfully.\n'.format(ctime()))
+
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
-        f.write('{}: Copying example files...\n'.format(ctime()))
-    # copy example data
+        f.write('{}: ls of {} yields:\n{}\n'.format(ctime(), path_to_reads, os.listdir(path_to_reads)))
+
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
-        f.write('Fetching: rsync -ravz {} {}\n'.format(CONSTS.EXAMPLE_FILE_RUN1_R1, paths_to_reads_files[0]))
-    os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN1_R1, paths_to_reads_files[0]))
+        f.write('{}: write_running_parameters_to_html...\n'.format(ctime()))
+
+    write_running_parameters_to_html(output_path, run_number, job_title, number_of_duplicates, urls_to_reads_files, MMU, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, add_mass_spec_seq)
+
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
-        f.write('{}: ls of {} yields:\n{}\n'.format(ctime(), os.path.join(wd, 'reads', 'run1'), os.listdir(path_to_reads)))
+        f.write('{}: Running parameters were written to html successfully.\n'.format(ctime()))
+
+    # This is hidden field that only spammer bots might fill in...
+    confirm_email_add = form['confirm_email'].value  # if it is contain a value it is a spammer.
+
+    #TODO: ADD INPUT VERIFICATION BEFORE JOB SUBMISSION
+
+    parameters_file = os.path.join(wd, 'parameters.txt')
+    parameters = [wd, CONSTS.GC.MiXCR_dir, number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, add_mass_spec_seq]
+    prepare_parameters_file(parameters_file, parameters)
+
+    cmds_file = os.path.join(wd, 'qsub.cmds')
+    write_cmds_file(cmds_file, run_number, parameters_file)
+
+    queue_name = 'bioseq'
+    os.system('ssh bioseq@lecs2 python /bioseq/bioSequence_scripts_and_constants/q_submitter.py {} {} {} > {}'.format(cmds_file, wd, queue_name, cmds_file.replace('cmds', 'log')))
+
+    if user_email != '':
+        with open(os.path.join(wd, 'user_email.txt'), 'w') as f:
+            f.write(user_email)
+
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
-        f.write('Fetching: rsync -ravz {} {}\n'.format(CONSTS.EXAMPLE_FILE_RUN1_R2, paths_to_reads_files[1]))
-    os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN1_R2, paths_to_reads_files[1]))
-    os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN2_R1, paths_to_reads_files[2]))
-    os.system('rsync -ravz {} {}'.format(CONSTS.EXAMPLE_FILE_RUN2_R2, paths_to_reads_files[3]))
+        f.write('{}: CGI finished running.\n\n'.format(ctime()))
+
+except Exception as e:
+    msg = 'CGI crashed before the job was submitted :('
+    with open(output_path) as f:
+        html_content = f.read()
+    html_content = html_content.replace(CONSTS.GC.RELOAD_TAGS, '')
+    html_content = html_content.replace('RUNNING', 'FAILED')
+    html_content += '<br><br><br><center><h2><font color="red">{}</font><br><br>Please try to re-run your job or <a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%2015249296875723">contact us</a> for further information</h2></center><br><br>\n</body>\n</html>\n'.format(msg)
+    with open(output_path, 'w') as f:
+        html_content = f.write(html_content)
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
-        f.write('{}: Files were copied successfully.\n'.format(ctime()))
-
-with open(cgi_debug_path, 'a') as f: # for cgi debugging
-    f.write('{}: ls of {} yields:\n{}\n'.format(ctime(), path_to_reads, os.listdir(path_to_reads)))
-
-with open(cgi_debug_path, 'a') as f: # for cgi debugging
-    f.write('{}: write_running_parameters_to_html...\n'.format(ctime()))
-
-write_running_parameters_to_html(output_path, run_number, job_title, number_of_duplicates, urls_to_reads_files, MMU, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, add_mass_spec_seq)
-
-with open(cgi_debug_path, 'a') as f: # for cgi debugging
-    f.write('{}: Running parameters were written to html successfully.\n'.format(ctime()))
-
-
-# This is hidden field that only spammer bots might fill in...
-confirm_email_add = form['confirm_email'].value  # if it is contain a value it is a spammer.
-
-#TODO: ADD INPUT VERIFICATION BEFORE JOB SUBMISSION
-
-parameters_file = os.path.join(wd, 'parameters.txt')
-parameters = [wd, CONSTS.GC.MiXCR_dir, number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, add_mass_spec_seq]
-prepare_parameters_file(parameters_file, parameters)
-
-cmds_file = os.path.join(wd, 'qsub.cmds')
-write_cmds_file(cmds_file, run_number, parameters_file)
-
-queue_name = 'bioseq'
-os.system('ssh bioseq@lecs2 python /bioseq/bioSequence_scripts_and_constants/q_submitter.py {} {} {} > {}'.format(cmds_file, wd, queue_name, cmds_file.replace('cmds', 'log')))
-
-if user_email != '':
-    with open(os.path.join(wd, 'user_email.txt'), 'w') as f:
-        f.write(user_email)
-
-with open(cgi_debug_path, 'a') as f: # for cgi debugging
-    f.write('{}: CGI finished running.\n\n'.format(ctime()))
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        f.write('\n\n' + '$'*60 + '\n\n')
+        f.write(ctime() + ': ' + msg + '\n\n')
+        f.write(str(fname) +': ' + str(exc_type) + ', at line: ' + str(exc_tb.tb_lineno) + '\n\n')
+        f.write('$'*60)
 
 

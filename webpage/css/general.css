@@ -39,7 +39,7 @@
     padding-top: 20px;
 }
 
-#overview_container, #gallery_container{
+#overview_container, #gallery_container, #credits_container{
     /*font-family: 'Kalam';*/
     /*font-family: "Sans";*/
     /*font-family: "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif;*/
@@ -59,7 +59,7 @@
 }
 
 body{
-    font-family: Futura;
+    font-family: Ubuntu, sans-serif;
     /*font-family: 'Kalam';*/
 }
 
