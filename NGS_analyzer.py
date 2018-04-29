@@ -32,7 +32,6 @@ if os.path.exists('/Users/Oren/'):
     sys.path.append('./cgi') # this is where GENERAL_CONSTANTS.py is located in my comp
     html_path = os.path.join(gp.working_dir, 'output.html')
     html_mode = 'w'
-
 else:
     sys.path.append('/bioseq/bioSequence_scripts_and_constants') # this is where GENERAL_CONSTANTS.py is located in host-ibis3
     sys.path.append('/bioseq/asap') # this is where ASAP_CONSTANTS is located in host-ibis3

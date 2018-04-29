@@ -39,7 +39,7 @@ def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', a
     barplot.set_xticklabels(x_values, rotation=rotation, fontsize=fontsize)
     barplot.set_xlabel(x_label)
     barplot.set_ylabel(y_label)
-    barplot.set_title(title)
+    # barplot.set_title(title)
 
     plt.tight_layout()
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
@@ -67,19 +67,6 @@ def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff,
         if style=='seaborn-paper':
             break
 
-# def plot_intersection_histogram(runs, y_values, out_path):
-#     '''plot a simple bar chart of CDR3 lengths and VDJ assignments'''
-#
-#     logger.debug(runs)
-#     logger.debug(y_values)
-#     barplot = sns.barplot(np.arange(len(runs)), y_values, color="mediumpurple")
-#     barplot.set_xticklabels(runs)
-#     barplot.set_title('Percent of intersection between joint and the different runs')
-#     barplot.set_ylabel('Frequency (%)')
-#     plt.ylim([0, 100])
-#
-#     plt.savefig(out_path)
-#     plt.close()
 
 def plot_venn(out_path, runs_annotations_sets, runs):
     if len(runs) == 2:
@@ -90,8 +77,8 @@ def plot_venn(out_path, runs_annotations_sets, runs):
         logger.error('Can\'t plot venn diagram for {} sets!! (only for 2 or 3 sets)'.format(len(runs)))
         return
     plt.figure()
-    venn(runs_annotations_sets, set_labels=[x.title() for x in runs])
-    plt.title('The intersection between the different runs')
+    venn(runs_annotations_sets, set_labels=[x.replace('run','replicate ').title() for x in runs])
+    # plt.title('The intersection between the different runs')
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
 
@@ -111,8 +98,8 @@ def generate_alignment_report_pie_chart(out_path, isotype_to_precent_dict, run=N
     plt.tight_layout()
     if not run:
         run = 'Replicate '+ out_path[out_path.find('run')+len('run')]
-    title = '{} isotype distribution\n'.format(run)
-    plt.title(title)
+    # title = '{} isotype distribution\n'.format(run)
+    # plt.title(title)
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
 
@@ -125,7 +112,7 @@ def plot_correlation(x, y, i, j, out_path):
     plt.plot(x, a*x + b, 'b', label='Fitted line (r={:.3f})'.format(correlation))
     plt.xlabel('\nCounts in replicate {}'.format(i))
     plt.ylabel('Counts in replicate {}\n'.format(j))
-    plt.title('Pearson correlation of V-gene sequence counts of replicate {} and replicate {}'.format(i, j))
+    # plt.title('Pearson correlation of V-gene sequence counts of replicate {} and replicate {}'.format(i, j))
     plt.legend(loc='best')
     plt.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
@@ -137,21 +124,22 @@ def generate_mutations_boxplots(core_dna_to_num_of_mutations_dict, out_path):
     # Create an axes instance
     ax = fig.add_subplot(221)
     data = np.array(list(core_dna_to_num_of_mutations_dict.values()))
-    plot_sub_figure(ax, data, ['Ka', 'Ks'])
+    plot_sub_figure(ax, data, ['Ka', 'Ks'], '#Mutations per codon')
 
     # Create an axes instance
     ax = fig.add_subplot(222)
     Ka_Ks = data[:,0]/data[:,1]
-    plot_sub_figure(ax, Ka_Ks, ['Ka/Ks'])
+    plot_sub_figure(ax, Ka_Ks, ['Ka/Ks'], '#Non synonymous per #synonymous mutations')
 
     fig.savefig(out_path, dpi=500, bbox_inches='tight')
     plt.close()
 
 
-def plot_sub_figure(ax, data, xticklabels):
+def plot_sub_figure(ax, data, xticklabels, ylab):
     ## to get fill color
     bp = ax.boxplot(data, patch_artist=True, showfliers=False)
     ax.set_xticklabels(xticklabels)
+    plt.ylabel(ylab)
 
     ## change outline color, fill color and linewidth of the boxes
     for box in bp['boxes']:
