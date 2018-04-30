@@ -11,7 +11,7 @@ from plots_generator import generate_alignment_report_pie_chart
 from text_handler import write_dict_to_file, logger
 
 
-def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_annotation_file_suffix, mutations_file_suffix, len_threshold, qlty_threshold, allowed_chain_types):
+def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_annotation_file_suffix, mutations_file_suffix, len_threshold, qlty_threshold):
     '''parse alignment procedure'''
     # input: alignments file, path for output files, length threshold, quality thresholds of total sequence and of CDR3 region
     # output: none. creates output files as specified in "notes" file
@@ -38,7 +38,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
 
     t1 = time.time()
 
-    allowed_chain_types = allowed_chain_types + ['unknown'] #do not use += or append here!
+    allowed_chain_types = ['IGH', 'IGK', 'IGL', 'unknown'] #do not use += or append here!
 
     total_lines = 1 # Shifted by one because of the header. More convenient when looking in notepad++...
     sequences_frequency_counter = {} #:{str:int}
@@ -141,15 +141,16 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
 
             # verify that there is a proper end_j_seq.
             # MUST be after making sure that '*' is NOT in core_aa (otherwise it makes problems with the regex).
-            has_end_j_seq = False
-            for end_j_seq in aa.end_j_seq: # aa.end_j_seq is a tuple with at least one string
-                if match_with_up_to_k_mismatches(core_aa[-len(end_j_seq): ], end_j_seq):
-                    has_end_j_seq = True
-                    break
-            if not has_end_j_seq:
-                logger.info('No end_j_seq in core_aa:\n{}'.format(core_aa))
-                errors_count_dict['inappropriate_end_j_seq'] += 1
-                continue
+            if chain == 'IGH':
+                has_end_j_seq = False
+                for end_j_seq in aa.end_j_seq: # aa.end_j_seq is a tuple with at least one string
+                    if match_with_up_to_k_mismatches(core_aa[-len(end_j_seq): ], end_j_seq):
+                        has_end_j_seq = True
+                        break
+                if not has_end_j_seq:
+                    logger.info('IGH with no end_j_seq in core_aa:\n{}'.format(core_aa))
+                    errors_count_dict['inappropriate_end_j_seq'] += 1
+                    continue
 
             #no more filtrations after this point!!
             alignments_filtered_txt += line

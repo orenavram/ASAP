@@ -12,17 +12,17 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
     with open(html_path, html_mode) as f:
         html_finish_header = '<br><br><br><center><h2>RESULTS:<h2><a href=\'outputs.zip\' target=\'_blank\'><h3><b>Download zipped full results</b></h3></a></center><br><br>\n'
         f.write(html_finish_header)
-        f.write('<div><table align="center">')
-        f.write('<tr><td></td>')
+        f.write('<div><table class="table">')
+        f.write('<thead><tr><th></th>')
 
         runs = ['run' + str(i + 1) for i in range(gp.number_of_runs)] + ['joint']
         for run in runs:
-            f.write('<td align="center">')
+            f.write('<th align="center">')
             #if os.path.exists(gp.working_dir + '/outputs/' + run):
-            f.write('<H2><b>' + run.replace('run','replicate ').title() + ' results</b></H2>\n')
-            f.write('</td>')
+            f.write('<h2><b>' + run.replace('run','replicate ').title() + ' results</b></h2>\n')
+            f.write('</th>')
 
-        f.write('</tr>')
+        f.write('</tr><thead><tbody>')
         for chain in gp.chains:
 
             f.write('<tr>')
@@ -37,9 +37,6 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
                 f.write('<ul>')
                 link = '<a href="outputs/' + run + '/parsed_mixcr_output/alignment_report.png" target="_blank">Alignment report pie chart</a>'
                 f.write('<li>' + link + ' ; ')
-                # if run != 'joint': #TODO: maybe this block should be removed?
-                #     raw_link = '(<a href="outputs/' + run + '/parsed_mixcr_output/alignment_report.log" target="_blank">raw_data</a>)'
-                #     f.write(raw_link)
                 f.write('</li>')
 
                 link = '<a href="outputs/' + run + '/parsed_mixcr_output/' + chain + gp.sequence_annotation_file_suffix + '" target="_blank">Sequence annotations</a>'
@@ -96,7 +93,7 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
                 f.write('</ul>')
                 f.write('</td>')
 
-            f.write('</tr>')
+            f.write('</tr></tbody>')
         f.write('</table></div>')
         html_footer = '<br><br><br>\n<hr>\n<h4 class=footer><p align=\'center\'>Questions and comments are welcome! Please <span class="admin_link"><a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%20' + run_number + '">contact us</a></span></p></h4>\n'
         # html_footer += '<div id="bottom_links" align="center"><span class="bottom_link"><a href="' + server_main_url + '" target="_blank">Home</a>&nbsp;|&nbsp<a href="' + server_main_url + 'overview.html" target="_blank">Overview</a>\n</span>\n<br>\n</div>\n</body>\n</html>\n'
@@ -175,7 +172,7 @@ def edit_failure_html(html_path, html_mode, msg):
     with open(html_path, html_mode) as f:
         f.write('<br><br><br>')
         f.write('<center><h2>')
-        f.write('<font color="red">{}</font>'.format(msg))
+        f.write('<font color="red">{}</font><br><br>'.format(msg))
         f.write('Please try to re-run your job or <a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%2015249296875723">contact us</a> for further information')
         f.write('</h2></center><br><br>')
         f.write('\n</body>\n</html>\n')

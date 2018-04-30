@@ -40,7 +40,7 @@ def analyze_samples(gp):
                 logger.info('Skipping parse_alignment_file, output files already exist...')
             else:
                 logger.info('Applying parse alignments procedure of {}...'.format(run))
-                parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, gp.sequence_annotation_file_suffix, gp.mutations_file_suffix, gp.len_threshold, gp.sequencing_quality_threshold, gp.chains)
+                parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, gp.sequence_annotation_file_suffix, gp.mutations_file_suffix, gp.len_threshold, gp.sequencing_quality_threshold)
                 with open(done_path, 'w') as f:
                     pass
         except Exception as e:
@@ -48,6 +48,10 @@ def analyze_samples(gp):
             raise e
 
     remove_irrelevant_chains(gp)
+
+    if gp.chains == []:
+        logger.info('No relevant chains to analyze...')
+        raise ValueError('No relevant chains to analyze...')
 
     try:
         logger.info('Joining runs...')

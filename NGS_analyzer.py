@@ -1,49 +1,53 @@
-from time import time
-start = time()
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('main')
-
-import sys, os, traceback
-argv = sys.argv
-import shutil
-from email_sender import send_email
-from sample_analyzer import analyze_samples
-import global_params as gp
-from directory_creator import create_dir
-from html_editor import edit_success_html, edit_failure_html
-
-
-logger.info('Starting '+argv[0]+'!')
-logger.debug('argv = ' + str(argv))
-logger.info('Usage: python3 ' + argv[0] + ' <?parameters_file_name [parameters.txt]>')
-if len(argv) < 2:
-    parameters_file_name = os.path.join(gp.working_dir, 'parameters.txt')
-else:
-    parameters_file_name = os.path.join(gp.working_dir, argv[1])
-logger.info('parameter file: ' + parameters_file_name)
-
-create_dir(gp.output_path)
-
-#main code!
-succeeded = True
-server_main_url = 'http://asap.tau.ac.il/'
-if os.path.exists('/Users/Oren/'):
-    sys.path.append('./cgi') # this is where GENERAL_CONSTANTS.py is located in my comp
-    html_path = os.path.join(gp.working_dir, 'output.html')
-    html_mode = 'w'
-else:
-    sys.path.append('/bioseq/bioSequence_scripts_and_constants') # this is where GENERAL_CONSTANTS.py is located in host-ibis3
-    sys.path.append('/bioseq/asap') # this is where ASAP_CONSTANTS is located in host-ibis3
-    html_path = os.path.join(gp.working_dir, 'output.php')
-    html_mode = 'a'
-
-import ASAP_CONSTANTS as CONSTS
-
 try:
+    from time import time
+
+    start = time()
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger('main')
+
+    import sys, os, traceback
+
+    argv = sys.argv
+    import shutil
+    from email_sender import send_email
+    from directory_creator import create_dir
+    from html_editor import edit_success_html, edit_failure_html
+
+    import global_params as gp
+
+    logger.info('Starting ' + argv[0] + '!')
+    logger.debug('argv = ' + str(argv))
+    logger.info('Usage: python3 ' + argv[0] + ' <?parameters_file_name [parameters.txt]>')
+    if len(argv) < 2:
+        parameters_file_name = os.path.join(gp.working_dir, 'parameters.txt')
+    else:
+        parameters_file_name = os.path.join(gp.working_dir, argv[1])
+    logger.info('parameter file: ' + parameters_file_name)
+
+    create_dir(gp.output_path)
+
+    # main code!
+    server_main_url = 'http://asap.tau.ac.il/'
+    if os.path.exists('/Users/Oren/'):
+        sys.path.append('./cgi')  # this is where GENERAL_CONSTANTS.py is located in my comp
+        html_path = os.path.join(gp.working_dir, 'output.html')
+        html_mode = 'w'
+    else:
+        sys.path.append(
+            '/bioseq/bioSequence_scripts_and_constants')  # this is where GENERAL_CONSTANTS.py is located in host-ibis3
+        sys.path.append('/bioseq/asap')  # this is where ASAP_CONSTANTS is located in host-ibis3
+        html_path = os.path.join(gp.working_dir, 'output.php')
+        html_mode = 'a'
+
+    import ASAP_CONSTANTS as CONSTS
+
+    from sample_analyzer import analyze_samples
     analyze_samples(gp)
+    succeeded = True
 except Exception as e:
-    error_msg = 'ASAP calculation crashed with the following error:<br>{}<br><br>'.format(str(e) or type(e).__name__)
+    error_msg = 'ASAP calculation crashed :('
     logger.error(error_msg)
     succeeded = False
 
@@ -77,6 +81,7 @@ if os.path.exists(user_email_file):
         addressee = f.read().rstrip()
 
     server_url = 'http://asap.tau.ac.il/results'
+    results_page = os.path.join(server_url, run_number, 'output.php')
     if succeeded:
         email_content = '''Hello,
     
@@ -84,9 +89,9 @@ The results for your ASAP run are ready at:
 {}
 
 Please note: the results will be kept on the server for three months.
-        '''.format(os.path.join(server_url, run_number, 'output.php'))
+        '''.format(results_page)
     else:
-        email_content = 'ASAP calculation failed. For further information please visit: {}'.format(html_path)
+        email_content = 'ASAP calculation failed. For further information please visit: {}'.format(results_page)
 
     email_content += '\n\nThanks, ASAP Team'
 

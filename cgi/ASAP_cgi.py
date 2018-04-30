@@ -123,17 +123,18 @@ def write_running_parameters_to_html(output_path, run_number, job_title, number_
 
         f.write('<div class="row" style="font-size: 20px;">')
         if job_title != '':
-            f.write('<div class="col-md-3">')
-            f.write('<b>Job title:</b>{}<br><br>'.format(job_title))
+            f.write('<div class="col-md-6">')
+            f.write('<b>Job title: </b>{}<br><br>'.format(job_title))
             f.write('</div>')
+            f.write('</div><div class="row" style="font-size: 20px;">')
 
         f.write('<div class="col-md-3">')
         f.write('<b>Organism: </b>{}'.format(MMU))
         f.write('</div>')
 
-        f.write('<div class="col-md-3">')
-        f.write('<b>Chains: </b>{}<br>'.format(chains))
-        f.write('</div>')
+        # f.write('<div class="col-md-3">')
+        # f.write('<b>Chains: </b>{}<br>'.format(chains))
+        # f.write('</div>')
 
         f.write('</div><br>')
 
@@ -266,7 +267,7 @@ def write_cmds_file(cmds_file, run_number, parameters_file):
     with open(cmds_file, 'w') as f:
         f.write('setenv PATH "/bioseq/Programs/MAFFT_7.222/installation/bin:${PATH}"')
         f.write(new_line_delimiter)
-        f.write('module load python/anaconda_python-3.5')
+        f.write('module load python/anaconda_python-3.6.4')
         f.write(new_line_delimiter)
         f.write(' '.join(['python', CONSTS.MAIN_SCRIPT, parameters_file, '""']))
         f.write('\t' + 'ASAP_' + run_number)
@@ -433,7 +434,7 @@ except Exception as e:
         html_content = f.read()
     html_content = html_content.replace(CONSTS.GC.RELOAD_TAGS, '')
     html_content = html_content.replace('RUNNING', 'FAILED')
-    html_content += '<br><br><br><center><h2><font color="red">{}</font><br><br>Please try to re-run your job or <a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%2015249296875723">contact us</a> for further information</h2></center><br><br>\n</body>\n</html>\n'.format(msg)
+    html_content += '<br><br><br><center><h2><font color="red">' + msg + '</font><br><br>Please try to re-run your job or <a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%2015249296875723">contact us</a> for further information</h2></center><br><br>\n</body>\n</html>\n'
     with open(output_path, 'w') as f:
         html_content = f.write(html_content)
     with open(cgi_debug_path, 'a') as f: # for cgi debugging

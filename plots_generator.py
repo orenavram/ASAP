@@ -46,26 +46,25 @@ def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', a
     plt.close()
 
 
-def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff, fontsize=15):
+def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff, fontsize=20):
     title = '{} top ranking clones prevalence\n'.format(cutoff)
     cols = np.loadtxt(cdr3_annotations_path, usecols=(1, 2), dtype='int')
     rank = range(1, cutoff+1)
-    for style in plt.style.available:
-        plt.figure(figsize=[25,5])
-        plt.style.use(style)
-        plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,0], label='Reads counts')
-        plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,1], label='Clonal expansion')
-        plt.title(title, fontsize=fontsize)
-        plt.xlabel('\nClone number', fontsize=fontsize)
-        plt.ylabel('Counts\n', fontsize=fontsize)
-        plt.xticks(range(0,cutoff+1,10), fontsize=fontsize)
-        plt.yticks(fontsize=fontsize)
-        plt.legend(loc='best', fontsize=fontsize)
-        if style=='seaborn-paper':
-            plt.savefig(out_path, dpi=500, bbox_inches='tight')
-        plt.close()
-        if style=='seaborn-paper':
-            break
+    #    for style in plt.style.available:
+    plt.figure(figsize=[25,5])
+    plt.style.use('seaborn-deep')
+    plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,0], label='Reads counts')
+    plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,1], label='Clonal expansion')
+    plt.xlabel('\nClone number', fontsize=fontsize)
+    plt.ylabel('Counts\n', fontsize=fontsize)
+    plt.xticks(range(0,cutoff+1,10), fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    plt.legend(loc='best', fontsize=fontsize)
+    # if style=='seaborn-paper':
+    plt.savefig(out_path, dpi=500, bbox_inches='tight')
+    plt.close()
+    # if style=='seaborn-paper':
+    #     break
 
 
 def plot_venn(out_path, runs_annotations_sets, runs):

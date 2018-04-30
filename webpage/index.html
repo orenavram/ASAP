@@ -99,7 +99,7 @@
         <div class="col-md-1">
         </div>
         <div class="col-md-10" id="basic">
-            <form id="ASAP_form" action="http://asap.tau.ac.il/cgi-bin/ASAP_cgi.py" method="post" ENCTYPE="multipart/form-data">
+            <form id="ASAP_form" action="http://asap.tau.ac.il/cgi-bin/ASAP_cgi.py" method="post" ENCTYPE="multipart/form-data" target="_blank">
                     <input type="hidden" name="example_page" value="no">
                     <div id="please-note" align="justify">Please notice that files larger than 100MB may require up to 30 minutes to be uploaded, depending on your network speed. It is possible and recommended to upload zipped fastq files (gzip format).</div>
                     <br><br>
@@ -130,11 +130,11 @@
                             <div name="file_button"></div> <input type="file" name="run3_R2">
                         </label>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="display: none;">
                         <b>Chains:</b>
-                        <label><input type="checkbox" name="chains" value="IGH" checked/> IGH</label>
-                        <label><input type="checkbox" name="chains" value="IGK"/> IGK</label>
-                        <label><input type="checkbox" name="chains" value="IGL"/> IGL</label>
+                        <label><input type="checkbox" name="chains" value="IGH" checked> IGH</label>
+                        <label><input type="checkbox" name="chains" value="IGK" checked> IGK</label>
+                        <label><input type="checkbox" name="chains" value="IGL" checked> IGL</label>
                         <!--
                             <span class="help-block">This is some help text that breaks onto a new line and may extend more than one line.</span>
                         -->

@@ -1,6 +1,6 @@
 from Bio import SeqIO
 from Bio.Align import AlignInfo
-from Bio.Align.Generic import Alignment
+from Bio.Align import MultipleSeqAlignment
 from Bio.Alphabet import Gapped, IUPAC
 from msa_parser import remove_sparse_columns
 from weblogo_generator import generate_weblogo
@@ -171,7 +171,7 @@ def find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path):
 def align_sequences(multiple_sequences, ms_path, msa_path, cluster_number):
     # create alignment object from a list of multiple sequences and write it to a file
 
-    aln = Alignment(Gapped(IUPAC.protein, '-'))
+    aln = MultipleSeqAlignment(Gapped(IUPAC.protein, '-'))
 
     # write ms to file
     with open(ms_path, 'w') as f:
