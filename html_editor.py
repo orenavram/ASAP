@@ -15,7 +15,9 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
         f.write('<div><table class="table">')
         f.write('<thead><tr><th></th>')
 
-        runs = ['run' + str(i + 1) for i in range(gp.number_of_runs)] + ['joint']
+        runs = ['run' + str(i + 1) for i in range(gp.number_of_runs)]
+        if gp.joint_run_is_needed:
+            runs += ['joint']
         for run in runs:
             f.write('<th align="center">')
             #if os.path.exists(gp.working_dir + '/outputs/' + run):
@@ -76,6 +78,9 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
                     top_cdr3_analysis_html_path = os.path.join(gp.output_path, run, chain + gp.top_cdr3_annotation_file_suffix).replace(gp.raw_data_file_suffix, 'html')
                     edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_main_url, run_number, chain, run)
 
+                link = '<a href="outputs/' + run + '/' + chain + '_final.fasta" target="_blank">Final fasta</a>'
+                f.write('<li>' + link + ' ;</li>\n\n')
+
                 if run == 'joint':
                     link = '<a href="outputs/'+run+'/parsed_mixcr_output/' + chain + '_runs_intersections.png" target="_blank">Runs intersection</a>'
                     f.write('<li>' + link + ' ;</li>\n')
@@ -87,9 +92,6 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
                             c_runs = correlation_file.split('_')[:2] #e.g., 'run1_run2_IGH_correlation.png'
                             link = '<a href="outputs/'+run+'/' + correlation_file + '" target="_blank">Correlation of {} and {}</a>'.format(*c_runs)
                             f.write('<li>' + link + ' ;</li>\n')
-
-                    link = '<a href="outputs/'+run+'/' + chain + '_final.fasta" target="_blank">Final '+run+' fasta</a>'
-                    f.write('<li>' + link + ' ;</li>\n\n')
 
                 f.write('</ul>')
                 f.write('</td>')

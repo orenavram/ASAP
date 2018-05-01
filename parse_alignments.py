@@ -80,9 +80,22 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
                 errors_count_dict['no_overlap'] += 1
                 continue
 
-            # discard too short reads
+            chain = line_tokens[best_v_family_col][:3]
+
+            # sanity check
+            if line_tokens[20][:3] != line_tokens[best_v_family_col][:3]:
+                logger.debug(line)
+                logger.debug(line[20][:3])
+                logger.debug(line[best_v_family_col][:3])
+                logger.debug('line[20][:3] != line[best_v_family_col][:3]')
+
             dna_read = line_tokens[dna_sequence]
-            read_len = len(dna_read)
+            # a combination that should generate the relevant part of the antibody dna
+            # (from the end of the 5' primer until the end of the end_j_seq)
+            core_dna = line_tokens[6] + line_tokens[4] + line_tokens[10] + line_tokens[8] + line_tokens[14] + line_tokens[12] + line_tokens[16]
+
+            # discard too short core dna's
+            read_len = len(core_dna)
             if read_len < len_threshold:
                 errors_count_dict['too_short_length'] += 1
                 continue
@@ -100,19 +113,6 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             if cdr3 == '': # or '*' in cdr3 :
                 errors_count_dict['missing_cdr3'] += 1
                 continue
-
-            chain = line_tokens[best_v_family_col][:3]
-
-            # sanity check
-            if line_tokens[20][:3] != line_tokens[best_v_family_col][:3]:
-                logger.debug(line)
-                logger.debug(line[20][:3])
-                logger.debug(line[best_v_family_col][:3])
-                logger.debug('line[20][:3] != line[best_v_family_col][:3]')
-
-            # a combination that should generate the relevant part of the antibody dna
-            # (from the end of the 5' primer until the end of the end_j_seq)
-            core_dna = line_tokens[6] + line_tokens[4] + line_tokens[10] + line_tokens[8] + line_tokens[14] + line_tokens[12] + line_tokens[16]
 
             # this should be the translation of the core_dna
             core_aa = line_tokens[7] + line_tokens[5] + line_tokens[11] + line_tokens[9] + line_tokens[15] + line_tokens[13] + line_tokens[17]
@@ -148,7 +148,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
                         has_end_j_seq = True
                         break
                 if not has_end_j_seq:
-                    logger.info('IGH with no end_j_seq in core_aa:\n{}'.format(core_aa))
+                    logger.debug('IGH with no end_j_seq in core_aa:\n{}'.format(core_aa))
                     errors_count_dict['inappropriate_end_j_seq'] += 1
                     continue
 

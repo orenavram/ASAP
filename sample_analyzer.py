@@ -3,7 +3,7 @@ import os
 from mixcr_procedure import mixcr_procedure
 from parse_alignments import parse_alignment_file
 from directory_creator import create_dir
-from runs_aggregator import join_runs_analyses
+from runs_aggregator import join_runs_analyses, generate_final_fasta_with_mass_spec_sec
 from plots_generator import plot_barplot, generate_mutations_boxplots
 from text_handler import write_dict_to_file, read_table_to_dict
 from cdr3_analyzer import analyze_cdr3
@@ -14,9 +14,9 @@ logger = logging.getLogger('main')
 
 def analyze_samples(gp):
 
-    for i in range(1, gp.number_of_runs+1):
+    for i in range(gp.number_of_runs):
 
-        run = 'run' + str(i)
+        run = 'run' + str(i+1)
 
         mixcr_output_path, parsed_mixcr_output_path, assignments_path, cdr3_analysis_path = create_sub_working_directories(gp, run)
 
@@ -47,6 +47,30 @@ def analyze_samples(gp):
             logger.error('Error in parse alignments procedure: {}'.format(str(e)))
             raise e
 
+        try:
+            done_path = os.path.join(gp.output_path, 'done_3_' + run + '_' + 'generate_final_fasta.txt')
+            if os.path.exists(done_path):
+                logger.info('Skipping generate_final_fasta, output files already exist...')
+            else:
+                logger.info('Generating final fasta file of {}...'.format(run))
+                for chain in gp.chains:
+                    annotations_path = os.path.join(parsed_mixcr_output_path, chain + gp.sequence_annotation_file_suffix)
+                    sequence_to_entry_dict = {}
+                    if os.path.exists(annotations_path):
+                        with open(annotations_path) as f:
+                            f.readline() #skip header
+                            for line in f:
+                                entry = line.split()
+                                sequence_to_entry_dict[entry[3]] = entry #entry[3] is aa_seq
+                        final_fasta_path = os.path.join(gp.run_output_paths[i], chain + '_final.fasta')
+                        from aa_sequences import mass_spec_seq
+                        generate_final_fasta_with_mass_spec_sec(final_fasta_path, sequence_to_entry_dict, mass_spec_seq)
+                with open(done_path, 'w') as f:
+                    pass
+        except Exception as e:
+            logger.error('Error in generate_final_fasta: {}'.format(str(e)))
+            raise e
+
     remove_irrelevant_chains(gp)
 
     if gp.chains == []:
@@ -54,29 +78,25 @@ def analyze_samples(gp):
         raise ValueError('No relevant chains to analyze...')
 
     try:
-        logger.info('Joining runs...')
-        # TODO: uncomment this block once final_fasta is implemented for each file
-        '''
-        joint_run_is_needed = gp.run_number > 1 
-        if joint_run_is_needed:
-        '''
-        joint_mixcr_output_path, joint_parsed_mixcr_output_path, joint_assignments_path, joint_cdr3_analysis_path = create_sub_working_directories(gp, 'joint')
+        gp.joint_run_is_needed = gp.number_of_runs > 1
+        if gp.joint_run_is_needed:
+            joint_mixcr_output_path, joint_parsed_mixcr_output_path, joint_assignments_path, joint_cdr3_analysis_path = create_sub_working_directories(gp, 'joint')
 
-        done_path = os.path.join(gp.output_path, 'done_3_' + 'join_runs_analysis.txt')
-        if os.path.exists(done_path):
-            logger.info('Skipping join_runs_analysis, output files already exist...')
-        else:
-            logger.info('Joining runs analysis...')
-            join_runs_analyses(gp.number_of_runs, gp.run_output_paths, joint_parsed_mixcr_output_path, gp.chains,
-                               gp.sequence_annotation_file_suffix, gp.mutations_file_suffix)
-            with open(done_path, 'w') as f:
-                pass
+            done_path = os.path.join(gp.output_path, 'done_4_' + 'join_runs_analysis.txt')
+            if os.path.exists(done_path):
+                logger.info('Skipping join_runs_analysis, output files already exist...')
+            else:
+                logger.info('Joining runs analysis...')
+                join_runs_analyses(gp.number_of_runs, gp.run_output_paths, joint_parsed_mixcr_output_path, gp.chains,
+                                   gp.sequence_annotation_file_suffix, gp.mutations_file_suffix)
+                with open(done_path, 'w') as f:
+                    pass
     except Exception as e:
        logger.error('Error in join_runs_analyses: {}'.format(str(e)))
        raise
 
     try:
-        done_path = os.path.join(gp.output_path, 'done_4_' + 'parse_annotation_files.txt')
+        done_path = os.path.join(gp.output_path, 'done_5_' + 'parse_annotation_files.txt')
         if os.path.exists(done_path):
             logger.info('Skipping parse_annotation_files, output files already exist...')
         else:
@@ -89,7 +109,7 @@ def analyze_samples(gp):
        raise
 
     try:
-        done_path = os.path.join(gp.output_path, 'done_5_' + 'plot_assignments.txt')
+        done_path = os.path.join(gp.output_path, 'done_6_' + 'plot_assignments.txt')
         if os.path.exists(done_path):
             logger.info('Skipping plot_assignments, output files already exist...')
         else:
@@ -102,7 +122,7 @@ def analyze_samples(gp):
        raise
 
     try:
-        done_path = os.path.join(gp.output_path, 'done_6_' + 'plot_mutation_analyses.txt')
+        done_path = os.path.join(gp.output_path, 'done_7_' + 'plot_mutation_analyses.txt')
         if os.path.exists(done_path):
             logger.info('Skipping plot_mutation_analyses, output files already exist...')
         else:
@@ -115,7 +135,7 @@ def analyze_samples(gp):
        raise
 
     try:
-        done_path = os.path.join(gp.output_path, 'done_7_' + 'analyze_cdr3.txt')
+        done_path = os.path.join(gp.output_path, 'done_8_' + 'analyze_cdr3.txt')
         if os.path.exists(done_path):
             logger.info('Skipping analyze_cdr3, output files already exist...')
         else:
@@ -172,7 +192,7 @@ def remove_irrelevant_chains(gp):
 
 
 def parse_annotation_files(gp):
-    for i in range(gp.number_of_runs + 1):  # +1 for the joint analysis (if needed)
+    for i in range(gp.number_of_runs + gp.joint_run_is_needed):
         if i == gp.number_of_runs:
             run = 'joint run'
         else:

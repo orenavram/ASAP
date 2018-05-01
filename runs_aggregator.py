@@ -55,7 +55,7 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
             generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict, 'Joint')
 
             final_fasta_path = os.path.join(run_output_paths[-1], chain + '_final.fasta')
-            generate_final_fasta_with_mass_spec_sec(aa_seq_to_counts_in_each_run, final_fasta_path, sequence_to_entry_dict, mass_spec_seq)
+            generate_final_fasta_with_mass_spec_sec(final_fasta_path, sequence_to_entry_dict, mass_spec_seq, aa_seq_to_counts_in_each_run)
 
             plot_runs_correlation(aa_seq_to_counts_in_each_run, aa_seq_to_counts_with_less_than_minimal_threshold, number_of_runs, run_output_paths[-1], chain)
 
@@ -127,14 +127,21 @@ def read_vector_from_file(path):
     return np.array([int(x) for x in vector])
 
 
-def generate_final_fasta_with_mass_spec_sec(aa_seq_to_counts_in_each_run, final_fasta_path, sequence_to_entry_dict, mass_spec_seq):
+def generate_final_fasta_with_mass_spec_sec(final_fasta_path, sequence_to_entry_dict, mass_spec_seq, aa_seq_to_counts_in_each_run=None):
     with open(final_fasta_path, 'w') as f:
         for aa_seq in sequence_to_entry_dict:
             chain, isotype, dna_read, aa_read, cdr3, v_type, d_type, j_type, read_frequency = sequence_to_entry_dict[aa_seq]
-            f.write('|'.join(['>' + chain, isotype, cdr3, v_type, d_type, j_type,
-                              str(sum(x for x in aa_seq_to_counts_in_each_run[aa_seq])),
-                              ','.join(str(x) for x in aa_seq_to_counts_in_each_run[aa_seq])]))
-            f.write('\n' + aa_seq + mass_spec_seq + '\n')
+            if chain != 'IGH':
+                d_type = 'NA'
+            f.write('|'.join(['>' + chain, isotype, cdr3, v_type, d_type, j_type]))
+            if aa_seq_to_counts_in_each_run:
+                # add counts in each run only for the joint fasta!
+                f.write('|' + str(sum(x for x in aa_seq_to_counts_in_each_run[aa_seq])))
+                f.write('|' + ','.join(str(x) for x in aa_seq_to_counts_in_each_run[aa_seq]))
+            else:
+                f.write('|' + read_frequency)
+            f.write('\n' + aa_seq + (mass_spec_seq if chain == 'IGH' else '') + '\n') # add mass_spec only to IGH!!
+
 
 
 def add_counts_to_mutations_dict(joint_mutation_counts_frequency, mutation_counts_frequency_path):

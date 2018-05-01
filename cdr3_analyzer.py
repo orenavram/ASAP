@@ -36,7 +36,7 @@ def plot_cdr3_length_distributions(gp):
 def analyze_top_clones(gp):
     #top clones analysis
     k = gp.top_cdr3_clones_to_further_analyze
-    for i in range(gp.number_of_runs+1): # +1 for the joint analysis
+    for i in range(gp.number_of_runs + gp.joint_run_is_needed):
         for chain in gp.chains:
             annotations_path = os.path.join(gp.parsed_mixcr_output_paths[i], chain + gp.sequence_annotation_file_suffix)
             if not os.path.exists(annotations_path):
@@ -49,7 +49,7 @@ def analyze_top_clones(gp):
             most_common_cdr3 = sorted(cdr3_to_counts, key=lambda cdr3:(cdr3_to_counts.get(cdr3), cdr3_to_num_of_different_reads.get(cdr3)), reverse=True)
 
             cdr3_annotations_path = os.path.join(gp.cdr3_analysis_paths[i], chain + gp.cdr3_annotation_file_suffix)
-            write_cdr3_counts_file(cdr3_annotations_path, most_common_cdr3, cdr3_to_counts, cdr3_to_num_of_different_reads)
+            write_cdr3_annotations_file(cdr3_annotations_path, most_common_cdr3, cdr3_to_counts, cdr3_to_num_of_different_reads)
 
             clonal_expansion_histogram_path = cdr3_annotations_path.replace(gp.raw_data_file_suffix, 'png')
             generate_clonal_expansion_histogram(cdr3_annotations_path, clonal_expansion_histogram_path, gp.top_cdr3_clones_to_clonal_expansion_graph)
@@ -57,7 +57,7 @@ def analyze_top_clones(gp):
             analyze_most_k_common_cdr3(annotations_path, gp.cdr3_analysis_paths[i], most_common_cdr3, cdr3_to_aa_reads, cdr3_to_counts, chain, gp, k)
 
 
-def write_cdr3_counts_file(cdr3_annotations_path, most_common_cdr3, cdr3_to_counts, cdr3_to_num_of_different_reads):
+def write_cdr3_annotations_file(cdr3_annotations_path, most_common_cdr3, cdr3_to_counts, cdr3_to_num_of_different_reads):
     sum_of_cdr3_counts = sum(cdr3_to_counts.values())
     sum_of_cdr3_different_reads = sum(cdr3_to_num_of_different_reads.values())
     with open(cdr3_annotations_path, 'w') as f:
