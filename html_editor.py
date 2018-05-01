@@ -35,16 +35,16 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
 
                 f.write('<td>')
                 f.write('<ul>')
-                link = '<a href="outputs/' + run + '/parsed_mixcr_output/alignment_report.png" target="_blank">Alignment report pie chart</a>'
-                f.write('<li>' + link + ' ; ')
-                f.write('</li>')
+                if chain == 'IGH':
+                    link = '<a href="outputs/' + run + '/parsed_mixcr_output/alignment_report.png" target="_blank">Isotypes distribution</a>'
+                    f.write('<li>' + link + ' ; ')
+                    f.write('</li>')
 
                 link = '<a href="outputs/' + run + '/parsed_mixcr_output/' + chain + gp.sequence_annotation_file_suffix + '" target="_blank">Sequence annotations</a>'
                 f.write('<li>' + link + ' ;</li>')
 
-                link = '<a href="outputs/' + run + '/parsed_mixcr_output/' + chain + gp.mutations_file_suffix.replace(
-                    gp.raw_data_file_suffix,
-                    '1.png') + '" target="_blank">SHM analysis: nucleotide substitution frequency</a> ; <a href="outputs/' + run + '/parsed_mixcr_output/' + chain + gp.mutations_file_suffix.replace(
+                link = 'SHM analysis: <a href="outputs/' + run + '/parsed_mixcr_output/' + chain + gp.mutations_file_suffix.replace(
+                    gp.raw_data_file_suffix,'1.png') + '" target="_blank">nucleotide substitution frequency</a> ; <a href="outputs/' + run + '/parsed_mixcr_output/' + chain + gp.mutations_file_suffix.replace(
                     gp.raw_data_file_suffix,
                     '2.png') + '" target="_blank">Ka Ks analysis</a>'
                 raw_link = '(<a href="outputs/' + run + '/parsed_mixcr_output/' + chain + gp.mutations_file_suffix + '" target="_blank">raw_data</a>)'
@@ -56,9 +56,10 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
 
                 family_distributions = ''
                 for group_combination in ['V', 'D', 'J', 'VD', 'VJ', 'DJ', 'VDJ']:
-                    link = '<a href="outputs/' + run + '/vdj_assignments/' + chain + '_' + group_combination + '_counts.png" target="_blank">' + group_combination + ' family subgroup distribution</a>'
-                    raw_link = '(<a href="outputs/' + run + '/vdj_assignments/' + chain + '_' + group_combination + '_counts.' + gp.raw_data_file_suffix + '" target="_blank">raw_data</a>)'
-                    family_distributions += '<li>' + link + ' ; ' + raw_link + '</li>\n'
+                    if chain == 'IGH' or 'D' not in group_combination: # no 'D' fragment in IGK/IGL
+                        link = '<a href="outputs/' + run + '/vdj_assignments/' + chain + '_' + group_combination + '_counts.png" target="_blank">' + group_combination + ' family subgroup distribution</a>'
+                        raw_link = '(<a href="outputs/' + run + '/vdj_assignments/' + chain + '_' + group_combination + '_counts.' + gp.raw_data_file_suffix + '" target="_blank">raw_data</a>)'
+                        family_distributions += '<li>' + link + ' ; ' + raw_link + '</li>\n'
                 f.write(family_distributions)
 
                 #if run == 'joint':
