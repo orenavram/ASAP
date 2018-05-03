@@ -51,8 +51,9 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
                     isotype = entry[1]
                     isotypes_count_dict[isotype] = isotypes_count_dict.get(isotype, 0) + 1
 
-            outfile_pie_chart = os.path.join(joint_parsed_mixcr_output_path, 'alignment_report.png')
-            generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict, 'Joint')
+            if chain == 'IGH':
+                outfile_pie_chart = os.path.join(joint_parsed_mixcr_output_path, 'alignment_report.png')
+                generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict, 'Joint')
 
             final_fasta_path = os.path.join(run_output_paths[-1], chain + '_final.fasta')
             generate_final_fasta_with_mass_spec_sec(final_fasta_path, sequence_to_entry_dict, mass_spec_seq, aa_seq_to_counts_in_each_run)

@@ -87,7 +87,7 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
 
                     joint_path = os.path.join(gp.output_path, 'joint')
                     for correlation_file in os.listdir(joint_path):
-                        if 'correlation' in correlation_file:
+                        if 'correlation' in correlation_file and chain in correlation_file:
                             #correlation_path = os.path.join(joint_path, correlation_file)
                             c_runs = correlation_file.split('_')[:2] #e.g., 'run1_run2_IGH_correlation.png'
                             link = '<a href="outputs/'+run+'/' + correlation_file + '" target="_blank">Correlation of {} and {}</a>'.format(*c_runs)
