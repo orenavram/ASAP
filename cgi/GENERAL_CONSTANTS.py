@@ -24,22 +24,3 @@ RELOAD_TAGS = """
     <META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE"/>
 """.format(str(RELOAD_INTERVAL))
 
-# # copy-pasted from email_sender.py
-# def send_email(sender, receiver, subject='', content=''):
-#     from email.mime.text import MIMEText
-#     from smtplib import SMTP
-#     msg = MIMEText(content)
-#     msg['Subject'] = subject
-#     msg['From'] = sender
-#     msg['To'] = receiver
-#     s = SMTP(SMTP_SERVER)
-#     s.send_message(msg)
-#     s.quit()
-#
-#
-# import logging, os
-# # copy-pasted from email_sender.py
-# def create_dir(path, logger = logging.getLogger('main')):
-#     if not os.path.exists(path):
-#         logger.info("Creating directory:\n" + path)
-#         os.makedirs(path)

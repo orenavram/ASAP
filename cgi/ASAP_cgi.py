@@ -67,42 +67,6 @@ def write_html_prefix(output_path, run_number):
 <div id="behind-nav-bar-results">
 </div>
 '''.format(CONSTS.GC.RELOAD_TAGS, run_number, CONSTS.GC.ASAP_URL))
-#             """
-# <?php
-# $path = "{0}";
-# set_include_path(get_include_path().PATH_SEPARATOR.$path);
-# include ("templates/definitions.tpl");
-# ?>
-# <HTML>
-# <HEAD>
-#     {1}
-#     <TITLE>ASAP Run #{2} </TITLE>
-#     <link rel="icon" href="/ASAP_icon.gif">
-#
-#     <style type="text/css">
-#     #menu {{
-#
-#     text-decoration: none;
-#             color: white;
-#     font-size: 12px;
-#     font-weight: 700;
-#     }}
-#
-#     ul.in_progress {{
-#         list-style-image: url('{3}/inprogress.gif');
-#         padding-bottom: 0 em;
-#     }}
-#
-#     ul.finished {{
-#         list-style-image: url('{3}/finished.gif');
-#     }}
-#     </style>
-#     <link rel="stylesheet" type="text/css" href="{3}/ASAP.css">
-#     <script src="{3}/clmenu.js" type="text/javascript"></script>
-#     <link href="{3}/clmenu.css" type="text/css" rel="stylesheet" />
-#
-# </HEAD>
-#         """.format(CONSTS.ASAP_HTML_DIR, CONSTS.GC.RELOAD_TAGS, run_number, CONSTS.GC.ASAP_URL))
 
 
 def write_info_paragraph_to_html(output_path):
@@ -285,11 +249,11 @@ if False:
     run_number = 'debug'#str(round(time())) + str(randint(1000,9999)) # adding 4 random figures to prevent users see data that are not their's
 
 results_url = os.path.join(CONSTS.ASAP_RESULTS_URL, run_number)
-output_url = os.path.join(results_url, 'output.php')
+output_url = os.path.join(results_url, 'output.html')
 
 wd = os.path.join(CONSTS.ASAP_RESULTS_DIR, run_number)
 create_dir(wd)
-output_path = os.path.join(wd, 'output.php')
+output_path = os.path.join(wd, 'output.html')
 cgi_debug_path = os.path.join(wd, 'cgi_debug.txt')
 
 #print('Content-Type: text/html\n')  # For more details see https://www.w3.org/International/articles/http-charset/index#scripting

@@ -29,16 +29,13 @@ try:
     create_dir(gp.output_path)
 
     # main code!
-    server_main_url = 'http://asap.tau.ac.il/'
-    if os.path.exists('/Users/Oren/'):
+    output_path = os.path.join(gp.working_dir, 'output.html')
+    if os.path.exists('/Users/Oren/'): #local run
         sys.path.append('./cgi')  # this is where GENERAL_CONSTANTS.py is located in my comp
-        html_path = os.path.join(gp.working_dir, 'output.html')
         html_mode = 'w'
-    else:
-        sys.path.append(
-            '/bioseq/bioSequence_scripts_and_constants')  # this is where GENERAL_CONSTANTS.py is located in host-ibis3
+    else: #run on host-ibis
+        sys.path.append('/bioseq/bioSequence_scripts_and_constants')  # this is where GENERAL_CONSTANTS.py is located in host-ibis3
         sys.path.append('/bioseq/asap')  # this is where ASAP_CONSTANTS is located in host-ibis3
-        html_path = os.path.join(gp.working_dir, 'output.php')
         html_mode = 'a'
 
     import ASAP_CONSTANTS as CONSTS
@@ -59,20 +56,22 @@ if succeeded:
     else:
         logger.info('Skipping (zip already exists..)')
     logger.info('Editing html file...')
-    edit_success_html(gp, html_path, html_mode, server_main_url, run_number)
+    edit_success_html(gp, output_path, html_mode, CONSTS.GC.ASAP_URL, run_number)
 else:
-    edit_failure_html(html_path, html_mode, error_msg)
+    edit_failure_html(output_path, html_mode, error_msg)
 
 #Change running status
-with open(html_path) as f:
+with open(output_path) as f:
     html_content = f.read()
 html_content = html_content.replace(CONSTS.GC.RELOAD_TAGS, '')
 if succeeded:
     html_content = html_content.replace('RUNNING', 'FINISHED')
 else:
     html_content = html_content.replace('RUNNING', 'FAILED')
-with open(html_path, 'w') as f:
+with open(output_path, 'w') as f:
     html_content = f.write(html_content)
+
+output_url = os.path.join(CONSTS.ASAP_RESULTS_URL, run_number, 'output.html')
 
 logger.info('Sending email...')
 user_email_file = os.path.join(gp.working_dir, 'user_email.txt')
@@ -80,8 +79,7 @@ if os.path.exists(user_email_file):
     with open(user_email_file) as f:
         addressee = f.read().rstrip()
 
-    server_url = 'http://asap.tau.ac.il/results'
-    results_page = os.path.join(server_url, run_number, 'output.php')
+    results_page = output_url
     if succeeded:
         email_content = '''Hello,
     

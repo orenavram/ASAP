@@ -65,11 +65,11 @@ form = cgi.FieldStorage()  # extract POSTed object
 run_number = 'sandbox'
 
 results_url = os.path.join(CONSTS.ASAP_RESULTS_URL, run_number)
-output_url = os.path.join(results_url, 'output.php')
+output_url = os.path.join(results_url, 'output.html')
 
 wd = os.path.join(CONSTS.ASAP_RESULTS_DIR, run_number)
 create_dir(wd)
-output_path = os.path.join(wd, 'output.php')
+output_path = os.path.join(wd, 'output.html')
 cgi_debug_path = os.path.join(wd, 'cgi_debug.txt')
 
 hello_world(output_path, run_number)
