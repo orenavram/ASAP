@@ -1,5 +1,5 @@
 try:
-    from time import time
+    from time import time, ctime
 
     start = time()
     import logging
@@ -45,7 +45,12 @@ try:
     succeeded = True
 except Exception as e:
     error_msg = 'ASAP calculation crashed :('
-    logger.error(error_msg)
+    exc_type, exc_obj, exc_tb = sys.exc_info()
+    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+    logger.error('\n\n' + '$'*60 + '\n\n')
+    logger.error(ctime() + ': ' + error_msg + '\n\n')
+    logger.error(str(fname) +': ' + str(exc_type) + ', at line: ' + str(exc_tb.tb_lineno) + '\n\n')
+    logger.error('$'*60)
     succeeded = False
 
 run_number = gp.working_dir.split('/')[-1]

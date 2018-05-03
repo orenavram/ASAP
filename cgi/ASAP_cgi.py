@@ -78,7 +78,7 @@ def write_info_paragraph_to_html(output_path):
 <br>""".format(CONSTS.GC.RELOAD_INTERVAL))
 
 
-def write_running_parameters_to_html(output_path, run_number, job_title, number_of_duplicates, urls_to_reads_files, MMU, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, add_mass_spec_seq):
+def write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, add_mass_spec_seq):
 
     with open(output_path, 'a') as f:
 
@@ -105,12 +105,10 @@ def write_running_parameters_to_html(output_path, run_number, job_title, number_
         f.write('<div class="row" style="font-size: 20px;">')
         for i in range(number_of_duplicates):
             # show only path suffix... http://asap.tau.ac.il/results/1520442230/reads/run1/242_R1.fastq
-            R1_url = urls_to_reads_files[i * 2].split(run_number)[-1].lstrip('/')
-            R2_url = urls_to_reads_files[i * 2 + 1].split(run_number)[-1].lstrip('/')
             f.write('<div class="col-md-4">')
             f.write('<b>Run {} sequence data:</b><br>'.format(i + 1))
-            f.write('R1 = <a href=\"{}\" target=_blank>{}</A><br>'.format(urls_to_reads_files[i * 2], R1_url))
-            f.write('R2 = <a href=\"{}\" target=_blank>{}</A><br>'.format(urls_to_reads_files[i * 2 + 1], R2_url))
+            f.write('R1 = <a href=\"{}\" target=_blank>{}</A><br>'.format(urls_to_reads_files[i * 2], files_names[i*2]))
+            f.write('R2 = <a href=\"{}\" target=_blank>{}</A><br>'.format(urls_to_reads_files[i * 2 + 1], files_names[i*2+1]))
             f.write('</div>')
 
         f.write('</div>')
@@ -306,21 +304,24 @@ try:
     if form['job_title'].value != '':
         job_title = form['job_title'].value.strip()
 
+    files_names = []
     if example_page == 'no':
         # handling uploaded files:
         number_of_duplicates = 1
 
         #at least one run should exist:
         run1_R1_filename, run1_R2_filename = process_uploaded_files('run1', cgi_debug_path)
-
+        files_names.extend([run1_R1_filename, run1_R2_filename])
         # additional files might not exist
         run2_R1_filename, run2_R2_filename, run3_R1_filename, run3_R2_filename, = '', '', '', ''
         if form['run2_R1'].filename != '': #handle run2 if any
             run2_R1_filename, run2_R2_filename = process_uploaded_files('run2', cgi_debug_path)
             number_of_duplicates += 1
+            files_names.extend([run2_R1_filename, run2_R2_filename])
         if form['run3_R1'].filename != '': #handle run3 if any
             run3_R1_filename, run3_R2_filename = process_uploaded_files('run3', cgi_debug_path)
             number_of_duplicates += 1
+            files_names.extend([run3_R1_filename, run3_R2_filename])
     else:
         # no files to handle, just copy them to the example folder (if needed).
         number_of_duplicates = 2
@@ -343,6 +344,7 @@ try:
         urls_to_reads_files.append(os.path.join(url_to_reads, 'R2.fastq'))
 
     if example_page == 'yes':
+        files_names = ['rep1_R1.fastq', 'rep1_R2.fastq', 'rep2_R1.fastq', 'rep2_R2.fastq']
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
             f.write('{}: Copying example files...\n'.format(ctime()))
         # copy example data
@@ -365,15 +367,13 @@ try:
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write('{}: write_running_parameters_to_html...\n'.format(ctime()))
 
-    write_running_parameters_to_html(output_path, run_number, job_title, number_of_duplicates, urls_to_reads_files, MMU, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, add_mass_spec_seq)
+    write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, add_mass_spec_seq)
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write('{}: Running parameters were written to html successfully.\n'.format(ctime()))
 
     # This is hidden field that only spammer bots might fill in...
     confirm_email_add = form['confirm_email'].value  # if it is contain a value it is a spammer.
-
-    #TODO: ADD INPUT VERIFICATION BEFORE JOB SUBMISSION
 
     parameters_file = os.path.join(wd, 'parameters.txt')
     parameters = [wd, CONSTS.GC.MiXCR_dir, number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, add_mass_spec_seq]
@@ -396,11 +396,9 @@ except Exception as e:
     msg = 'CGI crashed before the job was submitted :('
     with open(output_path) as f:
         html_content = f.read()
-    html_content = html_content.replace(CONSTS.GC.RELOAD_TAGS, '')
     html_content = html_content.replace('RUNNING', 'FAILED')
     html_content += '<br><br><br><center><h2><font color="red">' + msg + '</font><br><br>Please try to re-run your job or <a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%2015249296875723">contact us</a> for further information</h2></center><br><br>\n</body>\n</html>\n'
-    with open(output_path, 'w') as f:
-        html_content = f.write(html_content)
+
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -408,5 +406,12 @@ except Exception as e:
         f.write(ctime() + ': ' + msg + '\n\n')
         f.write(str(fname) +': ' + str(exc_type) + ', at line: ' + str(exc_tb.tb_lineno) + '\n\n')
         f.write('$'*60)
+
+    #make sure the page will refresh until the end of editing
+    with open(output_path) as f:
+        html_content = f.read()
+    html_content = html_content.replace(CONSTS.GC.RELOAD_TAGS, '')
+    with open(output_path, 'w') as f:
+        html_content = f.write(html_content)
 
 

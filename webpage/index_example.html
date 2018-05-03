@@ -22,6 +22,7 @@
 
     <link rel="stylesheet" href="css/general.css">
     <link rel="stylesheet" href="css/nav.css">
+    <script src="scripts/form_handler.js"></script>
 
     <!--<link href='https://fonts.googleapis.com/css?family=Kalam' rel='stylesheet'>-->
     <!--<script src="https://code.jquery.com/jquery-1.10.2.js"></script>-->
@@ -31,16 +32,6 @@
     <!--</script>-->
 
     <!--for hiding the advanced options by default-->
-    <script>
-        function myFunction() {
-            var x = document.getElementById("advanced");
-            if (x.style.display === "none") {
-                x.style.display = "block";
-            } else {
-                x.style.display = "none";
-            }
-        }
-    </script>
 </head>
 <body>
 <nav role="navigation" class="navbar navbar-inverse navbar-fixed-top">
@@ -130,9 +121,9 @@
                     </div>
                     <div class="form-group">
                         <b>Organism: </b>
-                        <select name="MMU" class="selectpicker" data-width="auto">
-                            <option value="Human" selected>Human
-                            <!--<option value="Mouse">Mouse-->
+                        <select name="MMU" class="selectpicker form-control" data-width="auto">
+                            <option value="Human" selected>Human</option>
+                            <option value="Mouse" disabled>Mouse</option>
                         </select>
                     </div>
                     <div class="form-group row">
@@ -147,7 +138,7 @@
                         </div>
                     </div>
                     <br>
-                    <button type="button" class="btn btn-warning" onclick="myFunction()">Advanced options</button>
+                    <button type="button" class="btn btn-warning" onclick="openAdvanced()">Advanced options</button>
                     <div id="advanced" style="display:none;">
                         <br>
                         <div class="form-group row">

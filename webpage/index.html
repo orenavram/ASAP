@@ -23,6 +23,7 @@
 
     <link rel="stylesheet" href="css/general.css">
     <link rel="stylesheet" href="css/nav.css">
+    <script src="scripts/form_handler.js"></script>
 
     <!--<link href='https://fonts.googleapis.com/css?family=Kalam' rel='stylesheet'>-->
 
@@ -31,18 +32,6 @@
         <!--$("head").load("header.html");-->
         <!--$('#loadingMask').fadeOut();});-->
     <!--</script>-->
-
-    <!--for hiding the advanced options by default-->
-    <script>
-        function myFunction() {
-            var x = document.getElementById("advanced");
-            if (x.style.display === "none") {
-                x.style.display = "block";
-            } else {
-                x.style.display = "none";
-            }
-        }
-    </script>
 
 </head>
 <body>
@@ -99,9 +88,9 @@
         <div class="col-md-1">
         </div>
         <div class="col-md-10" id="basic">
-            <form id="ASAP_form" action="http://asap.tau.ac.il/cgi-bin/ASAP_cgi.py" method="post" ENCTYPE="multipart/form-data" target="_blank">
+            <form id="ASAP_form" action="http://asap.tau.ac.il/cgi-bin/ASAP_cgi.py" method="post" ENCTYPE="multipart/form-data" target="_blank" onsubmit="return validate();">
                     <input type="hidden" name="example_page" value="no">
-                    <div id="please-note" align="justify">Please notice that files larger than 100MB may require up to 30 minutes to be uploaded, depending on your network speed. It is possible and recommended to upload zipped fastq files (gzip format).</div>
+                    <div id="please-note" align="justify">Please notice that files larger than 100MB may require up to 30 minutes to be uploaded, depending on your network speed. It is possible and recommended to upload zipped fastq files (gz format).</div>
                     <br><br>
                     <div class="form-group">
                         <b>Replicate 1:</b>
@@ -141,9 +130,9 @@
                     </div>
                     <div class="form-group">
                         <b>Organism: </b>
-                        <select name="MMU" class="selectpicker" data-width="auto">
-                            <option value="Human" selected>Human
-                            <option value="Mouse">Mouse
+                        <select name="MMU" class="selectpicker form-control" data-width="auto">
+                            <option value="Human" selected>Human</option>
+                            <option value="Mouse">Mouse</option>
                         </select>
                     </div>
                     <div class="form-group row">
@@ -158,7 +147,7 @@
                         </div>
                     </div>
                     <br>
-                    <button type="button" class="btn btn-warning" onclick="myFunction()">Advanced options</button>
+                    <button type="button" class="btn btn-warning" onclick="openAdvanced()">Advanced options</button>
                     <div id="advanced" style="display:none;">
                         <br>
                         <div class="form-group row">
