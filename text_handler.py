@@ -9,7 +9,7 @@ def read_table_to_dict(file_to_read, skip_rows=0, delimiter ='\t', key_type=str,
     if values_to_keys == 0 keys are taken from the first column o.w., from the second
     open_operator can also be set to gzip.open if the file is zipped
     '''
-    logger.debug('Reading dict from: ' + file_to_read)
+    logger.info('Reading dict from: ' + file_to_read)
     d = {}
     with open_operator(file_to_read) as f:
         for i in range(skip_rows):

@@ -22,10 +22,13 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
             run_output_path = run_output_paths[i]
 
             annotation_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + sequence_annotation_file_suffix)
+            if not os.path.exists(annotation_path):
+                logger.info('No annotation path for run {} chain {} (path does not exist: {}). Continuing for the next run (if any).'.format(i+1, chain, annotation_path))
+                continue
             add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, annotation_path, i, number_of_runs)
 
-            mutations_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + mutations_file_suffix)
-            #add_counts_to_mutations_dict(joint_mutation_counts_dict, mutations_path)
+            # mutations_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + mutations_file_suffix)
+            # add_counts_to_mutations_dict(joint_mutation_counts_dict, mutations_path)
 
             core_dna_to_to_mutations_info_dict_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + mutations_file_suffix)
             current_run_core_dna_to_mutations_info_dict_path = read_table_to_dict(core_dna_to_to_mutations_info_dict_path, value_type=list, skip_rows=1)
@@ -155,9 +158,6 @@ def add_counts_to_mutations_dict(joint_mutation_counts_frequency, mutation_count
 
 
 def add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, annotation_path, i, number_of_runs):
-    if not os.path.exists(annotation_path):
-        logger.info('Can\'t find annotation path:' + annotation_path)
-        return
     with open(annotation_path) as f:
         for line in f:
             '''
