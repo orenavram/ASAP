@@ -156,7 +156,7 @@ def edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_mai
             <tbody>
         '''.format(CONSTS.GC.ASAP_URL, annotation_file_path, gp.top_cdr3_clones_to_further_analyze, run, chain))
         for i in range(gp.top_cdr3_clones_to_further_analyze):
-            wasabi = '<a href="' + server_main_url + 'wasabi/index_general.html?url=' + server_main_url + 'results/' + run_number + '/outputs/'+run+'/cdr3_analysis/'+chain+'_top_' + str(gp.top_cdr3_clones_to_further_analyze) + '_clones/cluster_' + str(i) + '_msa.aln" target="_blank">+</a> '
+            wasabi = '<a href="' + server_main_url + '/wasabi/index_general.html?url=' + server_main_url + '/results/' + run_number + '/outputs/'+run+'/cdr3_analysis/'+chain+'_top_' + str(gp.top_cdr3_clones_to_further_analyze) + '_clones/cluster_' + str(i) + '_msa.aln" target="_blank">+</a> '
             sequence_logo = '<a href="cdr3_analysis/' + chain + '_top_' + str(gp.top_cdr3_clones_to_further_analyze) + '_clones/cluster_' + str(i) + '_weblogo.pdf" target="_blank">+</a>'
             msa = '<a href="cdr3_analysis/'+chain+'_top_' + str(gp.top_cdr3_clones_to_further_analyze) + '_clones/cluster_' + str(i) + '_msa.aln" target="_blank">+</a>'
             ms = '<a href="cdr3_analysis/' + chain + '_top_' + str(gp.top_cdr3_clones_to_further_analyze) + '_clones/cluster_' + str(i) + '_ms.fasta" target="_blank">+</a>'
