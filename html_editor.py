@@ -101,6 +101,7 @@ def edit_success_html(gp, html_path, html_mode, server_main_url, run_number):
         # html_text += '<div id="bottom_links" align="center"><span class="bottom_link"><a href="' + server_main_url + '" target="_blank">Home</a>&nbsp;|&nbsp<a href="' + server_main_url + 'overview.html" target="_blank">Overview</a>\n</span>\n<br>\n</div>\n</body>\n</html>\n'
         html_text += '<br><br><br>\n</body>\n</html>\n'
         f.write(html_text)
+        f.flush()
 
 
 def edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_main_url, run_number, chain, run):
@@ -167,6 +168,7 @@ def edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_mai
     <td align="center">{}</td>
 </tr>'''.format(i+1, wasabi, sequence_logo, msa, ms))
         f.write('</tbody></table></body></html>')
+        f.flush()
 
 
 
@@ -178,3 +180,4 @@ def edit_failure_html(html_path, html_mode, msg):
         f.write('Please try to re-run your job or <a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%2015249296875723">contact us</a> for further information')
         f.write('</h2></center><br><br>')
         f.write('\n</body>\n</html>\n')
+        f.flush()
