@@ -1,14 +1,13 @@
+import logging
 import os
 
+from directory_creator import create_dir
+from cdr3_analyzer import analyze_cdr3
 from mixcr_procedure import mixcr_procedure
 from parse_alignments import parse_alignment_file
-from directory_creator import create_dir
-from runs_aggregator import join_runs_analyses, generate_final_fasta_with_mass_spec_sec
 from plots_generator import plot_barplot, generate_mutations_boxplots
+from runs_aggregator import join_runs_analyses, generate_final_fasta_with_mass_spec_sec
 from text_handler import write_dict_to_file, read_table_to_dict
-from cdr3_analyzer import analyze_cdr3
-
-import logging
 
 logger = logging.getLogger('main')
 

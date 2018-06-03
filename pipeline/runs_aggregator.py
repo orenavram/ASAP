@@ -1,10 +1,12 @@
-import os, subprocess
+import logging
+import os
+import subprocess
+
+import numpy as np
+from plots_generator import plot_venn, plot_correlation, generate_alignment_report_pie_chart
 
 from text_handler import read_table_to_dict, write_dict_to_file
-from plots_generator import plot_venn, plot_correlation, generate_alignment_report_pie_chart
-import numpy as np
 
-import logging
 logger = logging.getLogger('main')
 
 

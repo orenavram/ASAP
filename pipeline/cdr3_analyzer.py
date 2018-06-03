@@ -1,23 +1,23 @@
+import os, sys
+
+from logging import getLogger
+logger = getLogger('main')
+
+from subprocess import check_output
+
 from Bio import SeqIO
 from Bio.Align import AlignInfo
 from Bio.Align import MultipleSeqAlignment
 from Bio.Alphabet import Gapped, IUPAC
-from msa_parser import remove_sparse_columns
-from weblogo_generator import generate_weblogo
-from plots_generator import plot_barplot, generate_clonal_expansion_histogram
-from text_handler import string_similarity, read_table_to_dict
-from subprocess import check_output
-from directory_creator import create_dir
-from logging import getLogger
-import re
-logger = getLogger('main')
 
-import os
+from directory_creator import create_dir
+from plots_generator import plot_barplot, generate_clonal_expansion_histogram
+from weblogo_generator import generate_weblogo
+from text_handler import string_similarity, read_table_to_dict
 
 def analyze_cdr3(gp):
     plot_cdr3_length_distributions(gp)
     analyze_top_clones(gp)
-
 
 
 def plot_cdr3_length_distributions(gp):

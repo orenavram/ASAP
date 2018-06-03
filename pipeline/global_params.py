@@ -1,7 +1,9 @@
-from text_handler import get_next_relevant_rstriped_line
-from sys import argv
-import os
 import logging
+import os
+from sys import argv
+
+from text_handler import get_next_relevant_rstriped_line
+
 logger = logging.getLogger('main')
 
 if len(argv)<2:

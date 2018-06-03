@@ -1,13 +1,12 @@
+import logging
+
+import matplotlib.pyplot as plt
 import matplotlib_venn
 import numpy as np
 import seaborn as sns
-import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 
-import logging
 logger = logging.getLogger('main')
-
-from text_handler import read_table_to_dict
 
 
 def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', as_proportions = True, rotation = 90):

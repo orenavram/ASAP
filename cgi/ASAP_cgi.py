@@ -1,19 +1,17 @@
 #!/shared/python/anaconda3.5/bin/python
-import gzip
-import os, sys
-try:
-    import sh
-except:
-    pass
-import cgi, cgitb, traceback
+import os
+import sys
+import sh
+import cgi
+import cgitb
 from time import time, ctime
 from random import randint
-sys.path.append('/bioseq/bioSequence_scripts_and_constants')
-sys.path.append('/bioseq/asap')
 
-from email_sender import send_email
-from directory_creator import create_dir
+#sys.path.append('/bioseq/bioSequence_scripts_and_constants')
+sys.path.append('/bioseq/asap/ASAP/auxiliaries')
 import ASAP_CONSTANTS as CONSTS
+from directory_creator import create_dir
+from email_sender import send_email
 
 def print_hello_world(output_path = '', run_number = 'NO_RUN_NUMBER'):
 
@@ -66,7 +64,7 @@ def write_html_prefix(output_path, run_number):
 </nav>
 <div id="behind-nav-bar-results">
 </div>
-'''.format(CONSTS.GC.RELOAD_TAGS, run_number, CONSTS.GC.ASAP_URL))
+'''.format(CONSTS.RELOAD_TAGS, run_number, CONSTS.ASAP_URL))
 
 
 def write_info_paragraph_to_html(output_path):
@@ -75,7 +73,7 @@ def write_info_paragraph_to_html(output_path):
 <H1 align=center>Job Status - <FONT color='red'>RUNNING</FONT></h1>
 <br>ASAP is now processing your request. This page will be automatically updated every {} seconds (until the job is done). You can also reload it manually. Once the job has finished, several links to the output files will appear below. A link to this page was sent to your email in case you wish to view these results at a later time without recalculating them. Please note that the results will be kept in the server for three months.
 </div>
-<br>""".format(CONSTS.GC.RELOAD_INTERVAL))
+<br>""".format(CONSTS.RELOAD_INTERVAL))
 
 
 def write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, add_mass_spec_seq):
@@ -242,7 +240,8 @@ cgitb.enable()
 #print_hello_world() # for debugging
 form = cgi.FieldStorage() # extract POSTed object
 
-run_number = str(round(time())) + str(randint(1000, 9999))  # adding 4 random figures to prevent users see data that are not their's
+#random_chars = "".join(choice(string.ascii_letters + string.digits) for x in range(20))
+run_number = str(round(time())) + str(randint(10**19,10**20-1)) # adding 20 random digits to prevent users see data that are not their's
 if False:
     run_number = 'debug'#str(round(time())) + str(randint(1000,9999)) # adding 4 random figures to prevent users see data that are not their's
 
@@ -265,8 +264,8 @@ print('Content-Type: text/html\n')  # For more details see https://www.w3.org/In
 sys.stdout.flush() #must be flushed immediately!!!
 
 # Send me a notification email every time there's a new request
-send_email(smtp_server=CONSTS.GC.SMTP_SERVER, sender='TAU BioSequence <bioSequence@tauex.tau.ac.il>',
-           receiver='orenavram@gmail.com', subject='ASAP - A new job has been submitted: {}'.format(run_number), content=os.path.join(CONSTS.GC.ASAP_URL,'results',run_number))
+send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
+           receiver='orenavram@gmail.com', subject='ASAP - A new job has been submitted: {}'.format(run_number), content=os.path.join(CONSTS.ASAP_URL,'results',run_number))
 
 try:
     write_info_paragraph_to_html(output_path)
@@ -376,7 +375,7 @@ try:
     confirm_email_add = form['confirm_email'].value  # if it is contain a value it is a spammer.
 
     parameters_file = os.path.join(wd, 'parameters.txt')
-    parameters = [wd, CONSTS.GC.MiXCR_dir, number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, add_mass_spec_seq]
+    parameters = [wd, CONSTS.MiXCR_dir, number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, add_mass_spec_seq]
     prepare_parameters_file(parameters_file, parameters)
 
     cmds_file = os.path.join(wd, 'qsub.cmds')
@@ -387,7 +386,7 @@ try:
 
     if user_email != '':
         with open(os.path.join(wd, 'user_email.txt'), 'w') as f:
-            f.write(user_email)
+            f.write(user_email+'\n')
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write('{}: CGI finished running.\n\n'.format(ctime()))
@@ -410,7 +409,7 @@ except Exception as e:
     #make sure the page will refresh until the end of editing
     with open(output_path) as f:
         html_content = f.read()
-    html_content = html_content.replace(CONSTS.GC.RELOAD_TAGS, '')
+    html_content = html_content.replace(CONSTS.RELOAD_TAGS, '')
     with open(output_path, 'w') as f:
         html_content = f.write(html_content)
 

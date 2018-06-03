@@ -1,27 +1,28 @@
 #!/shared/python/anaconda3.5/bin/python
 
-#THIS IS SANDBOX!!!!!!
-#THIS IS SANDBOX!!!!!!
-#THIS IS SANDBOX!!!!!!
-#THIS IS SANDBOX!!!!!!
-#THIS IS SANDBOX!!!!!!
-#THIS IS SANDBOX!!!!!!
-#THIS IS SANDBOX!!!!!!
-#THIS IS SANDBOX!!!!!!
-#THIS IS SANDBOX!!!!!!
+#THIS IS A SANDBOX!!!!!!
+#THIS IS A SANDBOX!!!!!!
+#THIS IS A SANDBOX!!!!!!
 
-# The apache sometimes says: "[Sat Apr 28 11:22:27.659177 2018] [http:error] [pid 29692] [client 132.66.1.18:21082]
+# Common error: "[Sat Apr 28 11:22:27.659177 2018] [http:error] [pid 29692] [client 132.66.1.18:21082]
 # AH02429: Response header name '<!--' contains invalid characters, aborting request, referer: http://localhost:63343/webpage/index.html"
-# but it's not always the real reason!! It may happen when trying to get undefined form key!! For more details see:
+# but it's not always the real reason!!
+# Solution: It may happen when trying to get undefined form key!! For more details see:
 # https://stackoverflow.com/questions/45375693/apache2-response-header-name-contains-invalid-characters-aborting-reque
-import os, sys
-import cgi, cgitb
 
-sys.path.append('/bioseq/bioSequence_scripts_and_constants')
-sys.path.append('/bioseq/asap')
+# Common error: "[Sun Jun 03 13:18:14.345457 2018] [cgi:error] [pid 22240] [client 132.66.1.18:61229] End of script output before headers: ASAP_cgi.py"
+# Solution: make sure there are execution permissions!! chmod 744
+# https://www.1and1.com/cloud-community/learn/web-server/server-management/how-to-fix-http-error-code-500-internal-server-error/
 
-from directory_creator import create_dir
+import cgi
+import cgitb
+import os
+import sys
+
+#sys.path.append('/bioseq/bioSequence_scripts_and_constants')
+sys.path.append('/bioseq/asap/ASAP/auxiliaries')
 import ASAP_CONSTANTS as CONSTS
+from directory_creator import create_dir
 
 
 def hello_world(output_path='', run_number='NO_RUN_NUMBER'):

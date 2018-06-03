@@ -1,12 +1,12 @@
-import re,regex, os
-#import warnings
-#warnings.filterwarnings('error', category=Bio.Seq.BiopythonWarning)
+import os
+import re
 
-import matplotlib     # Must be before importing matplotlib.pyplot or pylab! to Avoid the need of X-Dislay https://stackoverflow.com/questions/4706451/how-to-save-a-figure-remotely-with-pylab/4706614#4706614
-matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab! to Avoid the need of X-Dislay
+# import warnings
+# warnings.filterwarnings('error', category=Bio.Seq.BiopythonWarning)
 import time
 import Bio.Seq
 import aa_sequences as aa
+import regex
 from plots_generator import generate_alignment_report_pie_chart
 from text_handler import write_dict_to_file, logger
 

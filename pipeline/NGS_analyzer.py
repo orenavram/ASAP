@@ -1,5 +1,17 @@
 try:
+    import matplotlib  # Must be before importing matplotlib.pyplot or pylab! to Avoid the need of X-Dislay https://stackoverflow.com/questions/4706451/how-to-save-a-figure-remotely-with-pylab/4706614#4706614
+    matplotlib.use('Agg')  # Must be before importing matplotlib.pyplot or pylab! to Avoid the need of X-Dislay
+
+    import sys, os, traceback, shutil
+
+    if os.path.exists('/Users/Oren/'): #local run
+        sys.path.append('./auxiliaries')  # this is where ASAP_CONSTANTS (and GENERAL_CONSTANTS, currently unused) is located in my comp
+    else: #run on host-ibis
+        #sys.path.append('/bioseq/bioSequence_scripts_and_constants') # this is where GENERAL_CONSTANTS is located in host-ibis3
+        sys.path.append('/bioseq/asap/ASAP/auxiliaries') # this is where ASAP_CONSTANTS is located in host-ibis3
+
     from time import time, ctime
+    import global_params as gp
 
     start = time()
     import logging
@@ -7,15 +19,12 @@ try:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger('main')
 
-    import sys, os, traceback
+    print(sys.path)
 
     argv = sys.argv
-    import shutil
     from email_sender import send_email
     from directory_creator import create_dir
     from html_editor import edit_success_html, edit_failure_html
-
-    import global_params as gp
 
     logger.info('Starting ' + argv[0] + '!')
     logger.debug('argv = ' + str(argv))
@@ -30,13 +39,6 @@ try:
 
     # main code!
     output_path = os.path.join(gp.working_dir, 'output.html')
-    if os.path.exists('/Users/Oren/'): #local run
-        sys.path.append('./cgi')  # this is where GENERAL_CONSTANTS.py is located in my comp
-        html_mode = 'w'
-    else: #run on host-ibis
-        sys.path.append('/bioseq/bioSequence_scripts_and_constants')  # this is where GENERAL_CONSTANTS.py is located in host-ibis3
-        sys.path.append('/bioseq/asap')  # this is where ASAP_CONSTANTS is located in host-ibis3
-        html_mode = 'a'
 
     import ASAP_CONSTANTS as CONSTS
 
@@ -61,20 +63,19 @@ if succeeded:
     else:
         logger.info('Skipping (zip already exists..)')
     logger.info('Editing html file...')
-    edit_success_html(gp, output_path, html_mode, CONSTS.GC.ASAP_URL, run_number)
+    edit_success_html(gp, output_path, CONSTS.ASAP_URL, run_number)
 else:
-    edit_failure_html(output_path, html_mode, error_msg)
+    edit_failure_html(output_path, error_msg)
 
 #Change running status
-with open(output_path) as f:
-    html_content = f.read()
-html_content = html_content.replace(CONSTS.GC.RELOAD_TAGS, '')
-if succeeded:
-    html_content = html_content.replace('RUNNING', 'FINISHED')
-else:
-    html_content = html_content.replace('RUNNING', 'FAILED')
-with open(output_path, 'w') as f:
-    html_content = f.write(html_content)
+# with open(output_path) as f:
+#     html_content = f.read()
+# if succeeded:
+#     html_content = html_content.replace('RUNNING', 'FINISHED')
+# else:
+#     html_content = html_content.replace('RUNNING', 'FAILED')
+# with open(output_path, 'w') as f:
+#     html_content = f.write(html_content)
 
 output_url = os.path.join(CONSTS.ASAP_RESULTS_URL, run_number, 'output.html')
 
@@ -98,7 +99,7 @@ Please note: the results will be kept on the server for three months.
 
     email_content += '\n\nThanks, ASAP Team'
 
-    send_email(smtp_server=CONSTS.GC.SMTP_SERVER, sender='TAU BioSequence <bioSequence@tauex.tau.ac.il>',
+    send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
                receiver=addressee, subject='Your ASAP run is ready!', content=email_content)
 
 logger.info(argv[0] + ' is DONE!!')
@@ -112,3 +113,10 @@ logger.info('Finished joining samples. Took {}:{}:{} hours.'.format(hours, minut
 with open(os.path.join(gp.output_path, 'time.txt'), 'w') as f:
     f.write('{}:{}:{}'.format(hours, minutes, seconds))
 print('Bye.')
+
+# Must be after flushing all previous data. Otherwise it might refresh during the writing.. :(
+with open(output_path) as f:
+    html_content = f.read()
+html_content = html_content.replace(CONSTS.RELOAD_TAGS, '')
+with open(output_path, 'w') as f:
+    html_content = f.write(html_content)

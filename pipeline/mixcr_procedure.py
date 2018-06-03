@@ -1,5 +1,8 @@
 import os
+
 from text_handler import logger
+
+
 #input: path string to current database of fastq files, provided by NGS process
 #        path string to output all the results of MIXCR procedure
 def mixcr_procedure(path_to_mixcr, fastq_path, outpath, chains, mmu):
