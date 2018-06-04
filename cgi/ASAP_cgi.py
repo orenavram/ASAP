@@ -32,38 +32,46 @@ def print_hello_world(output_path = '', run_number = 'NO_RUN_NUMBER'):
 def write_html_prefix(output_path, run_number):
     # ESCAPE CURLY BRACES BY DOUBLING THEM!! {{ or }}
     with open(output_path, 'w') as f:
-        f.write('''<html><head>{0}
-<title>ASAP Job {1}</title>
-<link rel="shortcut icon" type="image/x-icon" href="{2}/pics/ASAP_logo.gif" />
-
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-<link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
-
-<link rel="stylesheet" href="{2}/css/general.css">
-
-</head><body>
-<nav role="navigation" class="navbar navbar-fixed-top">
-    <div class="jumbotron" id="jumbo">
-        <div class="container">
-            <div class="row" id="title-row">
-                <div class="col-md-1">
+        f.write('''<html><head>
+        
+    <meta http-equiv="cache-control" content="no-cache, must-revalidate, post-check=0, pre-check=0" />
+    <meta http-equiv="cache-control" content="max-age=0" />
+    <meta http-equiv="expires" content="0" />
+    <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+    <meta http-equiv="pragma" content="no-cache" />
+    {0}
+    
+    <title>ASAP Job {1}</title>
+    <link rel="shortcut icon" type="image/x-icon" href="{2}/pics/ASAP_logo.gif" />
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
+    
+    <link rel="stylesheet" href="{2}/css/general.css">
+    
+    </head><body>
+    <nav role="navigation" class="navbar navbar-fixed-top">
+        <div class="jumbotron" id="jumbo">
+            <div class="container">
+                <div class="row" id="title-row">
+                    <div class="col-md-1">
+                    </div>
+                    <div class="col-md-1">
+                        <img src="{2}/pics/ASAP_logo.gif" id="antibody_image" class="img-rounded">
+                    </div>
+                    <div class="col-md-9">
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span id="asap-title">ASAP</span>&nbsp;&nbsp;&nbsp;&nbsp;<span id="sub-title"><b>A</b> web server for Ig-<b>S</b>eq <b>A</b>nalysis <b>P</b>ipeline</span><br>
+                    </div>
                 </div>
-                <div class="col-md-1">
-                    <img src="{2}/pics/ASAP_logo.gif" id="antibody_image" class="img-rounded">
-                </div>
-                <div class="col-md-9">
-                    &nbsp;&nbsp;&nbsp;&nbsp;<span id="asap-title">ASAP</span>&nbsp;&nbsp;&nbsp;&nbsp;<span id="sub-title"><b>A</b> web server for Ig-<b>S</b>eq <b>A</b>nalysis <b>P</b>ipeline</span><br>
-                </div>
-            </div>
-        </div>       
+            </div>       
+        </div>
+    </nav>
+    <div id="behind-nav-bar-results">
     </div>
-</nav>
-<div id="behind-nav-bar-results">
-</div>
 '''.format(CONSTS.RELOAD_TAGS, run_number, CONSTS.ASAP_URL))
 
 
@@ -292,9 +300,7 @@ try:
     len_threshold = form['len_threshold'].value
     qlty_threshold = form['qlty_threshold'].value
     number_of_clones_to_analyze = form['number_of_clones_to_analyze'].value
-    raw_data_suffix = 'xls'
-    if form['raw_data_suffix'].value == 'txt':
-        raw_data_suffix = 'txt'
+    raw_data_suffix = form['raw_data_suffix'].value
     add_mass_spec_seq = 'no'
     #if this option is unchecked, it won't be send in the json (i.e., form['add_mass_spec_seq'].value might not work...)
     if 'add_mass_spec_seq' in form:

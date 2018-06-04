@@ -3,17 +3,13 @@ import os
 import sys
 
 logger = logging.getLogger('main')
-# if os.path.exists('/Users/Oren/'): #local run
-#     sys.path.append('./auxiliaries') # this is where both ASAP_CONSTANTS and GENERAL_CONSTANTS are located in my comp
-# else: #run on host-ibis
-#     sys.path.append('/bioseq/bioSequence_scripts_and_constants') # this is where GENERAL_CONSTANTS is located in host-ibis3
-#     sys.path.append('/bioseq/asap/ASAP/auxiliaries') # this is where ASAP_CONSTANTS is located in host-ibis3
+
 import ASAP_CONSTANTS as CONSTS
 
 
 def edit_success_html(gp, html_path, server_main_url, run_number):
     html_text = ''
-    if not os.path.exists('/Users/Oren/'): # run on ibis. cgi generated the initial file
+    if os.path.exists('/bioseq/'): # run on ibis. cgi generated the initial file
         with open(html_path) as f:
             html_text = f.read()
     html_text = html_text.replace('RUNNING', 'FINISHED')
@@ -182,7 +178,7 @@ def edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_mai
 
 def edit_failure_html(html_path, msg):
     html_text = ''
-    if not os.path.exists('/Users/Oren/'): # run on ibis. cgi generated the initial file
+    if os.path.exists(CONSTS.SERVERS_RESULTS_DIR): # run on ibis. cgi generated the initial file
         with open(html_path) as f:
             html_text = f.read()
     html_text = html_text.replace('RUNNING', 'FAILED')

@@ -4,13 +4,13 @@ try:
 
     import sys, os, traceback, shutil
 
-    if os.path.exists('/Users/Oren/'): #local run
-        sys.path.append('./auxiliaries')  # this is where ASAP_CONSTANTS (and GENERAL_CONSTANTS, currently unused) is located in my comp
-    else: #run on host-ibis
+    if os.path.exists('/bioseq/'): #local run
         #sys.path.append('/bioseq/bioSequence_scripts_and_constants') # this is where GENERAL_CONSTANTS is located in host-ibis3
         sys.path.append('/bioseq/asap/ASAP/auxiliaries') # this is where ASAP_CONSTANTS is located in host-ibis3
+    else: #run on host-ibis
+        sys.path.append('./auxiliaries')  # this is where ASAP_CONSTANTS (and GENERAL_CONSTANTS, currently unused) is located in my comp
 
-    from time import time, ctime
+    from time import time, ctime, sleep
     import global_params as gp
 
     start = time()
@@ -58,7 +58,7 @@ except Exception as e:
 run_number = gp.working_dir.split('/')[-1]
 if succeeded:
     logger.info('Zipping results...')
-    if not os.path.exists('/Users/Oren/Dropbox/Projects/wine/outputs.zip'):
+    if not os.path.exists(os.path.join(gp.output_path + '.zip')):
         shutil.make_archive(gp.output_path, 'zip', gp.output_path)
     else:
         logger.info('Skipping (zip already exists..)')
@@ -115,6 +115,7 @@ with open(os.path.join(gp.output_path, 'time.txt'), 'w') as f:
 print('Bye.')
 
 # Must be after flushing all previous data. Otherwise it might refresh during the writing.. :(
+sleep(2*CONSTS.RELOAD_INTERVAL)
 with open(output_path) as f:
     html_content = f.read()
 html_content = html_content.replace(CONSTS.RELOAD_TAGS, '')

@@ -7,9 +7,10 @@ from text_handler import get_next_relevant_rstriped_line
 logger = logging.getLogger('main')
 
 if len(argv)<2:
-    params_file_path = '/Users/Oren/Dropbox/Projects/wine/parameters.txt'
-else:
-    params_file_path = argv[1]
+    logger.error('Usage: python {} <params_file_path>'.format(argv[0]))
+    exit()
+
+params_file_path = argv[1]
 
 logger.info('Parsing parameter file: {}'.format(params_file_path))
 
