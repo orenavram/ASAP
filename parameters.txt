@@ -1,0 +1,31 @@
+#String that represents the working directory (run_i should be there under ruin folder; the output will be there under "outputs" folder), e.g.:
+/Users/Me/MyProject/
+
+#String that represents the path to MiXCR executable file, e.g.:
+/Users/Me/MyPrograms/MiXCR_2.0.4
+
+#Integer that represents number of runs (the output will be +1 because of the joint)
+2
+
+#List of strings that represent the chains
+#comma delimited (if more than one) without spaces!
+IGH,IGK,IGL
+
+#Integer that represents minimal threshold of reads' length (nucleotides)
+300
+
+#Integer that represents minimal threshold of reads' average quality
+20
+
+#Integer that represents the k-top clones to be further analyzed
+30
+
+#Boolean that indicates whether the samples originated in mice (and not human)
+Human
+
+#String that represent the raw data files suffix. txt / xls / etc...
+txt
+
+#String (yes/no) that represent whether to add mass_spec_seq to each aa sequence in the fasta output
+yes
+
