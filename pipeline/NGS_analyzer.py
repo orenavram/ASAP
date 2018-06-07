@@ -28,12 +28,12 @@ try:
 
     logger.info('Starting ' + argv[0] + '!')
     logger.debug('argv = ' + str(argv))
-    logger.info('Usage: python3 ' + argv[0] + ' <?parameters_file_name [parameters.txt]>')
     if len(argv) < 2:
-        parameters_file_name = os.path.join(gp.working_dir, 'parameters.txt')
+        logger.info('Usage: python ' + argv[0] + ' <parameters_file_path>')
+        exit()
     else:
-        parameters_file_name = os.path.join(gp.working_dir, argv[1])
-    logger.info('parameter file: ' + parameters_file_name)
+        parameters_file_path = argv[1]
+    logger.info('parameters file: ' + parameters_file_path)
 
     create_dir(gp.output_path)
 

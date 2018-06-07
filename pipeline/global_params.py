@@ -12,7 +12,7 @@ if len(argv)<2:
 
 params_file_path = argv[1]
 
-logger.info('Parsing parameter file: {}'.format(params_file_path))
+logger.info('Parsing parameters file: {}'.format(params_file_path))
 
 with open(params_file_path) as f:
 
@@ -47,7 +47,7 @@ with open(params_file_path) as f:
 
     #String that indicates whether the samples originated in mice (and not human)
     line = get_next_relevant_rstriped_line(f)
-    MMU = True if line == 'Mouse' else False
+    MMU = True if line.lower() == 'mouse' else False
 
     #String that represent the raw data files suffix. txt / xls / etc...
     line = get_next_relevant_rstriped_line(f)
