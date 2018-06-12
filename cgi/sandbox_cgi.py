@@ -1,4 +1,6 @@
-#!/shared/python/anaconda3.5/bin/python
+#!/data/shared/python/anaconda3-5.1.0/bin/python3.6
+
+# old shebang: #!/shared/python/anaconda3.5/bin/python
 
 #THIS IS A SANDBOX!!!!!!
 #THIS IS A SANDBOX!!!!!!
@@ -33,14 +35,14 @@ def write_running_parameters_to_html(output_path, form):
     with open(output_path, 'a') as f:
 
         f.write("""<font face=Verdana><u><h4>Running Parameters:</h4></u></font>""")
-        f.write('These are the keys that the CGI received:<br>{}<br><br>'.format('; '.join(sorted(form.keys()))))
+        f.write(f'These are the keys that the CGI received:<br>{"; ".join(sorted(form.keys()))}<br><br>')
         for key in sorted(form.keys()):
             if 'run' not in key:
-                f.write('{} = {}<br>'.format(key, form[key]))
+                f.write(f'{key} = {form[key]}<br>')
         for key in sorted(form.keys()):
             if 'run' in key:
-                f.write('100 first characters of {} = '.format(key))
-                f.write('{}<br>'.format(form[key].value[:100]))
+                f.write(f'100 first characters of {key} = ')
+                f.write(f'{form[key].value[:100]}<br>')
         f.write('<br><br>')
         f.write('</body></html>')
 
