@@ -4,22 +4,22 @@ try:
 
     import sys, os, traceback, shutil
 
-    if os.path.exists('/bioseq/'): #local run
+    if os.path.exists('/bioseq/'): #remote run
         #sys.path.append('/bioseq/bioSequence_scripts_and_constants') # this is where GENERAL_CONSTANTS is located in host-ibis3
         sys.path.append('/bioseq/asap/ASAP/auxiliaries') # this is where ASAP_CONSTANTS is located in host-ibis3
     else: #run on host-ibis
         sys.path.append('./auxiliaries')  # this is where ASAP_CONSTANTS (and GENERAL_CONSTANTS, currently unused) is located in my comp
 
     from time import time, ctime, sleep
-    import global_params as gp
-
-    start = time()
     import logging
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger('main')
 
-    print(sys.path)
+    logger.info(f'sys.path: {sys.path}')
+    import global_params as gp
+
+    start = time()
 
     argv = sys.argv
     from email_sender import send_email
@@ -41,6 +41,8 @@ try:
     output_path = os.path.join(gp.working_dir, 'output.html')
 
     import ASAP_CONSTANTS as CONSTS
+
+    gp.initial_db_path = CONSTS.MASS_SPEC_DB_MOUSE if gp.MMU else CONSTS.MASS_SPEC_DB_HUMAN
 
     from sample_analyzer import analyze_samples
     analyze_samples(gp)
@@ -112,8 +114,8 @@ seconds = int((end - start) % 60)
 logger.info('Finished joining samples. Took {}:{}:{} hours.'.format(hours, minutes, seconds))
 with open(os.path.join(gp.output_path, 'time.txt'), 'w') as f:
     f.write('{}:{}:{}'.format(hours, minutes, seconds))
-print('Bye.')
 
+logger.info(f'Waiting {2*CONSTS.RELOAD_INTERVAL} seconds to remove html refreshing headers...')
 # Must be after flushing all previous data. Otherwise it might refresh during the writing.. :(
 sleep(2*CONSTS.RELOAD_INTERVAL)
 with open(output_path) as f:
@@ -121,3 +123,5 @@ with open(output_path) as f:
 html_content = html_content.replace(CONSTS.RELOAD_TAGS, '')
 with open(output_path, 'w') as f:
     html_content = f.write(html_content)
+
+print('Done. Bye.')

@@ -59,14 +59,18 @@ def get_mixcr_cmds(fastq_path, outpath, MMU, chains):
     vdjca_path = os.path.join(outpath, 'alignments.vdjca')
     clones_clns_path = os.path.join(outpath, 'clones.clns')
 
+    #TODO: use the linux installation!!
+    # module load java/java180_144;
+    #maybe also add to the commands file to q_submitter
     align_cmd = ('java -Xmx4g -Xms3g -jar mixcr.jar align'                      #align command
                  ' -f'                                                          #overwrite output file if already exists
                  ' -s {}'                                                       #consider species (mouse/human)
+                 ' -c IGH,IGL,IGK'                                              #immunological chain gene(s) to align
                  ' --report ' + outpath + '/align_report.txt'                   #create report file
                  ' --library imgt'                                              #use IMGT local library as annotation reference
                  ' -a'                                                          #save reads' ids from fastq files
                  ' ' + fastq1 + ' ' + fastq2 + ''                               #input files- 2 X fastq files
-                 ' ' + vdjca_path).format("mmu" if MMU else "hsa")
+                 ' ' + vdjca_path).format("mouse" if MMU else "human")
              
     assemble_cmd = ('java -Xmx4g -Xms3g -jar mixcr.jar assemble'                    #assemble command
                     ' -r ' + outpath + '/assemble_report.txt'                       #create report file

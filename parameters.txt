@@ -29,3 +29,5 @@ txt
 #String (yes/no) that represent whether to add mass_spec_seq to each aa sequence in the fasta output
 yes
 
+#String that represent the mass_spec_seq to add for the proteomics DB
+ASTK

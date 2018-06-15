@@ -53,9 +53,9 @@ with open(params_file_path) as f:
     line = get_next_relevant_rstriped_line(f)
     raw_data_file_suffix = line
 
-    #String (yes/no) that represent whether to add mass_spec_seq to each aa sequence in the fasta output
+    #String that represent the mass_spec_seq to add for the proteomics DB
     line = get_next_relevant_rstriped_line(f)
-    add_mass_spec_seq = True if line == 'yes' else False
+    mass_spec_seq = line.upper()
 
 output_path = os.path.join(working_dir, 'outputs')
 
@@ -71,4 +71,5 @@ sequence_annotation_file_suffix = '_aa_sequence_annotations.' + raw_data_file_su
 top_cdr3_annotation_file_suffix = '_top_{}_cdr3_extended_annotations.{}'.format(top_cdr3_clones_to_further_analyze, raw_data_file_suffix)
 cdr3_annotation_file_suffix = '_cdr3_annotations.' + raw_data_file_suffix
 mutations_file_suffix = '_mutations.' + raw_data_file_suffix
+proteomic_db_file_suffix = 'proteomics_db.fatsa'
 #Ka_Ks_file_suffix = '_Ka_Ks_analysis_2.' + raw_data_file_suffix

@@ -1,4 +1,4 @@
-from global_params import MMU, add_mass_spec_seq
+from global_params import MMU
 
 
 IGK_id = 'RTVAA'
@@ -14,7 +14,7 @@ isotype_M_id = 'GSASAPT'
 
 end_j_seq = ('VTVSS',) # framework 4
 
-mass_spec_seq = 'ASTK'
+#mass_spec_seq = 'ASTK' #get from the user instead.
 
 if MMU:
     IGK_id = 'RADAA'
@@ -24,8 +24,8 @@ if MMU:
     isotype_G_id = r'AKTT[AP]P'
     isotype_M_id = 'ESQSFP'
     end_j_seq = ('VTVSS', 'LTVSS', 'VTVSA')  # framework 4
-    mass_spec_seq = 'AK'
+    #mass_spec_seq = 'AK' #get from the user instead.
 
-if not add_mass_spec_seq:
-    # when the user does not want to add any mass_spec_seq to the final fasta file
-    mass_spec_seq = ''
+# if not add_mass_spec_seq:
+#     # when the user does not want to add any mass_spec_seq to the final fasta file
+#     mass_spec_seq = ''

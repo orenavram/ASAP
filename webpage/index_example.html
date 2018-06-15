@@ -122,8 +122,8 @@
                     <div class="form-group">
                         <b>Organism: </b>
                         <select name="MMU" class="selectpicker form-control" data-width="auto">
-                            <option value="Human" selected>Human</option>
-                            <option value="Mouse" disabled>Mouse</option>
+                            <option value="human" selected>Human</option>
+                            <option value="mouse" disabled>Mouse</option>
                         </select>
                     </div>
                     <div class="form-group row">
@@ -138,7 +138,7 @@
                         </div>
                     </div>
                     <br>
-                    <button type="button" class="btn btn-warning" onclick="openAdvanced()">Advanced options</button>
+                    <button type="button" class="btn btn-warning" id="advanced_button" onclick="openAdvanced()">Advanced options</button>
                     <div id="advanced" style="display:none;">
                         <br>
                         <div class="form-group row">
@@ -157,17 +157,23 @@
                                 <input type="number" class="form-control" min="0" step="1" max="100" id="number_of_clones_to_analyze" name="number_of_clones_to_analyze" value="20" required>
                             </div>
                             <div class="col-md-4">
+                                <label for="mass_spec_seq">MassSpec sequence:</label>
+                                <input type="text" class="form-control" id="mass_spec_seq" name="mass_spec_seq" value="ASTK" pattern="[acdefghiklmnpqrstvwyACDEFGHIKLMNPQRSTVWY]+" title="Value must be legal amino-acid character(s)" required>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-4">
                                 <label for="raw_data_suffix">Raw data format:</label>
                                 <input type="text" class="form-control" id="raw_data_suffix" name="raw_data_suffix" value="tsv" required>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="add_mass_spec_seq">Add mass_spec sequence to final fasta file? </label>
-                            <input type="checkbox" id="add_mass_spec_seq" name="add_mass_spec_seq" value="yes" checked data-toggle="toggle">
-                            <br><label for="add_mass_spec_seq">(ASTK for human)</label>
-                        </div>
+                        <!--<div class="form-group">-->
+                            <!--<label for="add_mass_spec_seq">Add mass_spec sequence to final fasta file? </label>-->
+                            <!--<input type="checkbox" id="add_mass_spec_seq" name="add_mass_spec_seq" value="yes" checked data-toggle="toggle">-->
+                            <!--<br><label for="add_mass_spec_seq">(ASTK for human)</label>-->
+                        <!--</div>-->
                     </div>
-                    <br><br>
+                    <br>
                     <button type="reset" class="btn btn-danger">Reset</button>
                     <button type="submit" class="btn btn-success">Submit</button>
                     <a href="index.html"><button type="button" class="btn btn-danger">Clear Example</button></a>

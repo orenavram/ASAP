@@ -180,7 +180,7 @@ def align_sequences(multiple_sequences, ms_path, msa_path, cluster_number):
     if len(multiple_sequences) > 1:
         # align file
         logger.info('running mafft:')
-        mafft_cmd = 'mafft ' + ms_path + ' > ' + msa_path
+        mafft_cmd = f'mafft --quiet {ms_path} > {msa_path}'
         logger.info(mafft_cmd)
         os.system(mafft_cmd)
         #avoid removing sparse columns!! causes a bug when trying to grep from annotations!!

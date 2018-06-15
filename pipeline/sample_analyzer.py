@@ -1,12 +1,13 @@
 import logging
 import os
+import subprocess
 
 from directory_creator import create_dir
 from cdr3_analyzer import analyze_cdr3
 from mixcr_procedure import mixcr_procedure
 from parse_alignments import parse_alignment_file
 from plots_generator import plot_barplot, generate_mutations_boxplots
-from runs_aggregator import join_runs_analyses, generate_final_fasta_with_mass_spec_sec
+from runs_aggregator import join_runs_analyses, generate_final_fasta
 from text_handler import write_dict_to_file, read_table_to_dict
 
 logger = logging.getLogger('main')
@@ -61,9 +62,8 @@ def analyze_samples(gp):
                             for line in f:
                                 entry = line.split()
                                 sequence_to_entry_dict[entry[3]] = entry #entry[3] is aa_seq
-                        final_fasta_path = os.path.join(gp.run_output_paths[i], chain + '_final.fasta')
-                        from aa_sequences import mass_spec_seq
-                        generate_final_fasta_with_mass_spec_sec(final_fasta_path, sequence_to_entry_dict, mass_spec_seq)
+                        final_fasta_path = os.path.join(gp.run_output_paths[i], f'V{chain[-1]}_Sequences_AA.fasta')
+                        generate_final_fasta(final_fasta_path, sequence_to_entry_dict)
                 with open(done_path, 'w') as f:
                     pass
         except Exception as e:
@@ -144,6 +144,19 @@ def analyze_samples(gp):
                 pass
     except Exception as e:
        logger.error('Error in analyze_cdr3: {}'.format(str(e)))
+       raise
+
+    try:
+        done_path = os.path.join(gp.output_path, 'done_9_' + 'generate_proteomic_db.txt')
+        if os.path.exists(done_path):
+            logger.info('Skipping generate_proteomic_db, output files already exist...')
+        else:
+            logger.info('Generating proteomic DB...')
+            generate_proteomic_db(gp)
+            with open(done_path, 'w') as f:
+                pass
+    except Exception as e:
+       logger.error('Error in generate_proteomic_db: {}'.format(str(e)))
        raise
 
 
@@ -346,3 +359,40 @@ def get_values_frequency(d):
     for value in d.values():
         result[value] = result.get(value, 0) + 1
     return result
+
+
+def generate_proteomic_db(gp):
+    from global_params import mass_spec_seq
+    logger.info(f'gp.initial_db_path: {gp.initial_db_path}')
+    gp.initial_db_path = os.path.join(gp.working_dir, os.path.split(gp.initial_db_path)[-1])
+    logger.info(f'gp.initial_db_path: {gp.initial_db_path}')
+    for i in range(gp.number_of_runs + gp.joint_run_is_needed):
+        if i == gp.number_of_runs:
+            run = 'joint run'
+        else:
+            run = 'run' + str(i + 1)
+        logger.info(f'Generating DB for {run}')
+        proteomic_db_file_path = os.path.join(gp.run_output_paths[i], gp.proteomic_db_file_suffix)
+        subprocess.check_output(f'rsync -avz {gp.initial_db_path} {proteomic_db_file_path}', shell=True)
+        result = ''
+        for fasta_file in os.listdir(gp.run_output_paths[i]):
+            fasta_path = os.path.join(gp.run_output_paths[i], fasta_file)
+            if fasta_path == proteomic_db_file_path or not fasta_file.endswith('fasta'):
+                continue #read chain fasta files only
+            with open(fasta_path) as f:
+                while True:
+                    header = f.readline().rstrip()
+                    sequence = f.readline().rstrip()
+
+                    if not header:
+                        break
+
+                    if header.startswith('>IGH'):
+                        sequence += mass_spec_seq
+
+                    chunk_size = 60 #same length as in the human/mouse DBs
+                    sequence = ''.join([f'{sequence[i:i+chunk_size]}\n' for i in range(0,len(sequence), chunk_size)]).rstrip()
+
+                    result += f'{header}\n{sequence}\n'
+        with open(proteomic_db_file_path, 'a') as f:
+            f.write(result)

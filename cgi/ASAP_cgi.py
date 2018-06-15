@@ -88,7 +88,7 @@ def write_info_paragraph_to_html(output_path):
 <br>""")
 
 
-def write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, add_mass_spec_seq):
+def write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq):
 
     with open(output_path, 'a') as f:
 
@@ -135,16 +135,16 @@ def write_running_parameters_to_html(output_path, job_title, number_of_duplicate
         f.write(f'<b>Min read quality: </b>{qlty_threshold}<br>')
         f.write('</div>')
 
-        f.write('<div class="col-md-2">')
-        f.write(f'<b>Raw data format: </b>{raw_data_suffix}<br>')
-        f.write('</div>')
-
-        f.write('<div class="col-md-2">')
-        f.write(f'<b>Add mass_spec: </b>{add_mass_spec_seq}<br>')
+        f.write('<div class="col-md-3">')
+        f.write(f'<b>MassSpec sequence: </b>{mass_spec_seq}<br>')
         f.write('</div>')
 
         f.write('<div class="col-md-3">')
         f.write(f'<b>#clones to analyze: </b>{number_of_clones_to_analyze}<br>')
+        f.write('</div>')
+
+        f.write('<div class="col-md-2">')
+        f.write(f'<b>Raw data format: </b>{raw_data_suffix}<br>')
         f.write('</div>')
 
         f.write('</div></div>')
@@ -228,8 +228,9 @@ def prepare_parameters_file(parameters_file, parameters):
     #String that represent the raw data files suffix. txt / xls / etc...
     {}
 
-    #String (yes/no) that represent whether to add mass_spec_seq to each aa sequence in the fasta output
+    #String that represent the mass_spec_seq to add for the proteomics DB
     {}
+
     """.format(*parameters))
 
 
@@ -300,15 +301,15 @@ try:
     user_email = form['email'].value.strip()
     example_page = form['example_page'].value
     chains = ','.join(form.getlist('chains'))
-    MMU = form['MMU'].value
+    MMU = form['MMU'].value.lower()
     len_threshold = form['len_threshold'].value
     qlty_threshold = form['qlty_threshold'].value
     number_of_clones_to_analyze = form['number_of_clones_to_analyze'].value
     raw_data_suffix = form['raw_data_suffix'].value
-    add_mass_spec_seq = 'no'
-    #if this option is unchecked, it won't be send in the json (i.e., form['add_mass_spec_seq'].value might not work...)
-    if 'add_mass_spec_seq' in form:
-        add_mass_spec_seq = 'yes'
+    mass_spec_seq = form['mass_spec_seq'].value.strip()
+    # #if this option is unchecked, it won't be send in the json (i.e., form['add_mass_spec_seq'].value might not work...)
+    # if 'add_mass_spec_seq' in form:
+    #     add_mass_spec_seq = 'yes'
     job_title = ''
     if form['job_title'].value != '':
         job_title = form['job_title'].value.strip()
@@ -358,17 +359,23 @@ try:
             f.write(f'{ctime()}: Copying example files...\n')
         # copy example data
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
-            f.write(f'Fetching: rsync -ravz {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}\n')
-        os.system(f'rsync -ravz {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}')
+            f.write(f'Fetching: rsync -avz {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}\n')
+        os.system(f'rsync -avz {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
             f.write(f'{ctime()}: ls of {os.path.join(wd, "reads", "run1")} yields:\n{os.listdir(path_to_reads)}\n')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
-            f.write(f'Fetching: rsync -ravz {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}\n')
-        os.system(f'rsync -ravz {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}')
-        os.system(f'rsync -ravz {CONSTS.EXAMPLE_FILE_RUN2_R1} {paths_to_reads_files[2]}')
-        os.system(f'rsync -ravz {CONSTS.EXAMPLE_FILE_RUN2_R2} {paths_to_reads_files[3]}')
+            f.write(f'Fetching: rsync -avz {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}\n')
+        os.system(f'rsync -avz {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}')
+        os.system(f'rsync -avz {CONSTS.EXAMPLE_FILE_RUN2_R1} {paths_to_reads_files[2]}')
+        os.system(f'rsync -avz {CONSTS.EXAMPLE_FILE_RUN2_R2} {paths_to_reads_files[3]}')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
             f.write('{}: Files were copied successfully.\n'.format(ctime()))
+
+    # copy mass_spec db to the results folder
+    if MMU == 'mouse':
+        os.system(f'rsync -avz {CONSTS.MASS_SPEC_DB_MOUSE} {wd}')
+    else:
+        os.system(f'rsync -avz {CONSTS.MASS_SPEC_DB_HUMAN} {wd}')
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'{ctime()}: ls of {path_to_reads} yields:\n{os.listdir(path_to_reads)}\n')
@@ -376,7 +383,7 @@ try:
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'{ctime()}: write_running_parameters_to_html...\n')
 
-    write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, add_mass_spec_seq)
+    write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq)
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'{ctime()}: Running parameters were written to html successfully.\n')
@@ -385,7 +392,7 @@ try:
     confirm_email_add = form['confirm_email'].value  # if it is contain a value it is a spammer.
 
     parameters_file = os.path.join(wd, 'parameters.txt')
-    parameters = [wd, CONSTS.MiXCR_dir, number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, add_mass_spec_seq]
+    parameters = [wd, CONSTS.MiXCR_dir, number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, mass_spec_seq]
     prepare_parameters_file(parameters_file, parameters)
 
     cmds_file = os.path.join(wd, 'qsub.cmds')
