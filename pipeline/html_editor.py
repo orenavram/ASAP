@@ -23,7 +23,7 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
     for run in runs:
         html_text += '<th align="center">'
         #if os.path.exists(gp.working_dir + '/outputs/' + run):
-        html_text += '<h2><b>' + run.replace('run','replicate ').title() + ' results</b></h2>\n'
+        html_text += '<h2><b>' + run.replace('run','rep ').title() + ' results</b></h2>\n'
         html_text += '</th>'
 
     html_text += '</tr><thead><tbody>'
@@ -39,53 +39,71 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
 
             html_text += '<td>\n'
             html_text += '\t<ul>\n'
-            if chain == 'IGH':
-                link = f'<a href="outputs/{run}/parsed_mixcr_output/alignment_report.png" target="_blank">Isotypes distribution</a>'
+
+            raw_file = f'outputs/{run}/parsed_mixcr_output/alignment_report.png'
+            if os.path.exists(gp.working_dir + '/' + raw_file) and chain == 'IGH':
+                link = f'<a href="{raw_file}" target="_blank">Isotypes distribution</a>'
                 html_text += '\t\t<li>' + link + ' ; '
                 html_text += '</li>'
 
-            link = f'<a href="outputs/{run}/parsed_mixcr_output/{chain + gp.sequence_annotation_file_suffix}" target="_blank">Sequence annotations</a>'
-            html_text += '<li>' + link + ' ;</li>'
+            raw_file = f'outputs/{run}/parsed_mixcr_output/{chain + gp.sequence_annotation_file_suffix}'
+            if os.path.exists(gp.working_dir + '/' + raw_file):
+                link = f'<a href="{raw_file}" target="_blank">Sequence annotations</a>'
+                html_text += '<li>' + link + ' ;</li>'
 
-            link = f'SHM analysis: <a href="outputs/{run}/parsed_mixcr_output/{chain + gp.mutations_file_suffix.replace(gp.raw_data_file_suffix,"1.png")}" target="_blank">nucleotide substitution frequency</a> ; <a href="outputs/{run}/parsed_mixcr_output/{chain + gp.mutations_file_suffix.replace(gp.raw_data_file_suffix, "2.png")}" target="_blank">Ka Ks analysis</a>'
-            raw_link = f'(<a href="outputs/{run}/parsed_mixcr_output/{chain + gp.mutations_file_suffix}" target="_blank">raw_data</a>)'
-            html_text += '\t\t<li>' + link + ' ; ' + raw_link + '</li>'
+            raw_file = f'outputs/{run}/parsed_mixcr_output/{chain + gp.mutations_file_suffix}'
+            if os.path.exists(gp.working_dir + '/' + raw_file):
+                link = f'SHM analysis: <a href="{raw_file.replace(gp.raw_data_file_suffix, "1.png")}" target="_blank">nucleotide substitution frequency</a> ; <a href="{raw_file.replace(gp.raw_data_file_suffix, "2.png")}" target="_blank">Ka Ks analysis</a>'
+                raw_link = f'(<a href="{raw_file}" target="_blank">raw_data</a>)'
+                html_text += '\t\t<li>' + link + ' ; ' + raw_link + '</li>'
 
-            link = f'<a href="outputs/{run}/cdr3_analysis/{chain}_cdr3_len_counts.png" target="_blank">CDR3 length distribution (AA level)</a>'
-            raw_link = f'(<a href="outputs/{run}/cdr3_analysis/{chain}_cdr3_len_counts.{gp.raw_data_file_suffix}" target="_blank">raw_data</a>)'
-            html_text += '\t\t<li>' + link + ' ; ' + raw_link + '</li>'
+            raw_file = f'outputs/{run}/cdr3_analysis/{chain}_cdr3_len_counts.{gp.raw_data_file_suffix}'
+            if os.path.exists(gp.working_dir + '/' + raw_file):
+                link = f'<a href="{raw_file.replace(gp.raw_data_file_suffix, "png")}" target="_blank">CDR3 length distribution (AA level)</a>'
+                raw_link = f'(<a href="{raw_file}" target="_blank">raw_data</a>)'
+                html_text += '\t\t<li>' + link + ' ; ' + raw_link + '</li>'
 
             family_distributions = ''
             for group_combination in ['V', 'D', 'J', 'VD', 'VJ', 'DJ', 'VDJ']:
                 if chain == 'IGH' or 'D' not in group_combination: # no 'D' fragment in IGK/IGL
-                    link = f'<a href="outputs/{run}/vdj_assignments/{chain}_{group_combination}_counts.png" target="_blank">{group_combination} family subgroup distribution</a>'
-                    raw_link = f'(<a href="outputs/{run}/vdj_assignments/{chain}_{group_combination}_counts.{gp.raw_data_file_suffix}" target="_blank">raw_data</a>)'
-                    family_distributions += '\t\t<li>' + link + ' ; ' + raw_link + '</li>\n'
+                    raw_file = f'outputs/{run}/vdj_assignments/{chain}_{group_combination}_counts.{gp.raw_data_file_suffix}'
+                    if os.path.exists(gp.working_dir + '/' + raw_file):
+                        link = f'<a href="{raw_file.replace(gp.raw_data_file_suffix, "png")}" target="_blank">{group_combination} family subgroup distribution</a>'
+                        raw_link = f'(<a href="{raw_file}" target="_blank">raw_data</a>)'
+                        family_distributions += '\t\t<li>' + link + ' ; ' + raw_link + '</li>\n'
             html_text += family_distributions
 
-            #if run == 'joint':
-            link = f'<a href="outputs/{run}/cdr3_analysis/{chain + gp.cdr3_annotation_file_suffix.replace(gp.raw_data_file_suffix, "png")}" target="_blank">Clonal expansion graph</a>'
-            raw_link = f'(<a href="outputs/{run}/cdr3_analysis/{chain + gp.cdr3_annotation_file_suffix}" target="_blank">raw_data</a>)'
-            html_text += '\t\t<li>' + link + ' ; ' + raw_link + '</li>\n'
+            raw_file = f'outputs/{run}/cdr3_analysis/{chain + gp.cdr3_annotation_file_suffix}'
+            if os.path.exists(gp.working_dir + '/' + raw_file):
+                link = f'<a href="{raw_file.replace(gp.raw_data_file_suffix, "png")}" target="_blank">Clonal expansion graph</a>'
+                raw_link = f'(<a href="{raw_file}" target="_blank">raw_data</a>)'
+                html_text += '\t\t<li>' + link + ' ; ' + raw_link + '</li>\n'
 
-            cdr3_analysis_raw_file = os.path.join(gp.output_path, run, 'cdr3_analysis', chain + gp.top_cdr3_annotation_file_suffix)
-            if os.path.exists(cdr3_analysis_raw_file):
+            raw_file = os.path.join('outputs', run, 'cdr3_analysis', chain + gp.top_cdr3_annotation_file_suffix)
+            if os.path.exists(gp.working_dir + '/' + raw_file):
                 top_cdr3_analysis_html_url = os.path.join(server_main_url, 'results', run_number, 'outputs', run, chain + gp.top_cdr3_annotation_file_suffix).replace(gp.raw_data_file_suffix, 'html')
                 link = f'<a href="{top_cdr3_analysis_html_url}" target="_blank">Top {gp.top_cdr3_clones_to_further_analyze} clones annotations</a>'
-                raw_link = f'(<a href="outputs/{run}/cdr3_analysis/{chain + gp.top_cdr3_annotation_file_suffix}" target="_blank">raw_data</a>)'
+                raw_link = f'(<a href="{raw_file}" target="_blank">raw_data</a>)'
                 html_text += '\t\t<li>' + link + ' ; ' + raw_link + '</li>\n'
                 top_cdr3_analysis_html_path = os.path.join(gp.output_path, run, chain + gp.top_cdr3_annotation_file_suffix).replace(gp.raw_data_file_suffix, 'html')
                 edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_main_url, run_number, chain, run)
 
-            link = f'<a href="outputs/{run}/V{chain[-1]}_Sequences_AA.fasta" target="_blank">V{chain[-1]}_Sequences_AA (.fasta)</a>'
-            html_text += '\t\t<li>' + link + ' ;</li>\n'
+            raw_file = f'outputs/{run}/V{chain[-1]} sequences AA.fasta'
+            if os.path.exists(gp.working_dir + '/' + raw_file):
+                link = f'<a href="{raw_file}" target="_blank">V{chain[-1]} sequences AA (.fasta)</a>'
+                html_text += '\t\t<li>' + link + ' ;</li>\n'
 
-            link = f'<a href="outputs/{run}/{gp.proteomic_db_file_suffix}" target="_blank">Proteomics DB (.fasta)</a>'
-            html_text += '\t\t<li>' + link + ' ;</li>\n'
+            raw_file = f'outputs/{run}/{gp.proteomic_db_file_suffix}'
+            if os.path.exists(gp.working_dir + '/' + raw_file):
+                link = f'<a href="{raw_file}" target="_blank">Proteomics DB (.fasta)</a>'
+                html_text += '\t\t<li>' + link + ' ;</li>\n'
 
             if run == 'joint':
-                link = f'<a href="outputs/{run}/parsed_mixcr_output/{chain}_runs_intersections.png" target="_blank">Runs intersection</a>'
-                html_text += '\t\t<li>' + link + ' ;</li>\n'
+
+                raw_file = f'outputs/{run}/parsed_mixcr_output/{chain}_runs_intersections.png'
+                if os.path.exists(gp.working_dir + '/' + raw_file):
+                    link = f'<a href="{raw_file}" target="_blank">Runs intersection</a>'
+                    html_text += '\t\t<li>' + link + ' ;</li>\n'
 
                 joint_path = os.path.join(gp.output_path, 'joint')
                 for correlation_file in os.listdir(joint_path):

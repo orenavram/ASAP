@@ -114,9 +114,14 @@ def write_running_parameters_to_html(output_path, job_title, number_of_duplicate
 
         f.write('<div class="row" style="font-size: 20px;">')
         for i in range(number_of_duplicates):
+            if i == 3:
+                # keep the page structure aligned
+                f.write('</div>')
+                f.write('<div class="row" style="font-size: 20px;">')
+
             # show only path suffix... http://asap.tau.ac.il/results/1520442230/reads/run1/242_R1.fastq
             f.write('<div class="col-md-4">')
-            f.write('<b>Run {} sequence data:</b><br>'.format(i + 1))
+            f.write(f'<b>Rep {i + 1} sequence data:</b><br>')
             f.write(f'R1 = <a href="{urls_to_reads_files[i * 2]}" target=_blank>{files_names[i*2]}</A><br>')
             f.write(f'R2 = <a href="{urls_to_reads_files[i * 2 + 1]}" target=_blank>{files_names[i*2+1]}</A><br>')
             f.write('</div>')
@@ -172,21 +177,22 @@ def write_pair_file(debug_path, pair, run_content, run_filename, run_dir):
         f.write(f'R{pair} was handled successfully\n')
 
 
-def process_uploaded_files(run, debug_path):
+def process_uploaded_files(run, debug_path, actual_number_of_duplicates):
     #for debugging
     with open(debug_path, 'a') as f:
-        f.write(f'uploading file of {run}\n')
-    run_R1_filename = form[run + '_R1'].filename
-    run_R2_filename = form[run + '_R2'].filename
+        f.write(f'{"#"*80}\nuploading file of {run}\n')
+    run_R1_filename = form[f'{run}_R1'].filename
+    run_R2_filename = form[f'{run}_R2'].filename
     # for debugging
     with open(debug_path, 'a') as f:
         f.write(f'file names are:\n{run_R1_filename} (of type {type(form[run + "_R1"].value)}) and {run_R2_filename} (of type {type(form[run + "_R2"].value)})\n')
-    run_R1_content = form[run + '_R1'].value
-    run_R2_content = form[run + '_R2'].value
+    run_R1_content = form[f'{run}_R1'].value
+    run_R2_content = form[f'{run}_R2'].value
     # for debugging
     with open(debug_path, 'a') as f:
         f.write(f'{run_R1_filename} first 100 chars are: {run_R1_content[:100]}\n{run_R2_filename} first 100 chars are: {run_R2_content[:100]}\n')
-    run_dir = os.path.join(wd, 'reads', run)
+
+    run_dir = os.path.join(wd, 'reads', f'run{actual_number_of_duplicates}')
     create_dir(run_dir)
 
     write_pair_file(debug_path, '1', run_R1_content, run_R1_filename, run_dir)
@@ -317,31 +323,24 @@ try:
     files_names = []
     if example_page == 'no':
         # handling uploaded files:
-        number_of_duplicates = 1
-
-        #at least one run should exist:
-        run1_R1_filename, run1_R2_filename = process_uploaded_files('run1', cgi_debug_path)
-        files_names.extend([run1_R1_filename, run1_R2_filename])
-        # additional files might not exist
-        run2_R1_filename, run2_R2_filename, run3_R1_filename, run3_R2_filename, = '', '', '', ''
-        if form['run2_R1'].filename != '': #handle run2 if any
-            run2_R1_filename, run2_R2_filename = process_uploaded_files('run2', cgi_debug_path)
-            number_of_duplicates += 1
-            files_names.extend([run2_R1_filename, run2_R2_filename])
-        if form['run3_R1'].filename != '': #handle run3 if any
-            run3_R1_filename, run3_R2_filename = process_uploaded_files('run3', cgi_debug_path)
-            number_of_duplicates += 1
-            files_names.extend([run3_R1_filename, run3_R2_filename])
+        actual_number_of_duplicates = 0
+        for i in range(1,7):
+            if form[f'run{i}_R1'].filename != '': #handle run2 if any
+                actual_number_of_duplicates += 1
+                run_R1_filename, run_R2_filename = process_uploaded_files(f'run{i}', cgi_debug_path, actual_number_of_duplicates)
+                files_names.extend([run_R1_filename, run_R2_filename])
+        if actual_number_of_duplicates < 1:
+            raise ValueError('No files where uploaded. At least one run should exist!')
     else:
         # no files to handle, just copy them to the example folder (if needed).
-        number_of_duplicates = 2
+        actual_number_of_duplicates = 2
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
-        f.write(f'Number of duplicates is {number_of_duplicates}\n')
+        f.write(f'Number of duplicates is {actual_number_of_duplicates}\n')
 
     paths_to_reads_files = []
     urls_to_reads_files = []
-    for i in range(number_of_duplicates):
+    for i in range(actual_number_of_duplicates):
         run = 'run' + str(i + 1)
         path_to_reads = os.path.join(wd, 'reads', run)
         url_to_reads = os.path.join(results_url, 'reads', run)
@@ -383,7 +382,7 @@ try:
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'{ctime()}: write_running_parameters_to_html...\n')
 
-    write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq)
+    write_running_parameters_to_html(output_path, job_title, actual_number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq)
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'{ctime()}: Running parameters were written to html successfully.\n')
@@ -392,7 +391,7 @@ try:
     confirm_email_add = form['confirm_email'].value  # if it is contain a value it is a spammer.
 
     parameters_file = os.path.join(wd, 'parameters.txt')
-    parameters = [wd, CONSTS.MiXCR_dir, number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, mass_spec_seq]
+    parameters = [wd, CONSTS.MiXCR_dir, actual_number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, mass_spec_seq]
     prepare_parameters_file(parameters_file, parameters)
 
     cmds_file = os.path.join(wd, 'qsub.cmds')

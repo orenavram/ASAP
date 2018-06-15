@@ -59,7 +59,7 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
                 outfile_pie_chart = os.path.join(joint_parsed_mixcr_output_path, 'alignment_report.png')
                 generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict, 'Joint')
 
-            final_fasta_path = os.path.join(run_output_paths[-1], f'V{chain[-1]}_Sequences_AA.fasta')
+            final_fasta_path = os.path.join(run_output_paths[-1], f'V{chain[-1]} sequences AA.fasta')
             generate_final_fasta(final_fasta_path, sequence_to_entry_dict, aa_seq_to_counts_in_each_run)
 
             plot_runs_correlation(aa_seq_to_counts_in_each_run, aa_seq_to_counts_with_less_than_minimal_threshold, number_of_runs, run_output_paths[-1], chain)

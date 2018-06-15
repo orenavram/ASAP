@@ -68,7 +68,7 @@ def plot_venn(out_path, runs_annotations_sets, runs):
     elif len(runs) == 3:
         venn = matplotlib_venn.venn3
     else:
-        logger.error('Can\'t plot venn diagram for {} sets!! (only for 2 or 3 sets)'.format(len(runs)))
+        logger.error('Can\'t plot venn diagram for {} sets! (only for 2 or 3 sets)'.format(len(runs)))
         return
     plt.figure()
     venn(runs_annotations_sets, set_labels=[x.replace('run','replicate ').title() for x in runs])

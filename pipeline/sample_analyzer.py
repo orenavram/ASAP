@@ -62,7 +62,7 @@ def analyze_samples(gp):
                             for line in f:
                                 entry = line.split()
                                 sequence_to_entry_dict[entry[3]] = entry #entry[3] is aa_seq
-                        final_fasta_path = os.path.join(gp.run_output_paths[i], f'V{chain[-1]}_Sequences_AA.fasta')
+                        final_fasta_path = os.path.join(gp.run_output_paths[i], f'V{chain[-1]} sequences AA.fasta')
                         generate_final_fasta(final_fasta_path, sequence_to_entry_dict)
                 with open(done_path, 'w') as f:
                     pass
@@ -133,18 +133,18 @@ def analyze_samples(gp):
        logger.error('Error in plot_mutation_counts: {}'.format(str(e)))
        raise
 
-    try:
-        done_path = os.path.join(gp.output_path, 'done_8_' + 'analyze_cdr3.txt')
-        if os.path.exists(done_path):
-            logger.info('Skipping analyze_cdr3, output files already exist...')
-        else:
-            logger.info('Analyzing CDR3s...')
-            analyze_cdr3(gp)
-            with open(done_path, 'w') as f:
-                pass
-    except Exception as e:
-       logger.error('Error in analyze_cdr3: {}'.format(str(e)))
-       raise
+    #try:
+    done_path = os.path.join(gp.output_path, 'done_8_' + 'analyze_cdr3.txt')
+    if os.path.exists(done_path):
+        logger.info('Skipping analyze_cdr3, output files already exist...')
+    else:
+        logger.info('Analyzing CDR3s...')
+        analyze_cdr3(gp)
+        with open(done_path, 'w') as f:
+            pass
+    # except Exception as e:
+    #    logger.error('Error in analyze_cdr3: {}'.format(str(e)))
+    #    raise
 
     try:
         done_path = os.path.join(gp.output_path, 'done_9_' + 'generate_proteomic_db.txt')
