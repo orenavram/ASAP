@@ -82,7 +82,7 @@ print('Location: ' + output_url)  # Redirects to the results url. MUST appear be
 print('Content-Type: text/html\n')  # For more details see https://www.w3.org/International/articles/http-charset/index#scripting
 sys.stdout.flush()  # must be flushed immediately!!!
 
-# print_hello_world(output_path, run_number)
+# print_hello_world(output_html_path, run_number)
 # print_running_parameters_to_html(form) # html's prefix must be written BEFORE redirecting...
 
 

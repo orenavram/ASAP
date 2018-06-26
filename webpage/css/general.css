@@ -86,3 +86,15 @@ td ul{
 td h3{
     padding-right: 10px;
 }
+
+#lib_info{
+    padding: 0px;
+    border: 0px;
+    top: 0px;
+    margin-bottom: 3px;
+    outline: none;
+}
+
+#lib_info_modal{
+    font-size: 18px;
+}

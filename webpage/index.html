@@ -88,7 +88,7 @@
         <div class="col-md-1">
         </div>
         <div class="col-md-10" id="basic">
-            <form id="ASAP_form" action="http://asap.tau.ac.il/cgi-bin/ASAP_cgi.py" method="post" ENCTYPE="multipart/form-data" target="_blank" onsubmit="return validate();">
+            <form id="ASAP_form" action="https://asap.tau.ac.il/cgi-bin/ASAP_cgi.py" method="post" ENCTYPE="multipart/form-data" target="_blank" onsubmit="return validate_read_files() && validate_lib_file();">
                     <input type="hidden" name="example_page" value="no">
                     <div id="please-note" align="justify">Please notice that files larger than 100MB may require up to 30 minutes to be uploaded, depending on your network speed. It is possible and recommended to upload zipped fastq files (gz format).</div>
                     <br><br>
@@ -198,6 +198,32 @@
                             </div>
                         </div>
                         <div class="form-group row">
+                            <div class="col-md-4">
+                                <label for="alternative_lib">
+                                    Additional reference library:
+                                    <button type="button" class="btn btn-lg glyphicon" data-toggle="modal" data-target="#lib_info_modal" id="lib_info">&#xe085;</button>
+                                </label>
+
+                                <!-- Modal -->
+                                <div class="modal fade" id="lib_info_modal" role="dialog">
+                                    <div class="modal-dialog">
+
+                                        <!-- Modal content-->
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                <h4 class="modal-title">Have a fasta format file?</h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                If your library is in fasta format follow the instructions <a href='https://github.com/repseqio/repseqio/wiki/Creating-repseqio-formatted-JSON-library' target="_blank">HERE</a> in order to convert it to a <i>repseqio formatted JSON library</i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <label class="btn btn-default btn-file">
+                                    <div name="file_button"></div> <input type="file" id="alternative_lib" name="alternative_lib">
+                                </label>
+                            </div>
                             <div class="col-md-4">
                                 <label for="raw_data_suffix">Raw data format:</label>
                                 <input type="text" class="form-control" id="raw_data_suffix" name="raw_data_suffix" value="tsv" required>

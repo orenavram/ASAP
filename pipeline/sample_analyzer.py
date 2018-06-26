@@ -12,19 +12,18 @@ from text_handler import write_dict_to_file, read_table_to_dict
 
 logger = logging.getLogger('main')
 
-def analyze_samples(gp):
+def analyze_samples(gp, output_html_path):
 
     alternative_lib_path = os.path.join(gp.working_dir, 'alternative_lib.json')
     if os.path.exists(alternative_lib_path):
         logger.info(f'{alternative_lib_path} exists. Trying to merge it with the default IMGT lib...')
-        gp.alleles_lib_path = generate_lib_for_mixcr(gp.working_dir, gp.alleles_lib_path, alternative_lib_path)
-        logger.info(f'{alternative_lib_path} exists. Trying to merge it with the default IMGT lib...')
+        gp.alleles_lib_path = generate_lib_for_mixcr(gp.working_dir, gp.alleles_lib_path, alternative_lib_path, output_html_path, gp.remote_run)
         '''
+        set working_dir=???
         repseqio fromFasta $working_dir/Fosmid.IGHVs.For.Yariv.fasta  -t 9606 -c IGH -g V -n 0 --gene-feature VRegion $working_dir/Fosmid.IGHVs.For.Yariv.json 
-        
+        #this is maybe unnecessary
         repseqio compile $working_dir/Fosmid.IGHVs.For.Yariv.json $working_dir/Fosmid.IGHVs.For.Yariv.compiled
-        
-        repseqio merge $working_dir/libraries_backup/imgt.201631-4.sv1.json $working_dir/Fosmid.IGHVs.For.Yariv.compiled $working_dir/merged_lib.json
+        repseqio merge $working_dir/imgt.201631-4.sv1.json $working_dir/Fosmid.IGHVs.For.Yariv.compiled $working_dir/merged_lib.json
         '''
 
     for i in range(gp.number_of_runs):
@@ -40,7 +39,7 @@ def analyze_samples(gp):
             else:
                 logger.info('Starting mixcr_procedure of {}...'.format(run))
                 fastq_path = os.path.join(gp.working_dir, 'reads', run)
-                mixcr_procedure(fastq_path, mixcr_output_path, gp.chains, gp.MMU, gp.alleles_lib_path)
+                mixcr_procedure(fastq_path, mixcr_output_path, gp.chains, gp.MMU, gp.alleles_lib_path, gp.remote_run)
                 if not os.path.exists(os.path.join(mixcr_output_path, 'alignments.txt')):
                     raise AssertionError(f'MiXCR FAILED for some reason ({os.path.join(mixcr_output_path, "alignments.txt")} is missing).')
                 with open(done_path, 'w') as f:

@@ -1,25 +1,32 @@
 import os
 import subprocess
-
+import ASAP_CONSTANTS as CONSTS
 from text_handler import logger
 
-def generate_lib_for_mixcr(wd, default_lib_path, alternative_lib_path):
+def generate_lib_for_mixcr(wd, default_lib_path, alternative_lib_path, output_html_path, remote_run):
     merged_lib_path = f'{wd}/merged_lib.json'
-    execute_command(f'repseqio merge {default_lib_path} {alternative_lib_path} {merged_lib_path}')
+    execute_command(f'repseqio merge -f {default_lib_path} {alternative_lib_path} {merged_lib_path}')
     if os.path.exists(merged_lib_path):
         #merge succeeded
         logger.info(f'Merge succeeded! Using merged lib at: {merged_lib_path}')
-        return merged_lib_path.split('.json')[0]  # mixcr requires lib name without json suffix!!
+        return merged_lib_path
     else:
         #merge failed. will use the default lib
         logger.info(f'Merge failed! Using default lib at: {default_lib_path}')
-        return default_lib_path.split('.json')[0]  # mixcr requires lib name without json suffix!!
+        if remote_run:
+            with open(output_html_path) as f:
+                html_txt = f.read()
+            logger.info(f"html_txt.find('+ alternative_lib'): {html_txt.find('+ alternative_lib')}")
+            html_txt = html_txt.replace('+ alternative_lib', '(merging was failed)')
+            with open(output_html_path, 'w') as f:
+                f.write(html_txt)
+        return default_lib_path
 
 #input: path string to current database of fastq files, provided by NGS process
 #        path string to output all the results of MIXCR procedure
-def mixcr_procedure(fastq_path, outpath, chains, mmu, lib_path):
+def mixcr_procedure(fastq_path, outpath, chains, mmu, lib_path, remote_run):
 
-    align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds = get_mixcr_cmds(lib_path, fastq_path, outpath, mmu, chains)
+    align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds = get_mixcr_cmds(lib_path, fastq_path, outpath, mmu, chains, remote_run)
 
     logger.info('Current wd is: ' + os.getcwd())
     #logger.info('Changing wd to mixcr\'s dir')
@@ -42,14 +49,14 @@ def mixcr_procedure(fastq_path, outpath, chains, mmu, lib_path):
     execute_command(exportAlignments_cmd)
 
     #execute export clones command for each chain separately
-    #TODO: why it is needeD?
-    for exportClones_cmd in exportClones_cmds:
-        execute_command(exportClones_cmd)
+    #TODO: why it is needeD? Answer: it is NOT.
+    #for exportClones_cmd in exportClones_cmds:
+    #    execute_command(exportClones_cmd)
 
 
 
 '''assign variables to commands'''
-def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, chains):
+def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, chains, remote_run):
 
     if not os.path.exists(outpath):
         os.makedirs(outpath)
@@ -76,18 +83,14 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, chains):
     vdjca_path = os.path.join(outpath, 'alignments.vdjca')
     clones_clns_path = os.path.join(outpath, 'clones.clns')
 
-    #TODO: use the linux installation!!
-    # module load java/java180_144;
-    #maybe also add to the commands file (to q_submitter)
-
     align_cmd = ('mixcr align'                      #align command
                  ' -f'                                                          #overwrite output file if already exists
                  f' -s {"mouse" if MMU else "human"}'                                                       #consider species (mouse/human)
                  ' -c IGH,IGL,IGK'                                              #immunological chain gene(s) to align
                  f' --report {outpath}/align_report.txt'                   #create report file
-                 #' --library imgt'                                              #use IMGT local library as annotation reference
-                 f' --library {lib_path}'
+                 f' --library {lib_path.split(".json")[0]}'  # mixcr requires lib name without json suffix!!
                  ' -a'                                                          #save reads' ids from fastq files
+                 ' --verbose'
                  f' {fastq1} {fastq2}'                               #input files- 2 X fastq files
                  f' {vdjca_path}')
              
@@ -103,24 +106,24 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, chains):
                     f' {clones_clns_path}')                                         #output file
 
     exportAlignments_cmd = ('mixcr exportAlignments'    #exportAlignments command   
-                            ' -f'                                                   #overwrite output file if already exists
-                            f' --preset-file aln_fields.txt'         #export fields specified in aln_fields file
+                            ' -f'                                        #overwrite output file if already exists
+                            f' --preset-file {CONSTS.ASAP_EXEC+"/" if remote_run else ""}aln_fields.txt'         #export fields specified in aln_fields file
                             f' -cloneIdWithMappingType {outpath}/index_file'     #indicate stase of each read
                             f' {vdjca_path}'                                   #input file- VDJCA from previous step
                             f' {outpath}/alignments.txt')                           #output file
 
     exportClones_cmds = []
-    for chain in chains:
-        exportClones_cmd = ('mixcr exportClones'                #exportClones command
-                        ' -f'                                   #overwrite output file if already exists
-                        f' --chains {chain}'
-                        ' --preset-file assemble_fields.txt'    #export fields specified in assemble_fields file
-                        f' -readIds {outpath}/index_file'
-                        ' -o'                                   #remove out-of-frame clones
-                        ' -t'                                   #remove stop codon clones
-                        f' {clones_clns_path}'                  #input file
-                        f' {outpath}/{chain}_clones.txt')
-        exportClones_cmds.append(exportClones_cmd)
+    # for chain in chains:
+    #     exportClones_cmd = ('mixcr exportClones'                #exportClones command
+    #                     ' -f'                                   #overwrite output file if already exists
+    #                     f' --chains {chain}'
+    #                     f' --preset-file {CONSTS.ASAP_EXEC+"/" if remote_run else ""}assemble_fields.txt'    #export fields specified in assemble_fields file
+    #                     f' -readIds {outpath}/index_file'
+    #                     ' -o'                                   #remove out-of-frame clones
+    #                     ' -t'                                   #remove stop codon clones
+    #                     f' {clones_clns_path}'                  #input file
+    #                     f' {outpath}/{chain}_clones.txt')
+    #     exportClones_cmds.append(exportClones_cmd)
 
     return align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds
 

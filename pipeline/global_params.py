@@ -73,5 +73,3 @@ cdr3_annotation_file_suffix = '_cdr3_annotations.' + raw_data_file_suffix
 mutations_file_suffix = '_mutations.' + raw_data_file_suffix
 proteomic_db_file_suffix = 'proteomics_db.fatsa'
 #Ka_Ks_file_suffix = '_Ka_Ks_analysis_2.' + raw_data_file_suffix
-alleles_lib_path = [x for x in os.listdir('./') if 'imgt' in x.lower()][0]  # './imgt.201822-5.sv4.json'
-logger.info(f'default alleles lib path is: {alleles_lib_path}')

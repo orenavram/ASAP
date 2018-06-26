@@ -87,7 +87,7 @@ def write_info_paragraph_to_html(output_path):
 <br>""")
 
 
-def write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq):
+def write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq, lib_file_name):
 
     with open(output_path, 'a') as f:
 
@@ -115,43 +115,42 @@ def write_running_parameters_to_html(output_path, job_title, number_of_duplicate
         for i in range(number_of_duplicates):
             if i == 3:
                 # keep the page structure aligned
-                f.write('</div>')
-                f.write('<div class="row" style="font-size: 20px;">')
+                f.write('</div>\n<div class="row" style="font-size: 20px;">')
+                f.write('')
 
             # show only path suffix... http://asap.tau.ac.il/results/1520442230/reads/run1/242_R1.fastq
-            f.write('<div class="col-md-4">')
-            f.write(f'<b>Rep {i + 1} sequence data:</b><br>')
-            f.write(f'R1 = <a href="{urls_to_reads_files[i * 2]}" target=_blank>{files_names[i*2]}</A><br>')
-            f.write(f'R2 = <a href="{urls_to_reads_files[i * 2 + 1]}" target=_blank>{files_names[i*2+1]}</A><br>')
-            f.write('</div>')
-
+            f.write(f'''<div class="col-md-4">
+                            <b>Rep {i + 1} sequence data:</b><br>
+                            R1 = <a href="{urls_to_reads_files[i * 2]}" target=_blank>{files_names[i*2]}</A><br>
+                            R2 = <a href="{urls_to_reads_files[i * 2 + 1]}" target=_blank>{files_names[i*2+1]}</A><br>
+                        </div>''')
         f.write('</div>')
 
-        #Advanced params row
-        f.write('<br><u><h3>Advanced Parameters:</h3></u><br>')
-
-        f.write('<div class="row">')
-        f.write('<div class="col-md-2">')
-        f.write(f'<b>Min read length: </b>{len_threshold}<br>')
-        f.write('</div>')
-
-        f.write('<div class="col-md-2">')
-        f.write(f'<b>Min read quality: </b>{qlty_threshold}<br>')
-        f.write('</div>')
-
-        f.write('<div class="col-md-3">')
-        f.write(f'<b>MassSpec sequence: </b>{mass_spec_seq}<br>')
-        f.write('</div>')
-
-        f.write('<div class="col-md-3">')
-        f.write(f'<b>#clones to analyze: </b>{number_of_clones_to_analyze}<br>')
-        f.write('</div>')
-
-        f.write('<div class="col-md-2">')
-        f.write(f'<b>Raw data format: </b>{raw_data_suffix}<br>')
-        f.write('</div>')
-
-        f.write('</div></div>')
+        f.write(f'''
+    <br><u><h3>Advanced Parameters:</h3></u><br>
+    <div class="row">
+        <div class="col-md-2">
+            <b>Min read length: </b>{len_threshold}<br>
+        </div>
+        <div class="col-md-2">
+            <b>Min read quality: </b>{qlty_threshold}<br>
+        </div>
+        <div class="col-md-2">
+            <b>Raw data format: </b>{raw_data_suffix}<br>
+        </div>
+        <div class="col-md-6">
+            <b>reference library: </b>{lib_file_name}<br>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <b>MassSpec sequence: </b>{mass_spec_seq}<br>
+        </div>
+        <div class="col-md-3">
+            <b>#clones to analyze: </b>{number_of_clones_to_analyze}<br>
+        </div>
+    </div>
+</div>''')
 
 
 def write_pair_file(debug_path, pair, run_content, run_filename, run_dir):
@@ -196,42 +195,39 @@ def process_uploaded_files(run_dir, run, debug_path):
     return run_R1_filename, run_R2_filename
 
 
-def prepare_parameters_file(parameters_file, parameters):
-        with open(parameters_file, 'w') as f:
-            f.write("""
+def prepare_parameters_file(parameters_file, wd, actual_number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, mass_spec_seq):
+    with open(parameters_file, 'w') as f:
+        f.write(f"""
     #String that represents the path to a folder where the output dir will be generated
-    {}
-
-    #String that represents the path to MiXCR executable file
-    {}
+    {wd}
 
     #Integer that represents number of runs (the output will be +1 because of the joint)
-    {}
+    {actual_number_of_duplicates}
 
     #List of strings that represent the chains
     # comma delimited (if more than one) without spaces!
-    {}
+    {chains}
 
     #Integer that represents minimal threshold of reads' length (nucleotides)
-    {}
+    {len_threshold}
 
     #Integer that represents minimal threshold for reads' average quality
     #(reads with average quality lower than that are filtered out)
-    {}
+    {qlty_threshold}
 
     #Integer that represents the k-top clones to be further analyzed
-    {}
+    {number_of_clones_to_analyze}
 
     #String that indicates whether the samples originated in mice (and not human)
-    {}
+    {MMU}
 
     #String that represent the raw data files suffix. txt / xls / etc...
-    {}
+    {raw_data_suffix}
 
     #String that represent the mass_spec_seq to add for the proteomics DB
-    {}
+    {mass_spec_seq}
 
-    """.format(*parameters))
+    """)
 
 
 def write_cmds_file(cmds_file, run_number, parameters_file):
@@ -271,7 +267,7 @@ cgi_debug_path = os.path.join(wd, 'cgi_debug.txt')
 
 #print('Content-Type: text/html\n')  # For more details see https://www.w3.org/International/articles/http-charset/index#scripting
 #print_hello_world() # comment out for debugging
-#print_hello_world(output_path, run_number) # comment out for debugging
+#print_hello_world(output_html_path, run_number) # comment out for debugging
 
 write_html_prefix(output_path, run_number) # html's prefix must be written BEFORE redirecting...
 
@@ -292,7 +288,7 @@ try:
         f.write(f'These are the keys that the CGI received:\n{"; ".join(sorted(form.keys()))}\n\n')
         f.write('Form values are:\n')
         for key in sorted(form.keys()):
-            if 'run' not in key:
+            if 'run' not in key and 'lib' not in key:
                 f.write(f'{key} = {form[key]}\n')
         # for key in sorted(form.keys()):
         #     if 'run' in key:
@@ -321,6 +317,8 @@ try:
     if example_page == 'no':
         # handling uploaded NGS files:
         actual_number_of_duplicates = 0
+        with open(cgi_debug_path, 'a') as f: # for cgi debugging
+            f.write(f'{ctime()}: Creating path for reads...\n')
         for i in range(1,7):
             if form[f'run{i}_R1'].filename != '': #handle run$i if any
                 actual_number_of_duplicates += 1
@@ -343,9 +341,6 @@ try:
         run = 'run' + str(i + 1)
         path_to_reads = os.path.join(wd, 'reads', run)
         url_to_reads = os.path.join(results_url, 'reads', run)
-        with open(cgi_debug_path, 'a') as f: # for cgi debugging
-            f.write(f'{ctime()}: Creating path for reads...\n')
-        create_dir(path_to_reads)
         paths_to_reads_files.append(os.path.join(path_to_reads, 'R1.fastq'))
         paths_to_reads_files.append(os.path.join(path_to_reads, 'R2.fastq'))
         urls_to_reads_files.append(os.path.join(url_to_reads, 'R1.fastq'))
@@ -370,6 +365,7 @@ try:
             f.write('{}: Files were copied successfully.\n'.format(ctime()))
 
     # handling uploaded lib file:
+    default_lib_name = 'imgt.05.2018'
     if form['alternative_lib'].filename != '':
         lib_file_name = form['alternative_lib'].filename
         local_file_name = 'alternative_lib.json'
@@ -378,8 +374,9 @@ try:
         local_file_path = os.path.join(wd, local_file_name)
         with open(local_file_path, 'wb') as f:
             f.write(form['alternative_lib'].value)
+        lib_file_name = f'{default_lib_name} + {lib_file_name.split(".json")[0]}'
     else:
-        lib_file_name = 'default'
+        lib_file_name = default_lib_name
 
     # copy mass_spec db to the results folder
     cmd = f'scp -v {CONSTS.MASS_SPEC_DB_MOUSE if MMU=="mouse" else CONSTS.MASS_SPEC_DB_HUMAN} {wd}'
@@ -394,7 +391,7 @@ try:
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'{ctime()}: write_running_parameters_to_html...\n')
 
-    write_running_parameters_to_html(output_path, job_title, actual_number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq)
+    write_running_parameters_to_html(output_path, job_title, actual_number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq, lib_file_name)
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'{ctime()}: Running parameters were written to html successfully.\n')
@@ -403,8 +400,7 @@ try:
     confirm_email_add = form['confirm_email'].value  # if it is contain a value it is a spammer.
 
     parameters_file = os.path.join(wd, 'parameters.txt')
-    parameters = [wd, CONSTS.MiXCR_dir, actual_number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, mass_spec_seq]
-    prepare_parameters_file(parameters_file, parameters)
+    prepare_parameters_file(parameters_file, wd, actual_number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, mass_spec_seq)
 
     cmds_file = os.path.join(wd, 'qsub.cmds')
     write_cmds_file(cmds_file, run_number, parameters_file)

@@ -7,7 +7,16 @@ function openAdvanced() {
     }
 }
 
-function validate() {
+function validate_lib_file(){
+    var alternative_lib = document.getElementById("alternative_lib").value
+    if (alternative_lib != '' && !(alternative_lib.toLowerCase().endsWith('json'))) {
+        alternative_lib_file_name = alternative_lib.replace(/^.*[\\\/]/, '')
+        alert("Reference library "+alternative_lib_file_name+" is illegal. Only json format is allowed.");
+        return false;
+    }
+    return true;
+}
+function validate_read_files() {
     var R1s = [document.getElementsByName("run1_R1")[0].value,
         document.getElementsByName("run2_R1")[0].value,
         document.getElementsByName("run3_R1")[0].value,
