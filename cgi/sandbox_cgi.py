@@ -24,7 +24,7 @@ import sys
 #sys.path.append('/bioseq/bioSequence_scripts_and_constants')
 sys.path.append('/bioseq/asap/ASAP/auxiliaries')
 import ASAP_CONSTANTS as CONSTS
-from directory_creator import create_dir
+from auxiliaries import create_dir
 
 
 def hello_world(output_path='', run_number='NO_RUN_NUMBER'):

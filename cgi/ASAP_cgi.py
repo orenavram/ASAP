@@ -14,8 +14,7 @@ from random import randint
 #sys.path.append('/bioseq/bioSequence_scripts_and_constants')
 sys.path.append('/bioseq/asap/ASAP/auxiliaries')
 import ASAP_CONSTANTS as CONSTS
-from directory_creator import create_dir
-from email_sender import send_email
+from auxiliaries import create_dir, send_email
 
 def print_hello_world(output_path = '', run_number = 'NO_RUN_NUMBER'):
 
@@ -157,14 +156,12 @@ def write_running_parameters_to_html(output_path, job_title, number_of_duplicate
 
 def write_pair_file(debug_path, pair, run_content, run_filename, run_dir):
     if run_filename.endswith('gz'):
-        #TODO: This option is not working properly. Files are being uploaded but they're non sense :(
-        # open_operator = gzip.open
         local_file_name = f'R{pair}.fastq.gz'
     else:
         local_file_name = f'R{pair}.fastq'
     open_operator = open
     with open(debug_path, 'a') as f:
-        f.write(f'{local_file_name} is being handled with {open_operator}\n')
+        f.write(f'{run_filename} ({local_file_name}) is being handled with {open_operator}\n')
     local_file_path = os.path.join(run_dir, local_file_name)
     with open_operator(local_file_path, 'wb') as f:
         f.write(run_content)
@@ -177,7 +174,7 @@ def write_pair_file(debug_path, pair, run_content, run_filename, run_dir):
         f.write(f'R{pair} was handled successfully\n')
 
 
-def process_uploaded_files(run, debug_path, actual_number_of_duplicates):
+def process_uploaded_files(run_dir, run, debug_path):
     #for debugging
     with open(debug_path, 'a') as f:
         f.write(f'{"#"*80}\nuploading file of {run}\n')
@@ -191,9 +188,6 @@ def process_uploaded_files(run, debug_path, actual_number_of_duplicates):
     # for debugging
     with open(debug_path, 'a') as f:
         f.write(f'{run_R1_filename} first 100 chars are: {run_R1_content[:100]}\n{run_R2_filename} first 100 chars are: {run_R2_content[:100]}\n')
-
-    run_dir = os.path.join(wd, 'reads', f'run{actual_number_of_duplicates}')
-    create_dir(run_dir)
 
     write_pair_file(debug_path, '1', run_R1_content, run_R1_filename, run_dir)
 
@@ -243,10 +237,13 @@ def prepare_parameters_file(parameters_file, parameters):
 def write_cmds_file(cmds_file, run_number, parameters_file):
     # the queue does not like very long commands so I use a dummy delimiter (!@#) to break the commands for q_submitter
     new_line_delimiter = ';!@#'
+    # the code contains features that are exclusive to Python3.6 (or higher)!
+    # repseqio and mixcr require java 1.8 (or higher)
+    required_modules = ' '.join(['python/anaconda_python-3.6.4', 'repseqio/repseqio-linuxbrew', 'MiXCR/MiXCR-2.1.11', 'java/java180_144'])
     with open(cmds_file, 'w') as f:
         f.write('setenv PATH "/bioseq/Programs/MAFFT_7.222/installation/bin:${PATH}"')
         f.write(new_line_delimiter)
-        f.write('module load python/anaconda_python-3.6.4')
+        f.write(f'module load {required_modules}')
         f.write(new_line_delimiter)
         f.write(' '.join(['python', CONSTS.MAIN_SCRIPT, parameters_file, '""']))
         f.write('\t' + 'ASAP_' + run_number)
@@ -322,12 +319,14 @@ try:
 
     files_names = []
     if example_page == 'no':
-        # handling uploaded files:
+        # handling uploaded NGS files:
         actual_number_of_duplicates = 0
         for i in range(1,7):
-            if form[f'run{i}_R1'].filename != '': #handle run2 if any
+            if form[f'run{i}_R1'].filename != '': #handle run$i if any
                 actual_number_of_duplicates += 1
-                run_R1_filename, run_R2_filename = process_uploaded_files(f'run{i}', cgi_debug_path, actual_number_of_duplicates)
+                run_dir = os.path.join(wd, 'reads', f'run{actual_number_of_duplicates}')
+                create_dir(run_dir)
+                run_R1_filename, run_R2_filename = process_uploaded_files(run_dir, f'run{i}', cgi_debug_path)
                 files_names.extend([run_R1_filename, run_R2_filename])
         if actual_number_of_duplicates < 1:
             raise ValueError('No files where uploaded. At least one run should exist!')
@@ -358,23 +357,36 @@ try:
             f.write(f'{ctime()}: Copying example files...\n')
         # copy example data
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
-            f.write(f'Fetching: rsync -avz {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}\n')
-        os.system(f'rsync -avz {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}')
+            f.write(f'Fetching: scp -v {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}\n')
+        os.system(f'scp -v {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
             f.write(f'{ctime()}: ls of {os.path.join(wd, "reads", "run1")} yields:\n{os.listdir(path_to_reads)}\n')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
-            f.write(f'Fetching: rsync -avz {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}\n')
-        os.system(f'rsync -avz {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}')
-        os.system(f'rsync -avz {CONSTS.EXAMPLE_FILE_RUN2_R1} {paths_to_reads_files[2]}')
-        os.system(f'rsync -avz {CONSTS.EXAMPLE_FILE_RUN2_R2} {paths_to_reads_files[3]}')
+            f.write(f'Fetching: scp -v {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}\n')
+        os.system(f'scp -v {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}')
+        os.system(f'scp -v {CONSTS.EXAMPLE_FILE_RUN2_R1} {paths_to_reads_files[2]}')
+        os.system(f'scp -v {CONSTS.EXAMPLE_FILE_RUN2_R2} {paths_to_reads_files[3]}')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
             f.write('{}: Files were copied successfully.\n'.format(ctime()))
 
-    # copy mass_spec db to the results folder
-    if MMU == 'mouse':
-        os.system(f'rsync -avz {CONSTS.MASS_SPEC_DB_MOUSE} {wd}')
+    # handling uploaded lib file:
+    if form['alternative_lib'].filename != '':
+        lib_file_name = form['alternative_lib'].filename
+        local_file_name = 'alternative_lib.json'
+        with open(cgi_debug_path, 'a') as f:
+            f.write(f'{lib_file_name} ({local_file_name}) is being handled...\n')
+        local_file_path = os.path.join(wd, local_file_name)
+        with open(local_file_path, 'wb') as f:
+            f.write(form['alternative_lib'].value)
     else:
-        os.system(f'rsync -avz {CONSTS.MASS_SPEC_DB_HUMAN} {wd}')
+        lib_file_name = 'default'
+
+    # copy mass_spec db to the results folder
+    cmd = f'scp -v {CONSTS.MASS_SPEC_DB_MOUSE if MMU=="mouse" else CONSTS.MASS_SPEC_DB_HUMAN} {wd}'
+    # copy example data
+    with open(cgi_debug_path, 'a') as f: # for cgi debugging
+        f.write(f'Fetching: {cmd}\n')
+    os.system(cmd)
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'{ctime()}: ls of {path_to_reads} yields:\n{os.listdir(path_to_reads)}\n')
@@ -428,12 +440,15 @@ except Exception as e:
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        f.write('\n\n' + '$'*60 + '\n\n')
-        f.write(ctime() + ': ' + msg + '\n\n')
+        f.write('$'*60 + '\n\n')
+        f.write(f'{ctime()}: {msg}\n\n')
         f.write(f'{fname}: {exc_type}, at line: {exc_tb.tb_lineno}\n\n')
         f.write('$'*60)
 
-    #make sure the page will refresh until the end of editing
+    #logger.info(f'Waiting {2*CONSTS.RELOAD_INTERVAL} seconds to remove html refreshing headers...')
+    # Must be after flushing all previous data. Otherwise it might refresh during the writing.. :(
+    from time import sleep
+    sleep(2 * CONSTS.RELOAD_INTERVAL)
     with open(output_path) as f:
         html_content = f.read()
     html_content = html_content.replace(CONSTS.RELOAD_TAGS, '')

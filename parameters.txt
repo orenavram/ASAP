@@ -1,8 +1,8 @@
 #String that represents the working directory (run_i should be there under ruin folder; the output will be there under "outputs" folder), e.g.:
 /Users/Me/MyProject/
 
-#String that represents the path to MiXCR executable file, e.g.:
-/Users/Me/MyPrograms/MiXCR_2.0.4
+#String that represents a path to the IMGT lib JSON file, e.g.:
+/Users/Me/MyPrograms/mixcr/imgt.201822-5.sv4.json
 
 #Integer that represents number of runs (the output will be +1 because of the joint)
 2

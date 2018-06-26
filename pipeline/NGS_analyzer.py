@@ -22,8 +22,7 @@ try:
     start = time()
 
     argv = sys.argv
-    from email_sender import send_email
-    from directory_creator import create_dir
+    from auxiliaries import create_dir, send_email, measure_time
     from html_editor import edit_success_html, edit_failure_html
 
     logger.info('Starting ' + argv[0] + '!')
@@ -33,7 +32,7 @@ try:
         exit()
     else:
         parameters_file_path = argv[1]
-    logger.info('parameters file: ' + parameters_file_path)
+    logger.info(f'parameters file: {parameters_file_path}')
 
     create_dir(gp.output_path)
 
@@ -51,7 +50,7 @@ except Exception as e:
     error_msg = 'ASAP calculation crashed :('
     exc_type, exc_obj, exc_tb = sys.exc_info()
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-    logger.error('\n\n' + '$'*60 + '\n\n')
+    logger.error('$'*60 + '\n\n')
     logger.error(ctime() + ': ' + error_msg + '\n\n')
     logger.error(str(fname) +': ' + str(exc_type) + ', at line: ' + str(exc_tb.tb_lineno) + '\n\n')
     logger.error('$'*60)
@@ -108,12 +107,9 @@ logger.info(argv[0] + ' is DONE!!')
 
 
 end = time()
-hours = int((end - start) / 3600)
-minutes = int(((end - start) % 3600) / 60)
-seconds = int((end - start) % 60)
-logger.info('Finished joining samples. Took {}:{}:{} hours.'.format(hours, minutes, seconds))
+logger.info(f'Finished joining samples. Took {measure_time(int(end-start))}.')
 with open(os.path.join(gp.output_path, 'time.txt'), 'w') as f:
-    f.write('{}:{}:{}'.format(hours, minutes, seconds))
+    f.write(measure_time(int(end-start)))
 
 logger.info(f'Waiting {2*CONSTS.RELOAD_INTERVAL} seconds to remove html refreshing headers...')
 # Must be after flushing all previous data. Otherwise it might refresh during the writing.. :(

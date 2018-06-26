@@ -1,11 +1,11 @@
-Instruction for executing the stand-alone version:
+Instructions for the execution of the stand-alone version:
 
 This program is cross-platform. In order to run it you should have installed:
 1. Python 3.6 (or higher)
 2. MiXCR
 
 In addition, the following Python modules are needed for the program to run: (try to run this line in your Python she
-import Bio, difflib, logging, os, matplotlib, numpy, re, regex, seaborn, scipy, shutil, subprocess, sys, time, traceback, weblogolib
+import Bio, difflib, logging, os, matplotlib, numpy, re, regex, seaborn, scipy, shutil, subprocess, sys, time, traceback, umi_tools, weblogolib
 
 Once everything is set, you need to write a parameters file for the pipeline (see parameters.txt file for example)
 

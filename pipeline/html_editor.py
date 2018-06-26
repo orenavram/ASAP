@@ -12,14 +12,14 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
     if os.path.exists('/bioseq/'): # run on ibis. cgi generated the initial file
         with open(html_path) as f:
             html_text = f.read()
-    html_text = html_text.replace('RUNNING', 'FINISHED')
-    html_text += '<br><br><br><center><h2>RESULTS:<h2><a href=\'outputs.zip\' target=\'_blank\'><h3><b>Download zipped full results</b></h3></a></center><br><br>\n'
+    html_text = html_text.replace('RUNNING', 'FINISHED').replace(f'ASAP is now processing your request. This page will be automatically updated every {CONSTS.RELOAD_INTERVAL} seconds (until the job is done). You can also reload it manually. Once the job has finished, several links to the output files will appear below. ','')
+    html_text += '<br><br><center><h2>RESULTS:<h2><a href=\'outputs.zip\' target=\'_blank\'><h3><b>Download zipped full results</b></h3></a></center><br>\n'
     html_text += '<div><table class="table">'
     html_text += '<thead><tr><th></th>'
 
     runs = ['run' + str(i + 1) for i in range(gp.number_of_runs)]
     if gp.joint_run_is_needed:
-        runs += ['joint']
+        runs = ['joint'] + runs
     for run in runs:
         html_text += '<th align="center">'
         #if os.path.exists(gp.working_dir + '/outputs/' + run):
@@ -30,11 +30,12 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
     for chain in gp.chains:
 
         html_text += '<tr>'
-        html_text += f'<td><H3><b>Chain {chain} results</b></H3></td>\n'
+        html_text += f'<td><H3><b>V<sub>{chain[-1]}</sub> results</b></H3></td>\n'
+        # html_text += f'<td><H3><b>Chain {chain} results</b></H3></td>\n'
         for run in runs:
 
-            if not os.path.exists(gp.working_dir + '/outputs/' + run):
-                logger.info(run + ' does not exist...')
+            if not os.path.exists(f'{gp.working_dir}/outputs/{run}'):
+                logger.info(f'{run} does not exist...')
                 continue
 
             html_text += '<td>\n'
@@ -43,67 +44,76 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
             raw_file = f'outputs/{run}/parsed_mixcr_output/alignment_report.png'
             if os.path.exists(gp.working_dir + '/' + raw_file) and chain == 'IGH':
                 link = f'<a href="{raw_file}" target="_blank">Isotypes distribution</a>'
-                html_text += '\t\t<li>' + link + ' ; '
-                html_text += '</li>'
+                html_text += f'\t\t<li>{link} ;</li>\n'
 
             raw_file = f'outputs/{run}/parsed_mixcr_output/{chain + gp.sequence_annotation_file_suffix}'
             if os.path.exists(gp.working_dir + '/' + raw_file):
                 link = f'<a href="{raw_file}" target="_blank">Sequence annotations</a>'
-                html_text += '<li>' + link + ' ;</li>'
+                html_text += f'\t\t<li>{link} ;</li>\n'
 
+            raw_file = f'outputs/{run}/V{chain[-1]}_AA_sequences.fasta'
+            if os.path.exists(gp.working_dir + '/' + raw_file):
+                link = f'<a href="{raw_file}" target="_blank">AA sequences (.fasta)</a>'
+                html_text += f'\t\t<li>{link} ;</li>\n'
+
+            raw_file = f'outputs/{run}/parsed_mixcr_output/{chain}_AA_to_DNA_reads.fasta'
+            if os.path.exists(gp.working_dir + '/' + raw_file):
+                link = f'<a href="{raw_file}" target="_blank">AA to DNA (~.fasta)</a>'
+                html_text += f'\t\t<li>{link} ;</li>\n'
+
+            raw_file = f'outputs/{run}/{gp.proteomic_db_file_suffix}'
+            if os.path.exists(gp.working_dir + '/' + raw_file):
+                link = f'<a href="{raw_file}" target="_blank">Proteomics DB (.fasta)</a>'
+                html_text += f'\t\t<li>{link} ;</li>\n'
+
+            html_text += '\n\t\t<br>SHM analysis:<br>\n'
             raw_file = f'outputs/{run}/parsed_mixcr_output/{chain + gp.mutations_file_suffix}'
             if os.path.exists(gp.working_dir + '/' + raw_file):
-                link = f'SHM analysis: <a href="{raw_file.replace(gp.raw_data_file_suffix, "1.png")}" target="_blank">nucleotide substitution frequency</a> ; <a href="{raw_file.replace(gp.raw_data_file_suffix, "2.png")}" target="_blank">Ka Ks analysis</a>'
+                link = f'<a href="{raw_file.replace(gp.raw_data_file_suffix, "1.png")}" target="_blank">nucleotide substitution frequency</a> ; <a href="{raw_file.replace(gp.raw_data_file_suffix, "2.png")}" target="_blank">Ka Ks analysis</a>'
                 raw_link = f'(<a href="{raw_file}" target="_blank">raw_data</a>)'
-                html_text += '\t\t<li>' + link + ' ; ' + raw_link + '</li>'
+                html_text += f'\t\t<li>{link} ; {raw_link}</li>\n'
 
-            raw_file = f'outputs/{run}/cdr3_analysis/{chain}_cdr3_len_counts.{gp.raw_data_file_suffix}'
-            if os.path.exists(gp.working_dir + '/' + raw_file):
-                link = f'<a href="{raw_file.replace(gp.raw_data_file_suffix, "png")}" target="_blank">CDR3 length distribution (AA level)</a>'
-                raw_link = f'(<a href="{raw_file}" target="_blank">raw_data</a>)'
-                html_text += '\t\t<li>' + link + ' ; ' + raw_link + '</li>'
-
-            family_distributions = ''
+            family_distributions = '\n\t\t<br>V(D)J assignments analysis:<br>\n'
             for group_combination in ['V', 'D', 'J', 'VD', 'VJ', 'DJ', 'VDJ']:
-                if chain == 'IGH' or 'D' not in group_combination: # no 'D' fragment in IGK/IGL
+                if chain == 'IGH' or 'D' not in group_combination:  # no 'D' fragment in IGK/IGL
                     raw_file = f'outputs/{run}/vdj_assignments/{chain}_{group_combination}_counts.{gp.raw_data_file_suffix}'
                     if os.path.exists(gp.working_dir + '/' + raw_file):
                         link = f'<a href="{raw_file.replace(gp.raw_data_file_suffix, "png")}" target="_blank">{group_combination} family subgroup distribution</a>'
                         raw_link = f'(<a href="{raw_file}" target="_blank">raw_data</a>)'
-                        family_distributions += '\t\t<li>' + link + ' ; ' + raw_link + '</li>\n'
+                        family_distributions += f'\t\t<li>{link} ; {raw_link}</li>\n'
             html_text += family_distributions
+
+            html_text += '\n\t\t<br>Clonal analysis:<br>\n'
+            raw_file = f'outputs/{run}/cdr3_analysis/{chain}_cdr3_len_counts.{gp.raw_data_file_suffix}'
+            if os.path.exists(gp.working_dir + '/' + raw_file):
+                link = f'<a href="{raw_file.replace(gp.raw_data_file_suffix, "png")}" target="_blank">CDR3 length distribution</a>'
+                raw_link = f'(<a href="{raw_file}" target="_blank">raw_data</a>)'
+                html_text += f'\t\t<li>{link} ; {raw_link}</li>\n'
 
             raw_file = f'outputs/{run}/cdr3_analysis/{chain + gp.cdr3_annotation_file_suffix}'
             if os.path.exists(gp.working_dir + '/' + raw_file):
                 link = f'<a href="{raw_file.replace(gp.raw_data_file_suffix, "png")}" target="_blank">Clonal expansion graph</a>'
                 raw_link = f'(<a href="{raw_file}" target="_blank">raw_data</a>)'
-                html_text += '\t\t<li>' + link + ' ; ' + raw_link + '</li>\n'
+                html_text += f'\t\t<li>{link} ; {raw_link}</li>\n'
 
             raw_file = os.path.join('outputs', run, 'cdr3_analysis', chain + gp.top_cdr3_annotation_file_suffix)
             if os.path.exists(gp.working_dir + '/' + raw_file):
                 top_cdr3_analysis_html_url = os.path.join(server_main_url, 'results', run_number, 'outputs', run, chain + gp.top_cdr3_annotation_file_suffix).replace(gp.raw_data_file_suffix, 'html')
                 link = f'<a href="{top_cdr3_analysis_html_url}" target="_blank">Top {gp.top_cdr3_clones_to_further_analyze} clones annotations</a>'
                 raw_link = f'(<a href="{raw_file}" target="_blank">raw_data</a>)'
-                html_text += '\t\t<li>' + link + ' ; ' + raw_link + '</li>\n'
+                html_text += f'\t\t<li>{link} ; {raw_link}</li>\n'
                 top_cdr3_analysis_html_path = os.path.join(gp.output_path, run, chain + gp.top_cdr3_annotation_file_suffix).replace(gp.raw_data_file_suffix, 'html')
                 edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_main_url, run_number, chain, run)
 
-            raw_file = f'outputs/{run}/V{chain[-1]} sequences AA.fasta'
-            if os.path.exists(gp.working_dir + '/' + raw_file):
-                link = f'<a href="{raw_file}" target="_blank">V{chain[-1]} sequences AA (.fasta)</a>'
-                html_text += '\t\t<li>' + link + ' ;</li>\n'
-
-            raw_file = f'outputs/{run}/{gp.proteomic_db_file_suffix}'
-            if os.path.exists(gp.working_dir + '/' + raw_file):
-                link = f'<a href="{raw_file}" target="_blank">Proteomics DB (.fasta)</a>'
-                html_text += '\t\t<li>' + link + ' ;</li>\n'
-
             if run == 'joint':
 
+                html_text += '\n\t\t<br>Intersection analysis:<br>\n'
                 raw_file = f'outputs/{run}/parsed_mixcr_output/{chain}_runs_intersections.png'
                 if os.path.exists(gp.working_dir + '/' + raw_file):
                     link = f'<a href="{raw_file}" target="_blank">Runs intersection</a>'
-                    html_text += '\t\t<li>' + link + ' ;</li>\n'
+                else:
+                    link = f'<a href="{raw_file.replace("png", "txt")}" target="_blank">Runs intersection</a>'
+                html_text += f'\t\t<li>{link} ;</li>\n'
 
                 joint_path = os.path.join(gp.output_path, 'joint')
                 for correlation_file in os.listdir(joint_path):
@@ -111,7 +121,7 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
                         #correlation_path = os.path.join(joint_path, correlation_file)
                         c_runs = correlation_file.split('_')[:2] #e.g., 'run1_run2_IGH_correlation.png'
                         link = f'<a href="outputs/{run}/{correlation_file}" target="_blank">Correlation of {c_runs[0]} and {c_runs[1]}</a>'
-                        html_text += '\t\t<li>' + link + ' ;</li>\n'
+                        html_text += f'\t\t<li>{link} ;</li>\n'
 
             html_text += '\t</ul>\n'
             html_text += '</td>\n'
@@ -199,7 +209,7 @@ def edit_failure_html(html_path, msg):
     if os.path.exists(CONSTS.SERVERS_RESULTS_DIR): # run on ibis. cgi generated the initial file
         with open(html_path) as f:
             html_text = f.read()
-    html_text = html_text.replace('RUNNING', 'FAILED')
+    html_text = html_text.replace('RUNNING', 'FAILED').replace(f'ASAP is now processing your request. This page will be automatically updated every {CONSTS.RELOAD_INTERVAL} seconds (until the job is done). You can also reload it manually. Once the job has finished, several links to the output files will appear below. ','')
     html_text +='<br><br><br>'
     html_text +='<center><h2>'
     html_text +='<font color="red">{}</font><br><br>'.format(msg)

@@ -5,7 +5,7 @@ import subprocess
 import numpy as np
 from plots_generator import plot_venn, plot_correlation, generate_alignment_report_pie_chart
 
-from text_handler import read_table_to_dict, write_dict_to_file
+from text_handler import read_table_to_dict, write_dict_to_file, write_mapping_file
 
 logger = logging.getLogger('main')
 
@@ -15,34 +15,31 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
     logger.info('Number of replicates is: ' + str(number_of_runs))
     for chain in chains:
         sequence_to_entry_dict = {}
-        aa_seq_to_counts_in_each_run = {}
-        #joint_mutation_counts_dict = {}
-        shared_reads = None
+        aa_seq_to_counts_in_each_run_dict = {}
+        shared_dna_reads = None
 
-        for i in range(len(run_output_paths[:-1])): #without joint
+        for i in range(len(run_output_paths[:number_of_runs])): #without joint
             run_output_path = run_output_paths[i]
 
             annotation_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + sequence_annotation_file_suffix)
             if not os.path.exists(annotation_path):
-                logger.info('No annotation path for run {} chain {} (path does not exist: {}). Continuing for the next run (if any).'.format(i+1, chain, annotation_path))
+                logger.info(f'No annotation path for run {i+1} chain {chain} (path does not exist: {annotation_path}). Continuing for the next run (if any).')
                 continue
-            add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, annotation_path, i, number_of_runs)
-
-            # mutations_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + mutations_file_suffix)
-            # add_counts_to_mutations_dict(joint_mutation_counts_dict, mutations_path)
+            add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_to_counts_in_each_run_dict, annotation_path, i, number_of_runs)
 
             core_dna_to_to_mutations_info_dict_path = os.path.join(run_output_path, 'parsed_mixcr_output', chain + mutations_file_suffix)
             current_run_core_dna_to_mutations_info_dict_path = read_table_to_dict(core_dna_to_to_mutations_info_dict_path, value_type=list, skip_rows=1)
-            if shared_reads == None:
-                shared_reads = set(current_run_core_dna_to_mutations_info_dict_path.keys())
+            if shared_dna_reads == None:
+                shared_dna_reads = set(current_run_core_dna_to_mutations_info_dict_path.keys())
             else:
-                shared_reads = shared_reads.intersection(set(current_run_core_dna_to_mutations_info_dict_path.keys()))
+                shared_dna_reads = shared_dna_reads.intersection(set(current_run_core_dna_to_mutations_info_dict_path.keys()))
 
-        joint_core_dna_to_mutations_info_dict = dict((key, current_run_core_dna_to_mutations_info_dict_path[key]) for key in shared_reads)
+        joint_core_dna_to_mutations_info_dict = dict((key, current_run_core_dna_to_mutations_info_dict_path[key]) for key in shared_dna_reads)
 
 
         #remove entries that do not pass the minimal count threshold in all runs
-        aa_seq_to_counts_with_less_than_minimal_threshold = filter_seqs_below_overlap_minimal_threshold(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, minimal_overlap)
+        #after that, these dictionaries keys will contain only joint aa sequences
+        aa_seq_to_counts_with_less_than_minimal_threshold = filter_seqs_below_overlap_minimal_threshold(sequence_to_entry_dict, aa_seq_to_counts_in_each_run_dict, minimal_overlap)
 
         #generate joint files and plot for each chain
         if sequence_to_entry_dict != {}:
@@ -59,10 +56,12 @@ def join_runs_analyses(number_of_runs, run_output_paths, joint_parsed_mixcr_outp
                 outfile_pie_chart = os.path.join(joint_parsed_mixcr_output_path, 'alignment_report.png')
                 generate_alignment_report_pie_chart(outfile_pie_chart, isotypes_count_dict, 'Joint')
 
-            final_fasta_path = os.path.join(run_output_paths[-1], f'V{chain[-1]} sequences AA.fasta')
-            generate_final_fasta(final_fasta_path, sequence_to_entry_dict, aa_seq_to_counts_in_each_run)
+            final_fasta_path = os.path.join(run_output_paths[-1], f'V{chain[-1]}_AA_sequences.fasta')
+            generate_final_fasta(final_fasta_path, sequence_to_entry_dict, aa_seq_to_counts_in_each_run_dict)
 
-            plot_runs_correlation(aa_seq_to_counts_in_each_run, aa_seq_to_counts_with_less_than_minimal_threshold, number_of_runs, run_output_paths[-1], chain)
+            generate_aa_seq_to_dna_and_accession_mapping_file(chain, sequence_to_entry_dict, run_output_paths, number_of_runs)
+
+            plot_runs_correlation(aa_seq_to_counts_in_each_run_dict, aa_seq_to_counts_with_less_than_minimal_threshold, number_of_runs, run_output_paths[-1], chain)
 
             generate_intersection_plot(number_of_runs, joint_annotation_path, sequence_annotation_file_suffix)
 
@@ -159,7 +158,47 @@ def add_counts_to_mutations_dict(joint_mutation_counts_frequency, mutation_count
         joint_mutation_counts_frequency[key] = joint_mutation_counts_frequency.get(key, 0) + current_run_frequency[key]
 
 
-def add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_to_counts_in_each_run, annotation_path, i, number_of_runs):
+def generate_aa_seq_to_dna_and_accession_mapping_file(chain, sequence_to_entry_dict, run_output_paths, number_of_runs):
+    joint_core_aa_to_dna_reads_and_accession_numbers = {}
+    for i in range(len(run_output_paths[:number_of_runs])): #without joint
+        run_output_path = run_output_paths[i]
+        core_aa_to_dna_reads_and_accession_numbers = os.path.join(run_output_path, 'parsed_mixcr_output', f'{chain}_AA_to_DNA_reads.fasta')
+        logger.info(f'Parsing {core_aa_to_dna_reads_and_accession_numbers} and adding to the joint file')
+        with open(core_aa_to_dna_reads_and_accession_numbers) as f:
+            ''' For example:
+            >EVQLLESGAEVKKPGESLKISCKGSGYSFTSYWIGWVRQMPGKGLEWMGIIYPGDSDTRYSPSFQGQVTISADKSISTAYLQWSSLKASDTAMYYCARSRGGSYGTDYFDYWGQGTLVTVSS
+            <M04473:15:000000000-B8Y9M:1:1101:21471:2444 1:N:0:1
+            GAGGTGCAGCTGTTGGAGTCTGGAGCAGAGGTGAAAAAGCCCGGGGAGTCTCTGAAGATCTCCTGTAAGGGTTCTGGATACAGCTTTACCAGCTACTGGATCGGCTGGGTGCGCCAGATGCCCGGGAAAGGCCTGGAGTGGATGGGGATCATCTATCCTGGTGACTCTGATACCAGATACAGCCCGTCCTTCCAAGGCCAGGTCACCATCTCAGCCGACAAGTCCATCAGCACCGCCTACCTGCAGTGGAGCAGCCTGAAGGCCTCGGACACCGCCATGTATTACTGTGCGAGGTCCAGAGGCGGGAGCTACGGAACGGACTACTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA
+            <M04473:15:000000000-B8Y9M:1:2110:20973:16619 1:N:0:1
+            GAGGTGCAGCTGTTGGAGTCTGGAGCAGAGGTGAAAAAGCCCGGGGAGTCTCTGAAGATCTCCTGTAAGGGTTCTGGATACAGCTTTACCAGCTACTGGATCGGCTGGGTGCGCCAGATGCCCGGGAAAGGCCTGGAGTGGATGGGGATCATCTATCCTGGTGACTCTGATACCAGATACAGCCCGTCCTTCCAAGGCCAGGTCACCATCTCAGCCGACAAGTCCATCAGCACCGCCTACCTGCAGTGGAGCAGCCTGAAGGCCTCGGACACCGCCATGTATTACTGTGCGAGGTCCAGAGGCGGGAGCTACGGAACGGACTACTTTGACTACTGGGGCCAGGGAACCCTGGTCACCGTCTCCTCA
+            >QVQLVQSGAEVKKPGASVKVSCKASGYTFTSYYMHWVRQAPGQGLEWMGIINPSGGSTSYAQKFQGRVTMTRDTSTSTVYMELSSLRSEDTAVYYCARDLGPYDSSGYFQHWGQGTLVTVSS
+            <M04473:15:000000000-B8Y9M:1:1101:22849:2507 1:N:0:1
+            CAGGTCCAGCTTGTGCAGTCTGGGGCTGAGGTGAAGAAGCCTGGGGCCTCAGTGAAGGTTTCCTGCAAGGCATCTGGATACACCTTCACCAGCTACTATATGCACTGGGTGCGACAGGCCCCTGGACAAGGGCTTGAGTGGATGGGAATAATCAACCCTAGTGGTGGTAGCACAAGCTACGCACAGAAGTTCCAGGGCAGAGTCACCATGACCAGGGACACGTCCACGAGCACAGTCTACATGGAGCTGAGCAGCCTGAGATCTGAGGACACGGCCGTGTATTACTGTGCGAGAGACCTGGGCCCCTATGATAGTAGTGGTTACTTCCAGCACTGGGGCCAGGGCACCCTGGTCACCGTCTCCTCA
+            <M04473:15:000000000-B8Y9M:1:1102:15422:10777 1:N:0:1
+            CAGGTCCAGCTTGTACAGTCTGGGGCTGAGGTGAAGAAGCCTGGGGCCTCAGTGAAGGTTTCCTGCAAGGCATCTGGATACACCTTCACCAGCTACTATATGCACTGGGTGCGACAGGCCCCTGGACAAGGGCTTGAGTGGATGGGAATAATCAACCCTAGTGGTGGTAGCACAAGCTACGCACAGAAGTTCCAGGGCAGAGTCACCATGACCAGGGACACGTCCACGAGCACAGTCTACATGGAGCTGAGCAGCCTGAGATCTGAGGACACGGCCGTGTATTACTGTGCGAGAGACCTGGGCCCCTATGATAGTAGTGGTTACTTCCAGCACTGGGGCCAGGGCACCCTGGTCACCGTCTCCTCA
+            '''
+            aa_seq = ''
+            while True:
+                line = f.readline().rstrip()
+                if not line:
+                    break
+                if line.startswith('>'):
+                    aa_seq = line[1:]
+                    if aa_seq not in sequence_to_entry_dict:
+                        aa_seq = ''
+                    continue
+                if aa_seq:  # skip dna and accession for aa_seq that doesn't belong to the joint run
+                    # reached here? aa_seq belongs to the joint run
+                    accession = line[1:]  # line startswith '<'
+                    dna_seq = f.readline().rstrip()
+                    joint_core_aa_to_dna_reads_and_accession_numbers[aa_seq] = joint_core_aa_to_dna_reads_and_accession_numbers.get(aa_seq, []) + [(dna_seq, accession)]
+
+    if joint_core_aa_to_dna_reads_and_accession_numbers != {}:
+        joint_core_aa_to_read_and_accession_path = os.path.join(run_output_paths[-1], 'parsed_mixcr_output', f'{chain}_AA_to_DNA_reads.fasta')
+        write_mapping_file(joint_core_aa_to_dna_reads_and_accession_numbers, joint_core_aa_to_read_and_accession_path)
+
+
+def add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_to_counts_in_each_run_dict, annotation_path, i, number_of_runs):
     with open(annotation_path) as f:
         for line in f:
             '''
@@ -170,9 +209,9 @@ def add_annotation_to_seqs_dict(sequence_to_entry_dict, aa_seq_to_counts_in_each
                 continue  # skip header
             aa_seq = tokens[3]
             count = int(tokens[-1])
-            if aa_seq not in aa_seq_to_counts_in_each_run:
-                aa_seq_to_counts_in_each_run[aa_seq] = [0] * number_of_runs  # initialize on first time
-            aa_seq_to_counts_in_each_run[aa_seq][i] = count
+            if aa_seq not in aa_seq_to_counts_in_each_run_dict:
+                aa_seq_to_counts_in_each_run_dict[aa_seq] = [0] * number_of_runs  # initialize on first time
+            aa_seq_to_counts_in_each_run_dict[aa_seq][i] = count
             if aa_seq not in sequence_to_entry_dict:
                 sequence_to_entry_dict[aa_seq] = tokens
             else:

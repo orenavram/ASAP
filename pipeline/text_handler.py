@@ -59,3 +59,16 @@ def string_similarity(a, b):
     return SequenceMatcher(None, a, b).ratio()
 
 
+def write_mapping_file(core_aa_to_dna_reads_and_accession_numbers, aa_to_read_and_accession_path):
+    logger.info(f'Writing mapping of core_aa_to_dna_reads_and_accession_numbers for {aa_to_read_and_accession_path}')
+    result = ''
+    for core_aa in core_aa_to_dna_reads_and_accession_numbers:
+        result += f'>{core_aa}\n'
+        dna_reads_and_accession_numbers = core_aa_to_dna_reads_and_accession_numbers[
+            core_aa]  # a tuple of (dna read, accession number)
+        for t in dna_reads_and_accession_numbers:
+            result += f'<{t[1]}\n{t[0]}\n'
+    with open(aa_to_read_and_accession_path, 'w') as f:
+        f.write(result)
+
+

@@ -10,7 +10,7 @@ from Bio.Align import AlignInfo
 from Bio.Align import MultipleSeqAlignment
 from Bio.Alphabet import Gapped, IUPAC
 
-from directory_creator import create_dir
+from auxiliaries import create_dir
 from plots_generator import plot_barplot, generate_clonal_expansion_histogram
 from weblogo_generator import generate_weblogo
 from text_handler import string_similarity, read_table_to_dict
@@ -30,7 +30,7 @@ def plot_cdr3_length_distributions(gp):
             plot_path = cdr3_len_file.replace(gp.raw_data_file_suffix, 'png')
             logger.info('Plotting cdr3_len_file: ' + cdr3_len_file)
             d = read_table_to_dict(cdr3_len_file, key_type=int, value_type=int, skip_rows=1)
-            plot_barplot(d, plot_path, x_label='\nLength of CDR3')
+            plot_barplot(d, plot_path, x_label='\nLength of CDR3 (AA level)')
 
 
 def analyze_top_clones(gp):

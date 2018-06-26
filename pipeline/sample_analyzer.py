@@ -2,9 +2,9 @@ import logging
 import os
 import subprocess
 
-from directory_creator import create_dir
+from auxiliaries import create_dir
 from cdr3_analyzer import analyze_cdr3
-from mixcr_procedure import mixcr_procedure
+from mixcr_procedure import mixcr_procedure, generate_lib_for_mixcr
 from parse_alignments import parse_alignment_file
 from plots_generator import plot_barplot, generate_mutations_boxplots
 from runs_aggregator import join_runs_analyses, generate_final_fasta
@@ -13,6 +13,19 @@ from text_handler import write_dict_to_file, read_table_to_dict
 logger = logging.getLogger('main')
 
 def analyze_samples(gp):
+
+    alternative_lib_path = os.path.join(gp.working_dir, 'alternative_lib.json')
+    if os.path.exists(alternative_lib_path):
+        logger.info(f'{alternative_lib_path} exists. Trying to merge it with the default IMGT lib...')
+        gp.alleles_lib_path = generate_lib_for_mixcr(gp.working_dir, gp.alleles_lib_path, alternative_lib_path)
+        logger.info(f'{alternative_lib_path} exists. Trying to merge it with the default IMGT lib...')
+        '''
+        repseqio fromFasta $working_dir/Fosmid.IGHVs.For.Yariv.fasta  -t 9606 -c IGH -g V -n 0 --gene-feature VRegion $working_dir/Fosmid.IGHVs.For.Yariv.json 
+        
+        repseqio compile $working_dir/Fosmid.IGHVs.For.Yariv.json $working_dir/Fosmid.IGHVs.For.Yariv.compiled
+        
+        repseqio merge $working_dir/libraries_backup/imgt.201631-4.sv1.json $working_dir/Fosmid.IGHVs.For.Yariv.compiled $working_dir/merged_lib.json
+        '''
 
     for i in range(gp.number_of_runs):
 
@@ -27,7 +40,9 @@ def analyze_samples(gp):
             else:
                 logger.info('Starting mixcr_procedure of {}...'.format(run))
                 fastq_path = os.path.join(gp.working_dir, 'reads', run)
-                mixcr_procedure(gp.path_to_mixcr, fastq_path, mixcr_output_path, gp.chains, gp.MMU)
+                mixcr_procedure(fastq_path, mixcr_output_path, gp.chains, gp.MMU, gp.alleles_lib_path)
+                if not os.path.exists(os.path.join(mixcr_output_path, 'alignments.txt')):
+                    raise AssertionError(f'MiXCR FAILED for some reason ({os.path.join(mixcr_output_path, "alignments.txt")} is missing).')
                 with open(done_path, 'w') as f:
                     pass
         except Exception as e:
@@ -62,7 +77,7 @@ def analyze_samples(gp):
                             for line in f:
                                 entry = line.split()
                                 sequence_to_entry_dict[entry[3]] = entry #entry[3] is aa_seq
-                        final_fasta_path = os.path.join(gp.run_output_paths[i], f'V{chain[-1]} sequences AA.fasta')
+                        final_fasta_path = os.path.join(gp.run_output_paths[i], f'V{chain[-1]}_AA_sequences.fasta')
                         generate_final_fasta(final_fasta_path, sequence_to_entry_dict)
                 with open(done_path, 'w') as f:
                     pass
@@ -223,15 +238,15 @@ def parse_sequence_annotation_file(parsed_mixcr_output_path, assignments_path, c
             logger.info('Skipping: ' + chain_data_path + ' (file does not exists)')
             continue
 
-        v_types = {} #:{str:int}
-        d_types = {} #:{str:int}
-        j_types = {} #:{str:int}
-        vd_types = {} #:{str:int}
-        vj_types = {} #:{str:int}
-        dj_types = {} #:{str:int}
-        vdj_types = {} #:{str:int}
-        cdr3_len = {} #:{int:int}
-        cdr3_frequency_counter = {} #:{str:int}
+        v_types: {str: int} = {}
+        d_types: {str: int} = {}
+        j_types: {str: int} = {}
+        vd_types: {str: int} = {}
+        vj_types: {str: int} = {}
+        dj_types: {str: int} = {}
+        vdj_types: {str: int} = {}
+        cdr3_len: {int: int} = {}
+        cdr3_frequency_counter:{str:int} = {}
 
         with open(chain_data_path) as f:
             for i in range(skip_rows):
@@ -253,22 +268,26 @@ def parse_sequence_annotation_file(parsed_mixcr_output_path, assignments_path, c
             write_dict_to_file(v_path, v_types, header='\t'.join(['V family subgroup', 'counts']))
 
             d_path = assignments_path + '/' + chain + '_D_counts.' + raw_data_file_suffix
-            write_dict_to_file(d_path, d_types, header='\t'.join(['D family subgroup', 'counts']))
+            if chain == 'IGH':  # no 'D' fragment in IGK/IGL
+                write_dict_to_file(d_path, d_types, header='\t'.join(['D family subgroup', 'counts']))
 
             j_path = assignments_path + '/' + chain + '_J_counts.' + raw_data_file_suffix
             write_dict_to_file(j_path, j_types, header='\t'.join(['J family subgroup', 'counts']))
 
-            vd_path = assignments_path + '/' + chain + '_VD_counts.' + raw_data_file_suffix
-            write_dict_to_file(vd_path, vd_types, header='\t'.join(['VD combinations', 'counts']))
+            if chain == 'IGH':  # no 'D' fragment in IGK/IGL
+                vd_path = assignments_path + '/' + chain + '_VD_counts.' + raw_data_file_suffix
+                write_dict_to_file(vd_path, vd_types, header='\t'.join(['VD combinations', 'counts']))
 
             vj_path = assignments_path + '/' + chain + '_VJ_counts.' + raw_data_file_suffix
             write_dict_to_file(vj_path, vj_types, header='\t'.join(['VJ combinations', 'counts']))
 
-            dj_path = assignments_path + '/' + chain + '_DJ_counts.' + raw_data_file_suffix
-            write_dict_to_file(dj_path, dj_types, header='\t'.join(['DJ combinations', 'counts']))
+            if chain == 'IGH':  # no 'D' fragment in IGK/IGL
+                dj_path = assignments_path + '/' + chain + '_DJ_counts.' + raw_data_file_suffix
+                write_dict_to_file(dj_path, dj_types, header='\t'.join(['DJ combinations', 'counts']))
 
-            vdj_path = assignments_path + '/' + chain + '_VDJ_counts.' + raw_data_file_suffix
-            write_dict_to_file(vdj_path, vdj_types, header='\t'.join(['VDJ combinations', 'counts']))
+            if chain == 'IGH':  # no 'D' fragment in IGK/IGL
+                vdj_path = assignments_path + '/' + chain + '_VDJ_counts.' + raw_data_file_suffix
+                write_dict_to_file(vdj_path, vdj_types, header='\t'.join(['VDJ combinations', 'counts']))
 
             cdr3_len_path = cdr3_analysis_path + '/' + chain + '_cdr3_len_counts.' + raw_data_file_suffix
             write_dict_to_file(cdr3_len_path, cdr3_len, header='\t'.join(['length_of_CDR3', 'counts']))

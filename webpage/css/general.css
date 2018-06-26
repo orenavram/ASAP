@@ -78,3 +78,11 @@ body{
 #advanced_button{
     margin-bottom: 10px
 }
+
+td ul{
+    padding-left: 0px;
+}
+
+td h3{
+    padding-right: 10px;
+}

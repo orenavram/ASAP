@@ -12,7 +12,7 @@ if len(argv)<2:
 
 params_file_path = argv[1]
 
-logger.info('Parsing parameters file: {}'.format(params_file_path))
+logger.info(f'Parsing parameters file: {params_file_path}')
 
 with open(params_file_path) as f:
 
@@ -20,9 +20,9 @@ with open(params_file_path) as f:
     #String that represents the path to a folder where the output dir will be generated
     working_dir = line.rstrip('/')
 
-    line = get_next_relevant_rstriped_line(f)
-    #String that represents the path to MiXCR executable file
-    path_to_mixcr = line
+    # line = get_next_relevant_rstriped_line(f)
+    # #String that represents a path to the IMGT lib JSON file
+    # path_to_mixcr = '/Users/Oren/Dropbox/Projects/wine/ASAP/imgt.201822-5.sv4.json'
 
     #Integer that represents number of runs (the output will be +1 because of the joint)
     line = get_next_relevant_rstriped_line(f)
@@ -67,9 +67,11 @@ assignments_paths = []
 cdr3_analysis_paths = []
 top_cdr3_clones_to_clonal_expansion_graph = 100
 top_cdr3_clones_to_further_analyze = min(top_cdr3_clones_to_further_analyze, top_cdr3_clones_to_clonal_expansion_graph)
-sequence_annotation_file_suffix = '_aa_sequence_annotations.' + raw_data_file_suffix
+sequence_annotation_file_suffix = '_AA_sequence_annotations.' + raw_data_file_suffix
 top_cdr3_annotation_file_suffix = '_top_{}_cdr3_extended_annotations.{}'.format(top_cdr3_clones_to_further_analyze, raw_data_file_suffix)
 cdr3_annotation_file_suffix = '_cdr3_annotations.' + raw_data_file_suffix
 mutations_file_suffix = '_mutations.' + raw_data_file_suffix
 proteomic_db_file_suffix = 'proteomics_db.fatsa'
 #Ka_Ks_file_suffix = '_Ka_Ks_analysis_2.' + raw_data_file_suffix
+alleles_lib_path = [x for x in os.listdir('./') if 'imgt' in x.lower()][0]  # './imgt.201822-5.sv4.json'
+logger.info(f'default alleles lib path is: {alleles_lib_path}')

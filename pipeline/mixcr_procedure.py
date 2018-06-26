@@ -1,44 +1,61 @@
 import os
+import subprocess
 
 from text_handler import logger
 
+def generate_lib_for_mixcr(wd, default_lib_path, alternative_lib_path):
+    merged_lib_path = f'{wd}/merged_lib.json'
+    execute_command(f'repseqio merge {default_lib_path} {alternative_lib_path} {merged_lib_path}')
+    if os.path.exists(merged_lib_path):
+        #merge succeeded
+        logger.info(f'Merge succeeded! Using merged lib at: {merged_lib_path}')
+        return merged_lib_path.split('.json')[0]  # mixcr requires lib name without json suffix!!
+    else:
+        #merge failed. will use the default lib
+        logger.info(f'Merge failed! Using default lib at: {default_lib_path}')
+        return default_lib_path.split('.json')[0]  # mixcr requires lib name without json suffix!!
 
 #input: path string to current database of fastq files, provided by NGS process
 #        path string to output all the results of MIXCR procedure
-def mixcr_procedure(path_to_mixcr, fastq_path, outpath, chains, mmu):
+def mixcr_procedure(fastq_path, outpath, chains, mmu, lib_path):
 
-    align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds = get_mixcr_cmds(fastq_path, outpath, mmu, chains)
+    align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds = get_mixcr_cmds(lib_path, fastq_path, outpath, mmu, chains)
 
     logger.info('Current wd is: ' + os.getcwd())
-    logger.info('Changing wd to mixcr\'s dir')
-    os.chdir(path_to_mixcr)
-    logger.info('Current wd is: ' + os.getcwd())
+    #logger.info('Changing wd to mixcr\'s dir')
+    #os.chdir(path_to_mixcr)
+    #logger.info('Current wd is: ' + os.getcwd())
+
+    #for debugging:
+    library_cmd = 'mixcr -v'.split()          #which library paths mixcr uses
+    logger.info(f'Germline library paths of mixcr are:\n{subprocess.check_output(library_cmd).decode()}')
 
     logger.info('Starting mixcr align procedure')
-    cmd_exe(align_cmd)
+    execute_command(align_cmd)
 
     #execute assemble to clones command
     logger.info('Starting assemble command')
-    cmd_exe(assemble_cmd)
+    execute_command(assemble_cmd)
 
     #execute export alignments command
     logger.info('Starting exportAlignments command')
-    cmd_exe(exportAlignments_cmd)
+    execute_command(exportAlignments_cmd)
 
     #execute export clones command for each chain separately
+    #TODO: why it is needeD?
     for exportClones_cmd in exportClones_cmds:
-        cmd_exe(exportClones_cmd)
+        execute_command(exportClones_cmd)
 
 
 
 '''assign variables to commands'''
-def get_mixcr_cmds(fastq_path, outpath, MMU, chains):
+def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, chains):
 
     if not os.path.exists(outpath):
         os.makedirs(outpath)
 
-    logger.debug('fastq path: ' + fastq_path)
-    logger.debug('os.path.join(fastq_path, \'R1.fastq\'): ' + os.path.join(fastq_path, 'R1.fastq'))
+    logger.debug(f'fastq path: {fastq_path}')
+    logger.debug(f'os.path.join(fastq_path, "R1.fastq"): {os.path.join(fastq_path, "R1.fastq")}')
 
     fastq1 = fastq2 = ''
     for file_name in os.listdir(fastq_path):
@@ -61,54 +78,56 @@ def get_mixcr_cmds(fastq_path, outpath, MMU, chains):
 
     #TODO: use the linux installation!!
     # module load java/java180_144;
-    #maybe also add to the commands file to q_submitter
-    align_cmd = ('java -Xmx4g -Xms3g -jar mixcr.jar align'                      #align command
+    #maybe also add to the commands file (to q_submitter)
+
+    align_cmd = ('mixcr align'                      #align command
                  ' -f'                                                          #overwrite output file if already exists
-                 ' -s {}'                                                       #consider species (mouse/human)
+                 f' -s {"mouse" if MMU else "human"}'                                                       #consider species (mouse/human)
                  ' -c IGH,IGL,IGK'                                              #immunological chain gene(s) to align
-                 ' --report ' + outpath + '/align_report.txt'                   #create report file
-                 ' --library imgt'                                              #use IMGT local library as annotation reference
+                 f' --report {outpath}/align_report.txt'                   #create report file
+                 #' --library imgt'                                              #use IMGT local library as annotation reference
+                 f' --library {lib_path}'
                  ' -a'                                                          #save reads' ids from fastq files
-                 ' ' + fastq1 + ' ' + fastq2 + ''                               #input files- 2 X fastq files
-                 ' ' + vdjca_path).format("mouse" if MMU else "human")
+                 f' {fastq1} {fastq2}'                               #input files- 2 X fastq files
+                 f' {vdjca_path}')
              
-    assemble_cmd = ('java -Xmx4g -Xms3g -jar mixcr.jar assemble'                    #assemble command
+    assemble_cmd = ('mixcr assemble'                    #assemble command
                     ' -r ' + outpath + '/assemble_report.txt'                       #create report file
                     ' -f'                                                           #overwrite output file if already exists
-                    ' -i ' + outpath + '/index_file'           #keep mapping between initial reads and final clones
+                    f' -i {outpath}/index_file'                                   #keep mapping between initial reads and final clones
                     ' -OseparateByC=true'                                           #separate by isotypes
-                    ' -OcloneFactoryParameters.vParameters.featureToAlign=VRegion'  #align v region and not v transcript
-                    ' -OassemblingFeatures=[CDR3]'                   #define sequence to create clones by
-                    ' -OminimalClonalSequenceLength=6'                              #minimum number of nucleotides in clonal sequence
-                    ' ' + vdjca_path  +      #input file - VDJCA from previous step
-                    ' ' + clones_clns_path)                 #output file
+                    #' -OcloneFactoryParameters.vParameters.featureToAlign=VRegion' #align v region and not v transcript
+                    #' -OassemblingFeatures=[CDR3]'                   #define sequence to create clones by
+                    #' -OminimalClonalSequenceLength=6'                             #minimum number of nucleotides in clonal sequence
+                    f' {vdjca_path}'                                             #input file - VDJCA from previous step
+                    f' {clones_clns_path}')                                         #output file
 
-    exportAlignments_cmd = ('java -Xmx4g -Xms3g -jar mixcr.jar exportAlignments'    #exportAlignments command   
+    exportAlignments_cmd = ('mixcr exportAlignments'    #exportAlignments command   
                             ' -f'                                                   #overwrite output file if already exists
-                            ' --preset-file aln_fields.txt'                         #export fields specified in aln_fields file
-                            ' -cloneIdWithMappingType ' + outpath + '/index_file'  #indicate stase of each read
-                            ' ' + vdjca_path  +   #input file- VDJCA from previous step
-                            ' ' + outpath + '/alignments.txt')      #output file
+                            f' --preset-file aln_fields.txt'         #export fields specified in aln_fields file
+                            f' -cloneIdWithMappingType {outpath}/index_file'     #indicate stase of each read
+                            f' {vdjca_path}'                                   #input file- VDJCA from previous step
+                            f' {outpath}/alignments.txt')                           #output file
 
     exportClones_cmds = []
     for chain in chains:
-        exportClones_cmd = ('java -Xmx4g -Xms3g -jar mixcr.jar exportClones'            #exportClones command
-                        ' -f'                                                           #overwrite output file if already exists
-                        ' --chains ' + chain + ''
-                        ' --preset-file assemble_fields.txt'                            #export fields specified in assemble_fields file
-                        ' -readIds ' + outpath + '/index_file'
-                        ' -o'                                                           #remove out-of-frame clones
-                        ' -t'                                                           #remove stop codon clones
-                        ' ' + clones_clns_path + ''                  #input file
-                        ' ' + outpath + '/' + chain + '_clones.txt')
+        exportClones_cmd = ('mixcr exportClones'                #exportClones command
+                        ' -f'                                   #overwrite output file if already exists
+                        f' --chains {chain}'
+                        ' --preset-file assemble_fields.txt'    #export fields specified in assemble_fields file
+                        f' -readIds {outpath}/index_file'
+                        ' -o'                                   #remove out-of-frame clones
+                        ' -t'                                   #remove stop codon clones
+                        f' {clones_clns_path}'                  #input file
+                        f' {outpath}/{chain}_clones.txt')
         exportClones_cmds.append(exportClones_cmd)
 
     return align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds
 
 
 '''executing command in command prompt'''
-def cmd_exe(cmd):
-    logger.info('Executing:\n' + cmd)
+def execute_command(cmd):
+    logger.info(f'Executing:\n{cmd}')
     os.system(cmd)
         
 
