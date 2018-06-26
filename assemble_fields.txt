@@ -1,0 +1,8 @@
+-fraction
+-count
+-aaFeature VRegion
+-aaFeature CDR3
+-aaFeature JRegion
+-vFamily
+-dFamily
+-jFamily

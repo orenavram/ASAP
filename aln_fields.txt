@@ -1,0 +1,32 @@
+-sequence
+-quality
+-descrR1
+-descrR2
+-nFeature FR1
+-nFeature CDR1
+-nFeature FR2
+-nFeature CDR2
+-nFeature FR3
+-nFeature CDR3
+-nFeature FR4
+-aaFeature FR1
+-aaFeature CDR1
+-aaFeature FR2
+-aaFeature CDR2
+-aaFeature FR3
+-aaFeature CDR3
+-aaFeature FR4
+-qFeature CDR3
+-avrgFeatureQuality CDR3
+-vHit
+-dHit
+-jHit
+-vFamily
+-dFamily
+-jFamily
+-readId
+-nMutations GermlineVCDR3Part
+-aaMutations GermlineVCDR3Part
+-nMutations GermlineJCDR3Part
+-aaMutations GermlineJCDR3Part
+-vAlignment
