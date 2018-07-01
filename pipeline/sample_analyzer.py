@@ -1,6 +1,6 @@
 import logging
 import os
-import subprocess
+import shutil
 
 from UMI_Handler import handle_UMI
 from auxiliaries import create_dir
@@ -428,9 +428,11 @@ def generate_proteomic_db(gp):
             run = 'run' + str(i + 1)
         logger.info(f'Generating DB for {run}')
         proteomic_db_file_path = os.path.join(gp.run_output_paths[i], gp.proteomic_db_file_suffix)
+        cmd = f'cp {gp.initial_db_path} {proteomic_db_file_path}'
         try:
-            subprocess.check_output(f'cp -v {gp.initial_db_path} {proteomic_db_file_path}', shell=True)
-            logger.info(f'{proteomic_db_file_path} was successfully synced.')
+            logger.info(f'Fetching: {cmd}\n')
+            shutil.copy(gp.initial_db_path, proteomic_db_file_path)
+            logger.info(f'{proteomic_db_file_path} was successfully copied.')
         except:
             logger.error(f'\n{"#"*50}\nFailed to sync initial DB...\n{"#"*50}')
         result = ''

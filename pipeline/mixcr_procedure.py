@@ -130,8 +130,8 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, remote_run):
 
 '''executing command in command prompt'''
 def execute_command(cmd):
-    logger.info(f'Executing:\n{cmd}')
-    os.system(cmd)
+    logger.info(f'Executing mixcr:\n{cmd}')
+    logger.info(subprocess.check_output(cmd, shell=True).decode('unicode_escape'))
         
 
                                 

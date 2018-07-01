@@ -1,4 +1,4 @@
-#!/shared/python/anaconda3.5/bin/python
+#!/data/shared/python/anaconda3-5.1.0/bin/python3.6
 
 import os
 
@@ -13,13 +13,12 @@ SERVERS_LOGS_DIR = '/bioseq/data/logs'
 # external programs
 # IMPORTANT: one must run the command: setenv PATH "/bioseq/Programs/MAFFT_7.222/installation/bin:${PATH}" ahead of this mafft command so all components will be found...
 MAFFT_v7_222 = '/bioseq/Programs/MAFFT_7.222/installation/bin/mafft' # v7.222
-#MiXCR_dir = '/bioseq/asap/MiXCR_2.0.4' #using module load instead!
 
 ASAP_URL = 'https://asap.tau.ac.il'
 #ASAP_LOG = '/bioseq/asap/ASAP_runs.log'
 
 RELOAD_INTERVAL = 30
-RELOAD_TAGS = """<META HTTP-EQUIV="REFRESH" CONTENT="{}"/>""".format(str(RELOAD_INTERVAL))
+RELOAD_TAGS = f'<META HTTP-EQUIV="REFRESH" CONTENT="{RELOAD_INTERVAL}"/>'
 
 
 ASAP_RESULTS_DIR = os.path.join(SERVERS_RESULTS_DIR, 'ASAP')

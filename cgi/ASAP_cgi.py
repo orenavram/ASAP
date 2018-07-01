@@ -5,6 +5,7 @@
 import os
 import sys
 import sh
+import shutil
 import cgi
 import cgitb
 import subprocess
@@ -370,17 +371,17 @@ try:
             f.write(f'{ctime()}: Copying example files...\n')
         # copy example data
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
-            f.write(f'Fetching: cp -v {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}\n')
-        os.system(f'cp -v {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}')
+            f.write(f'Fetching: cp {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}\n')
+        os.system(f'cp {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
             f.write(f'{ctime()}: ls of {os.path.join(wd, "reads", "run1")} yields:\n{os.listdir(path_to_reads)}\n')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
-            f.write(f'Fetching: cp -v {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}\n')
-        os.system(f'cp -v {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}')
-        os.system(f'cp -v {CONSTS.EXAMPLE_FILE_RUN2_R1} {paths_to_reads_files[2]}')
-        os.system(f'cp -v {CONSTS.EXAMPLE_FILE_RUN2_R2} {paths_to_reads_files[3]}')
+            f.write(f'Fetching: cp {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}\n')
+        os.system(f'cp {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}')
+        os.system(f'cp {CONSTS.EXAMPLE_FILE_RUN2_R1} {paths_to_reads_files[2]}')
+        os.system(f'cp {CONSTS.EXAMPLE_FILE_RUN2_R2} {paths_to_reads_files[3]}')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
-            f.write('{}: Files were copied successfully.\n'.format(ctime()))
+            f.write('{}: Files were copied successfully.\n\n'.format(ctime()))
 
     # handling uploaded lib file:
     default_lib_name = 'imgt.05.2018'
@@ -397,14 +398,20 @@ try:
         lib_file_name = default_lib_name
 
     # copy mass_spec db to the results folder
-    cmd = f'cp -v {CONSTS.MASS_SPEC_DB_MOUSE if MMU=="mouse" else CONSTS.MASS_SPEC_DB_HUMAN} {wd}'
+    if MMU == 'mouse':
+        source_db_path = CONSTS.MASS_SPEC_DB_MOUSE
+        dest_db_path = os.path.join(wd, "murine.fasta")
+    else:
+        source_db_path = CONSTS.MASS_SPEC_DB_HUMAN
+        dest_db_path = os.path.join(wd, "human.fasta")
+
     # copy example data
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
-        f.write(f'Fetching: {cmd}\n')
+        f.write(f'Copying {source_db_path}\n')
     try:
-        res = subprocess.check_output(cmd)
+        shutil.copy(source_db_path, dest_db_path)
         with open(cgi_debug_path, 'a') as f:  # for cgi debugging
-            f.write(f'{proteomic_db_file_path} was successfully copied.\n')
+            f.write(f'Copied successfully to {dest_db_path}\n\n')
     except:
         with open(cgi_debug_path, 'a') as f:  # for cgi debugging
             f.write(f'{"#"*50}\nFailed to create a copy for initial DB...\n{"#"*50}\n')
