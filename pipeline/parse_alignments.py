@@ -76,7 +76,7 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             #count total number of entries provided by mixcr alignment
             total_lines += 1
 
-            if not total_lines%10000:
+            if not total_lines%100000:
                 logger.info('total_lines: {}'.format(total_lines))
             # If the first token contains two sequences (separated by a comma) it means that
             # MiXCR was unable to find an overlap between the two paired-end reads.

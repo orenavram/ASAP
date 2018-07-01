@@ -57,6 +57,13 @@ with open(params_file_path) as f:
     line = get_next_relevant_rstriped_line(f)
     mass_spec_seq = line.upper()
 
+    # UMI (IUPAC pattern)
+    # A single string for forward UMI followed by a comma
+    # A comma and then a single string for backward UMI (near the constant region)
+    # Two strings separated by a comma for forward and backward UMIs
+    line = get_next_relevant_rstriped_line(f)
+    f_umi, r_umi = line.upper().split(',')
+
 output_path = os.path.join(working_dir, 'outputs')
 
 run_output_paths = []

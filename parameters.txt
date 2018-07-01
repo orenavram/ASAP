@@ -25,3 +25,9 @@ txt
 
 #String that represent the mass_spec_seq to add for the proteomics DB
 ASTK
+
+#UMI (IUPAC pattern)
+#A single string for forward UMI followed by a comma
+#A comma and then a single string for backward UMI (near the constant region)
+#Two strings separated by a comma for forward and backward UMIs, e.g.:
+HHDACHHDDDDHHNGTCG,AHHDDDHGACAHHDHN

@@ -15,7 +15,7 @@ SERVERS_LOGS_DIR = '/bioseq/data/logs'
 MAFFT_v7_222 = '/bioseq/Programs/MAFFT_7.222/installation/bin/mafft' # v7.222
 #MiXCR_dir = '/bioseq/asap/MiXCR_2.0.4' #using module load instead!
 
-ASAP_URL = 'http://asap.tau.ac.il'
+ASAP_URL = 'https://asap.tau.ac.il'
 #ASAP_LOG = '/bioseq/asap/ASAP_runs.log'
 
 RELOAD_INTERVAL = 30

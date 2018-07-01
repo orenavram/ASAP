@@ -87,7 +87,7 @@ def write_info_paragraph_to_html(output_path):
 <br>""")
 
 
-def write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq, lib_file_name):
+def write_running_parameters_to_html(output_path, job_title, number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq, lib_file_name, f_umi, r_umi):
 
     with open(output_path, 'a') as f:
 
@@ -150,6 +150,14 @@ def write_running_parameters_to_html(output_path, job_title, number_of_duplicate
             <b>#clones to analyze: </b>{number_of_clones_to_analyze}<br>
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-4">
+            <b>Forward UMI: </b>{f_umi if f_umi else 'None'}<br>
+        </div>
+        <div class="col-md-4">
+            <b>Reversed UMI: </b>{r_umi if r_umi else 'None'}<br>
+        </div>
+    </div>
 </div>''')
 
 
@@ -195,7 +203,7 @@ def process_uploaded_files(run_dir, run, debug_path):
     return run_R1_filename, run_R2_filename
 
 
-def prepare_parameters_file(parameters_file, wd, actual_number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, mass_spec_seq):
+def prepare_parameters_file(parameters_file, wd, actual_number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, mass_spec_seq, f_umi, r_umi):
     with open(parameters_file, 'w') as f:
         f.write(f"""
     #String that represents the path to a folder where the output dir will be generated
@@ -226,6 +234,12 @@ def prepare_parameters_file(parameters_file, wd, actual_number_of_duplicates, ch
 
     #String that represent the mass_spec_seq to add for the proteomics DB
     {mass_spec_seq}
+
+    #UMI (IUPAC letters pattern) 
+    #A single string for forward UMI followed by a comma
+    #A comma and then a single string for backward UMI (near the constant region)
+    #Two strings separated by a comma for forward and backward UMIs
+    {f_umi},{r_umi}
 
     """)
 
@@ -306,6 +320,9 @@ try:
     number_of_clones_to_analyze = form['number_of_clones_to_analyze'].value
     raw_data_suffix = form['raw_data_suffix'].value
     mass_spec_seq = form['mass_spec_seq'].value.strip()
+    f_umi = form['f_umi'].value.strip()
+    r_umi = form['r_umi'].value.strip()
+
     # #if this option is unchecked, it won't be send in the json (i.e., form['add_mass_spec_seq'].value might not work...)
     # if 'add_mass_spec_seq' in form:
     #     add_mass_spec_seq = 'yes'
@@ -340,6 +357,7 @@ try:
     for i in range(actual_number_of_duplicates):
         run = 'run' + str(i + 1)
         path_to_reads = os.path.join(wd, 'reads', run)
+        create_dir(path_to_reads)
         url_to_reads = os.path.join(results_url, 'reads', run)
         paths_to_reads_files.append(os.path.join(path_to_reads, 'R1.fastq'))
         paths_to_reads_files.append(os.path.join(path_to_reads, 'R2.fastq'))
@@ -352,15 +370,15 @@ try:
             f.write(f'{ctime()}: Copying example files...\n')
         # copy example data
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
-            f.write(f'Fetching: scp -v {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}\n')
-        os.system(f'scp -v {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}')
+            f.write(f'Fetching: cp -v {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}\n')
+        os.system(f'cp -v {CONSTS.EXAMPLE_FILE_RUN1_R1} {paths_to_reads_files[0]}')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
             f.write(f'{ctime()}: ls of {os.path.join(wd, "reads", "run1")} yields:\n{os.listdir(path_to_reads)}\n')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
-            f.write(f'Fetching: scp -v {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}\n')
-        os.system(f'scp -v {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}')
-        os.system(f'scp -v {CONSTS.EXAMPLE_FILE_RUN2_R1} {paths_to_reads_files[2]}')
-        os.system(f'scp -v {CONSTS.EXAMPLE_FILE_RUN2_R2} {paths_to_reads_files[3]}')
+            f.write(f'Fetching: cp -v {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}\n')
+        os.system(f'cp -v {CONSTS.EXAMPLE_FILE_RUN1_R2} {paths_to_reads_files[1]}')
+        os.system(f'cp -v {CONSTS.EXAMPLE_FILE_RUN2_R1} {paths_to_reads_files[2]}')
+        os.system(f'cp -v {CONSTS.EXAMPLE_FILE_RUN2_R2} {paths_to_reads_files[3]}')
         with open(cgi_debug_path, 'a') as f: # for cgi debugging
             f.write('{}: Files were copied successfully.\n'.format(ctime()))
 
@@ -379,11 +397,17 @@ try:
         lib_file_name = default_lib_name
 
     # copy mass_spec db to the results folder
-    cmd = f'scp -v {CONSTS.MASS_SPEC_DB_MOUSE if MMU=="mouse" else CONSTS.MASS_SPEC_DB_HUMAN} {wd}'
+    cmd = f'cp -v {CONSTS.MASS_SPEC_DB_MOUSE if MMU=="mouse" else CONSTS.MASS_SPEC_DB_HUMAN} {wd}'
     # copy example data
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'Fetching: {cmd}\n')
-    os.system(cmd)
+    try:
+        res = subprocess.check_output(cmd)
+        with open(cgi_debug_path, 'a') as f:  # for cgi debugging
+            f.write(f'{proteomic_db_file_path} was successfully copied.\n')
+    except:
+        with open(cgi_debug_path, 'a') as f:  # for cgi debugging
+            f.write(f'{"#"*50}\nFailed to create a copy for initial DB...\n{"#"*50}\n')
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'{ctime()}: ls of {path_to_reads} yields:\n{os.listdir(path_to_reads)}\n')
@@ -391,7 +415,7 @@ try:
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'{ctime()}: write_running_parameters_to_html...\n')
 
-    write_running_parameters_to_html(output_path, job_title, actual_number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq, lib_file_name)
+    write_running_parameters_to_html(output_path, job_title, actual_number_of_duplicates, urls_to_reads_files, files_names, MMU, len_threshold, qlty_threshold, number_of_clones_to_analyze, raw_data_suffix, mass_spec_seq, lib_file_name, f_umi, r_umi)
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'{ctime()}: Running parameters were written to html successfully.\n')
@@ -400,7 +424,7 @@ try:
     confirm_email_add = form['confirm_email'].value  # if it is contain a value it is a spammer.
 
     parameters_file = os.path.join(wd, 'parameters.txt')
-    prepare_parameters_file(parameters_file, wd, actual_number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, mass_spec_seq)
+    prepare_parameters_file(parameters_file, wd, actual_number_of_duplicates, chains, len_threshold, qlty_threshold, number_of_clones_to_analyze, MMU, raw_data_suffix, mass_spec_seq, f_umi, r_umi)
 
     cmds_file = os.path.join(wd, 'qsub.cmds')
     write_cmds_file(cmds_file, run_number, parameters_file)

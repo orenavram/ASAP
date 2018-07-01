@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess
 
+from UMI_Handler import handle_UMI
 from auxiliaries import create_dir
 from cdr3_analyzer import analyze_cdr3
 from mixcr_procedure import mixcr_procedure, generate_lib_for_mixcr
@@ -11,6 +12,7 @@ from runs_aggregator import join_runs_analyses, generate_final_fasta
 from text_handler import write_dict_to_file, read_table_to_dict
 
 logger = logging.getLogger('main')
+
 
 def analyze_samples(gp, output_html_path):
 
@@ -31,6 +33,22 @@ def analyze_samples(gp, output_html_path):
         run = 'run' + str(i+1)
 
         mixcr_output_path, parsed_mixcr_output_path, assignments_path, cdr3_analysis_path = create_sub_working_directories(gp, run)
+        fastq_dir = os.path.join(gp.working_dir, 'reads', run)
+
+        try:
+            done_path = os.path.join(gp.output_path, f'done_0_{run}_read_filtration_by_UMI.txt')
+            if not gp.f_umi and not gp.r_umi:
+                logger.info('Skipping fastq filtration procedure: NO UMIs...')
+            elif os.path.exists(done_path):
+                logger.info('Skipping fastq filtration procedure: filtered files already exist...')
+            else:
+                logger.info(f'Starting filtration of {run}... (f_UMI={gp.f_umi} ; r_UMI={gp.r_umi})')
+                filter_fasq_by_UMI(fastq_dir, gp.f_umi, gp.r_umi, output_html_path)
+                with open(done_path, 'w') as f:
+                    pass
+        except Exception as e:
+            logger.error(f'Error in fastq filtration procedure: {e}')
+            raise
 
         try:
             done_path = os.path.join(gp.output_path, 'done_1_' + run + '_' + 'mixcr_procedure.txt')
@@ -38,8 +56,7 @@ def analyze_samples(gp, output_html_path):
                 logger.info('Skipping mixcr_procedure, output files already exist...')
             else:
                 logger.info('Starting mixcr_procedure of {}...'.format(run))
-                fastq_path = os.path.join(gp.working_dir, 'reads', run)
-                mixcr_procedure(fastq_path, mixcr_output_path, gp.chains, gp.MMU, gp.alleles_lib_path, gp.remote_run)
+                mixcr_procedure(fastq_dir, mixcr_output_path, gp.chains, gp.MMU, gp.alleles_lib_path, gp.remote_run)
                 if not os.path.exists(os.path.join(mixcr_output_path, 'alignments.txt')):
                     raise AssertionError(f'MiXCR FAILED for some reason ({os.path.join(mixcr_output_path, "alignments.txt")} is missing).')
                 with open(done_path, 'w') as f:
@@ -199,6 +216,26 @@ def create_sub_working_directories(global_params, run):
     global_params.cdr3_analysis_paths.append(cdr3_analysis_path)
 
     return mixcr_output_path, parsed_mixcr_output_path, assignments_path, cdr3_analysis_path
+
+
+def filter_fasq_by_UMI(fastq_dir, f_umi, r_umi, output_html_path):
+    for file_name in os.listdir(fastq_dir):
+        if 'R1' in file_name:
+            fastq_path = os.path.join(fastq_dir, file_name)
+        if 'R2' in file_name:
+            fastq2_path = os.path.join(fastq_dir, file_name)
+    if r_umi:  # more reliable
+        logger.info(f'Start handling r_UMI={r_umi}')
+        handle_UMI(fastq2_path, fastq2_path, r_umi, fastq_path, fastq_path)
+    if f_umi:
+        logger.info(f'Start handling f_UMI={f_umi}')
+        handle_UMI(fastq_path, fastq_path, f_umi, fastq2_path, fastq2_path)
+    #TODO: uncomment
+    # with open(output_html_path) as f:
+    #     html_text = f.read()
+    # html_text = html_text.replace('sequence data:', 'sequence data (after UMI filtration):')
+    # with open(output_html_path, 'w') as f:
+    #     f.write(html_text)
 
 
 def remove_irrelevant_chains(gp):
@@ -391,7 +428,11 @@ def generate_proteomic_db(gp):
             run = 'run' + str(i + 1)
         logger.info(f'Generating DB for {run}')
         proteomic_db_file_path = os.path.join(gp.run_output_paths[i], gp.proteomic_db_file_suffix)
-        subprocess.check_output(f'rsync -avz {gp.initial_db_path} {proteomic_db_file_path}', shell=True)
+        try:
+            subprocess.check_output(f'cp -v {gp.initial_db_path} {proteomic_db_file_path}', shell=True)
+            logger.info(f'{proteomic_db_file_path} was successfully synced.')
+        except:
+            logger.error(f'\n{"#"*50}\nFailed to sync initial DB...\n{"#"*50}')
         result = ''
         for fasta_file in os.listdir(gp.run_output_paths[i]):
             fasta_path = os.path.join(gp.run_output_paths[i], fasta_file)

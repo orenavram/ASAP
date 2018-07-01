@@ -26,7 +26,7 @@ def generate_lib_for_mixcr(wd, default_lib_path, alternative_lib_path, output_ht
 #        path string to output all the results of MIXCR procedure
 def mixcr_procedure(fastq_path, outpath, chains, mmu, lib_path, remote_run):
 
-    align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds = get_mixcr_cmds(lib_path, fastq_path, outpath, mmu, chains, remote_run)
+    align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds = get_mixcr_cmds(lib_path, fastq_path, outpath, mmu, remote_run)
 
     logger.info('Current wd is: ' + os.getcwd())
     #logger.info('Changing wd to mixcr\'s dir')
@@ -56,7 +56,7 @@ def mixcr_procedure(fastq_path, outpath, chains, mmu, lib_path, remote_run):
 
 
 '''assign variables to commands'''
-def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, chains, remote_run):
+def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, remote_run):
 
     if not os.path.exists(outpath):
         os.makedirs(outpath)
@@ -70,7 +70,7 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, chains, remote_run):
             fastq1 = os.path.join(fastq_path, file_name)
         elif 'R2.fastq' in file_name:
             fastq2 = os.path.join(fastq_path, file_name)
-    logger.debug('fastq files paths are:\n{}\n{}'.format(fastq1, fastq2))
+    logger.info(f'fastq files paths are:\n{fastq1}\n{fastq2}')
 
     if not os.path.exists(fastq1):
         logger.error('R1.fastq is missing...')
@@ -90,7 +90,7 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, chains, remote_run):
                  f' --report {outpath}/align_report.txt'                   #create report file
                  f' --library {lib_path.split(".json")[0]}'  # mixcr requires lib name without json suffix!!
                  ' -a'                                                          #save reads' ids from fastq files
-                 ' --verbose'
+                 #' --verbose'
                  f' {fastq1} {fastq2}'                               #input files- 2 X fastq files
                  f' {vdjca_path}')
              
