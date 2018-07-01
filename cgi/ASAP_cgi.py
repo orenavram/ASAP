@@ -326,9 +326,6 @@ try:
     f_umi = form['f_umi'].value.strip()
     r_umi = form['r_umi'].value.strip()
 
-    # #if this option is unchecked, it won't be send in the json (i.e., form['add_mass_spec_seq'].value might not work...)
-    # if 'add_mass_spec_seq' in form:
-    #     add_mass_spec_seq = 'yes'
     job_title = ''
     if form['job_title'].value != '':
         job_title = form['job_title'].value.strip()
