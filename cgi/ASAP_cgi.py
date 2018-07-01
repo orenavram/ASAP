@@ -250,13 +250,15 @@ def write_cmds_file(cmds_file, run_number, parameters_file):
     new_line_delimiter = ';!@#'
     # the code contains features that are exclusive to Python3.6 (or higher)!
     # repseqio and mixcr require java 1.8 (or higher)
-    required_modules = ' '.join(['python/anaconda_python-3.6.4', 'repseqio/repseqio-linuxbrew', 'MiXCR/MiXCR-2.1.11', 'java/java180_144'])
+    required_modules = ' '.join(['python/anaconda_python-3.6.4',
+                                 'mafft/mafft7313',
+                                 'repseqio/repseqio-linuxbrew',
+                                 'MiXCR/MiXCR-2.1.11',
+                                 'java/java180_144'])
     with open(cmds_file, 'w') as f:
-        f.write('setenv PATH "/bioseq/Programs/MAFFT_7.222/installation/bin:${PATH}"')
-        f.write(new_line_delimiter)
         f.write(f'module load {required_modules}')
         f.write(new_line_delimiter)
-        f.write(' '.join(['python', CONSTS.MAIN_SCRIPT, parameters_file, '""']))
+        f.write(' '.join(['python', CONSTS.MAIN_SCRIPT, parameters_file]))
         f.write('\t' + 'ASAP_' + run_number)
 
 
@@ -298,7 +300,7 @@ try:
     write_info_paragraph_to_html(output_path)
 
     with open(cgi_debug_path, 'a') as f:
-        # form debugging
+        # for debugging
         f.write(f'{"#"*50}\n{ctime()}: A new CGI request has been recieved!\n')
         f.write(f'These are the keys that the CGI received:\n{"; ".join(sorted(form.keys()))}\n\n')
         f.write('Form values are:\n')
@@ -441,7 +443,7 @@ try:
     #submission_cmd = 'ssh bioseq@lecs2login "module load python/anaconda_python-3.6.4; python /bioseq/bioSequence_scripts_and_constants/q_submitter.py {} {} -q {} --verbose > {}"'.format(cmds_file, wd, queue_name, log_file)
 
     # simple command when using shebang header
-    submission_cmd = f'ssh bioseq@lecs2login /bioseq/bioSequence_scripts_and_constants/q_submitter.py {cmds_file} {wd} -q bioseq --verbose > {log_file}'
+    submission_cmd = f'ssh bioseq@lecs2login /bioseq/bioSequence_scripts_and_constants/q_submitter.py {cmds_file} {wd} -q "h=compute-8-8" --verbose > {log_file}' #TODO: change queue to bioseq
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'\nSSHing and SUBMITting the JOB to the QUEUE:\n{submission_cmd}\n\n')
