@@ -68,6 +68,14 @@ except Exception as e:
     succeeded = False
 
 run_number = gp.working_dir.split('/')[-1]
+fastq_dir = os.path.join(gp.working_dir, 'reads')
+if gp.remote_run:
+    # remove raw NGS data from the server
+    try:
+        shutil.rmtree(fastq_dir)
+    except:
+        pass
+
 if succeeded:
     logger.info('Zipping results...')
     if not os.path.exists(os.path.join(gp.output_path + '.zip')):

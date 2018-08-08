@@ -24,7 +24,7 @@ def generate_lib_for_mixcr(wd, default_lib_path, alternative_lib_path, output_ht
 
 #input: path string to current database of fastq files, provided by NGS process
 #        path string to output all the results of MIXCR procedure
-def mixcr_procedure(fastq_path, outpath, chains, mmu, lib_path, remote_run):
+def mixcr_procedure(fastq_path, outpath, mmu, lib_path, remote_run):
 
     align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds = get_mixcr_cmds(lib_path, fastq_path, outpath, mmu, remote_run)
 

@@ -120,10 +120,15 @@ def write_running_parameters_to_html(output_path, job_title, number_of_duplicate
                 f.write('')
 
             # show only path suffix... http://asap.tau.ac.il/results/1520442230/reads/run1/242_R1.fastq
+            # f.write(f'''<div class="col-md-4">
+            #                 <b>Rep {i + 1} sequence data:</b><br>
+            #                 R1 = <a href="{urls_to_reads_files[i * 2]}" target=_blank>{files_names[i*2]}</A><br>
+            #                 R2 = <a href="{urls_to_reads_files[i * 2 + 1]}" target=_blank>{files_names[i*2+1]}</A><br>
+            #             </div>''')
             f.write(f'''<div class="col-md-4">
                             <b>Rep {i + 1} sequence data:</b><br>
-                            R1 = <a href="{urls_to_reads_files[i * 2]}" target=_blank>{files_names[i*2]}</A><br>
-                            R2 = <a href="{urls_to_reads_files[i * 2 + 1]}" target=_blank>{files_names[i*2+1]}</A><br>
+                            R1 = {files_names[i*2]}<br>
+                            R2 = {files_names[i*2+1]}<br>
                         </div>''')
         f.write('</div>')
 
@@ -294,10 +299,15 @@ sys.stdout.flush() #must be flushed immediately!!!
 
 # Send me a notification email every time there's a new request
 send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
-           receiver='orenavram@gmail.com', subject=f'ASAP - A new job has been submitted: {run_number}', content=os.path.join(CONSTS.ASAP_URL,'results',run_number))
+           receiver='orenavram@gmail.com', subject=f'ASAP - A new job has been submitted: {run_number}',
+           content=f"{os.path.join(CONSTS.ASAP_URL, 'results', run_number, 'cgi_debug.txt')}\n{os.path.join(CONSTS.ASAP_URL, 'results', run_number, 'output.html')}")
 
 try:
     write_info_paragraph_to_html(output_path)
+
+    if form['email'].value != '':
+        with open(cgi_debug_path, 'a') as f:
+            f.write(f"{form['email'].value.strip()}\n\n")
 
     with open(cgi_debug_path, 'a') as f:
         # for debugging

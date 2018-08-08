@@ -45,7 +45,7 @@ def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', a
     plt.close()
 
 
-def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff, fontsize=20):
+def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff, fontsize=25):
     cols = np.loadtxt(cdr3_annotations_path, usecols=(1, 2), dtype='int')
     rank = range(1, cutoff+1)
     plt.figure(figsize=[25,5])

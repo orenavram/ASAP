@@ -56,7 +56,7 @@ def analyze_samples(gp, output_html_path):
                 logger.info('Skipping mixcr_procedure, output files already exist...')
             else:
                 logger.info('Starting mixcr_procedure of {}...'.format(run))
-                mixcr_procedure(fastq_dir, mixcr_output_path, gp.chains, gp.MMU, gp.alleles_lib_path, gp.remote_run)
+                mixcr_procedure(fastq_dir, mixcr_output_path, gp.MMU, gp.alleles_lib_path, gp.remote_run)
                 if not os.path.exists(os.path.join(mixcr_output_path, 'alignments.txt')):
                     raise AssertionError(f'MiXCR FAILED for some reason ({os.path.join(mixcr_output_path, "alignments.txt")} is missing).')
                 with open(done_path, 'w') as f:
