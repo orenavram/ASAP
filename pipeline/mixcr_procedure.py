@@ -66,10 +66,11 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, remote_run):
 
     fastq1 = fastq2 = ''
     for file_name in os.listdir(fastq_path):
-        if 'R1.fastq' in file_name:
-            fastq1 = os.path.join(fastq_path, file_name)
-        elif 'R2.fastq' in file_name:
-            fastq2 = os.path.join(fastq_path, file_name)
+        if 'fastq' in file_name:
+            if 'R1' in file_name:
+                fastq1 = os.path.join(fastq_path, file_name)
+            elif 'R2' in file_name:
+                fastq2 = os.path.join(fastq_path, file_name)
     logger.info(f'fastq files paths are:\n{fastq1}\n{fastq2}')
 
     if not os.path.exists(fastq1):

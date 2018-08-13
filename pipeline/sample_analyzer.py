@@ -448,6 +448,14 @@ def generate_proteomic_db(gp):
                     if not header:
                         break
 
+                    if '_' in header.split('|')[2]:
+                        logger.info(f'DISCARDING gapped CDR3 record from proteomic db:\n{header}\n{sequence}')
+                        continue #skip cdr3 with gaps (frame shifted)
+
+                    if '_' in sequence:
+                        logger.info(f'Removing gaps from record:\n{header}\n{sequence}')
+                        sequence = sequence.replace('_', '')
+
                     if header.startswith('>IGH'):
                         sequence += mass_spec_seq
 
