@@ -203,7 +203,7 @@ def edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_mai
         f.flush()
 
 
-def edit_failure_html(html_path, msg):
+def edit_failure_html(html_path, msg, run_number):
     html_text = ''
     if os.path.exists(CONSTS.SERVERS_RESULTS_DIR): # run on ibis. cgi generated the initial file
         with open(html_path) as f:
@@ -212,7 +212,7 @@ def edit_failure_html(html_path, msg):
     html_text +='<br><br><br>'
     html_text +='<center><h2>'
     html_text +='<font color="red">{}</font><br><br>'.format(msg)
-    html_text +='Please try to re-run your job or <a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%2015249296875723">contact us</a> for further information'
+    html_text +=f'Please try to re-run your job or <a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%20{run_number}">contact us</a> for further information'
     html_text +='</h2></center><br><br>'
     html_text +='\n</body>\n</html>\n'
     with open(html_path, 'w') as f:

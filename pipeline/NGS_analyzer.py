@@ -85,7 +85,7 @@ if succeeded:
     logger.info('Editing html file...')
     edit_success_html(gp, output_html_path, CONSTS.ASAP_URL, run_number)
 else:
-    edit_failure_html(output_html_path, error_msg)
+    edit_failure_html(output_html_path, error_msg, run_number)
 
 #Change running status
 # with open(output_html_path) as f:
