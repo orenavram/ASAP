@@ -469,7 +469,7 @@ except Exception as e:
     with open(output_path) as f:
         html_content = f.read()
     html_content = html_content.replace('RUNNING', 'FAILED')
-    html_content += '<br><br><br><center><h2><font color="red">' + msg + '</font><br><br>Please try to re-run your job or <a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%2015249296875723">contact us</a> for further information</h2></center><br><br>\n</body>\n</html>\n'
+    html_content += f'<br><br><br><center><h2><font color="red">{msg}</font><br><br>Please try to re-run your job or <a href="mailto:{CONSTS.ADMIN_EMAIL}?subject=ASAP%20Run%20Number%20{run_number}">contact us</a> for further information</h2></center><br><br>\n</body>\n</html>\n'
     with open(output_path, 'w') as f:
         html_content = f.write(html_content)
 

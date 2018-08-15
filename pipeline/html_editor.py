@@ -127,7 +127,7 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
 
         html_text += '</tr></tbody>'
     html_text += '</table></div>'
-    html_text += '<br><br><br>\n<hr>\n<h4 class=footer><p align=\'center\'>Questions and comments are welcome! Please <span class="admin_link"><a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%20' + run_number + '">contact us</a></span></p></h4>\n'
+    html_text += f'<br><br><br>\n<hr>\n<h4 class=footer><p align=\'center\'>Questions and comments are welcome! Please <span class="admin_link"><a href="mailto:{CONSTS.ADMIN_EMAIL}?subject=ASAP%20Run%20Number%20{run_number}">contact us</a></span></p></h4>\n'
     # html_text += '<div id="bottom_links" align="center"><span class="bottom_link"><a href="' + server_main_url + '" target="_blank">Home</a>&nbsp;|&nbsp<a href="' + server_main_url + 'overview.html" target="_blank">Overview</a>\n</span>\n<br>\n</div>\n</body>\n</html>\n'
     html_text += '<br><br><br>\n</body>\n</html>\n'
 
@@ -212,7 +212,7 @@ def edit_failure_html(html_path, msg, run_number):
     html_text +='<br><br><br>'
     html_text +='<center><h2>'
     html_text +='<font color="red">{}</font><br><br>'.format(msg)
-    html_text +=f'Please try to re-run your job or <a href="mailto:bioSequence@tauex.tau.ac.il?subject=ASAP%20Run%20Number%20{run_number}">contact us</a> for further information'
+    html_text +=f'Please try to re-run your job or <a href="mailto:{CONSTS.ADMIN_EMAIL}?subject=ASAP%20Run%20Number%20{run_number}">contact us</a> for further information'
     html_text +='</h2></center><br><br>'
     html_text +='\n</body>\n</html>\n'
     with open(html_path, 'w') as f:
