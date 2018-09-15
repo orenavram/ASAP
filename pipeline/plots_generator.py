@@ -47,11 +47,11 @@ def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', a
 
 def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff, fontsize=25):
     cols = np.loadtxt(cdr3_annotations_path, usecols=(1, 2), dtype='int')
-    rank = range(1, cutoff+1)
+    cutoff = min(cols.shape[0], cutoff)
     plt.figure(figsize=[25,5])
     plt.style.use('seaborn-deep')
-    plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,0], label='Reads counts')
-    plt.bar(np.arange(1,len(rank)+1), cols[:cutoff,1], label='Clonal expansion')
+    plt.bar(np.arange(1, cutoff+1), cols[:cutoff, 0], label='Reads counts')
+    plt.bar(np.arange(1, cutoff+1), cols[:cutoff, 1], label='Clonal expansion')
     plt.xlabel('\nClone number', fontsize=fontsize)
     plt.ylabel('Counts\n', fontsize=fontsize)
     plt.xticks(range(0,cutoff+1,10), fontsize=fontsize)

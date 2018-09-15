@@ -4,6 +4,7 @@ import logging
 logger = logging.getLogger('main')
 
 def generate_weblogo(in_file, out_file, title = "A Logo Title"):
+    logger.info(f'Generating logo for {out_file}')
     with open(in_file) as f:
         seqs = read_seq_data(f)
     data = LogoData.from_seqs(seqs)

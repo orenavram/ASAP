@@ -69,7 +69,7 @@ except Exception as e:
 
 run_number = gp.working_dir.split('/')[-1]
 fastq_dir = os.path.join(gp.working_dir, 'reads')
-if gp.remote_run:
+if gp.remote_run and succeeded:
     # remove raw NGS data from the server
     try:
         shutil.rmtree(fastq_dir)
@@ -97,33 +97,6 @@ else:
 # with open(output_html_path, 'w') as f:
 #     html_content = f.write(html_content)
 
-output_url = os.path.join(CONSTS.ASAP_RESULTS_URL, run_number, 'output.html')
-
-logger.info('Sending email...')
-user_email_file = os.path.join(gp.working_dir, 'user_email.txt')
-if os.path.exists(user_email_file):
-    with open(user_email_file) as f:
-        addressee = f.read().rstrip()
-
-    results_page = output_url
-    if succeeded:
-        email_content = '''Hello,
-    
-The results for your ASAP run are ready at:
-{}
-
-Please note: the results will be kept on the server for three months.
-        '''.format(results_page)
-    else:
-        email_content = 'ASAP calculation failed. For further information please visit: {}'.format(results_page)
-
-    email_content += '\n\nThanks, ASAP Team'
-
-    send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
-               receiver=addressee, subject='Your ASAP run is ready!', content=email_content)
-
-logger.info(argv[0] + ' is DONE!!')
-
 
 end = time()
 logger.info(f'Finished joining samples. Took {measure_time(int(end-start))}.')
@@ -140,3 +113,48 @@ with open(output_html_path, 'w') as f:
     html_content = f.write(html_content)
 
 print('Done. Bye.')
+
+output_url = os.path.join(CONSTS.ASAP_RESULTS_URL, run_number, 'output.html')
+
+logger.info('Sending email...')
+user_email_file = os.path.join(gp.working_dir, 'user_email.txt')
+if os.path.exists(user_email_file):
+    with open(user_email_file) as f:
+        addressee = f.read().rstrip()
+
+    results_page = output_url
+    if succeeded:
+        email_content = '''Hello,
+
+The results for your ASAP run are ready at:
+{}
+
+Please note: the results will be kept on the server for three months.
+        '''.format(results_page)
+    else:  # failed
+        email_content = 'ASAP calculation failed. For further information please visit: {}'.format(results_page)
+
+    email_content += '\n\nThanks, ASAP Team'
+
+    send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
+               receiver=addressee, subject=f"{'ASAP analysis is ready!' if succeeded else 'ASAP analysis failed...'}",
+               content=email_content)
+
+
+if not succeeded:
+    output_folder_url = os.path.join(CONSTS.ASAP_URL, 'results', run_number)
+    email = 'NO_EMAIL'
+    if os.path.exists(user_email_file):
+        with open(user_email_file) as f:
+            email = f.read().rstrip()
+    error_log_path = 'NO_ERROR_LOG'
+    tmp = [file for file in os.listdir(gp.working_dir) if file.endswith('.err')]
+    if len(tmp)>0:
+        error_log_path = tmp[0]
+    # Send me a notification email every time there's a failure
+    send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
+               receiver='orenavram@gmail.com', subject=f'ASAP job {run_number} by {email} has been failed: ',
+               content=f"{email}\n\n{os.path.join(output_folder_url, 'output.html')}\n\n{os.path.join(output_folder_url, 'cgi_debug.txt')}\n\n{os.path.join(output_folder_url, error_log_path)}\n\n{os.path.join(gp.working_dir, error_log_path)}")
+
+
+logger.info(argv[0] + ' is DONE!!')

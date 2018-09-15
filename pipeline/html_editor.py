@@ -138,11 +138,10 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
 
 def edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_main_url, run_number, chain, run):
     with open(top_cdr3_analysis_html_path, 'w') as f:
-        annotation_file_path = os.path.join(os.path.split(top_cdr3_analysis_html_path)[0], 'cdr3_analysis', chain + gp.top_cdr3_annotation_file_suffix)
-        f.write('''<html>
+        f.write(f'''<html>
 <head>
     <title>ASAP top clones</title>
-    <link rel="shortcut icon" type="image/x-icon" href="{0}/pics/ASAP_logo.gif" />
+    <link rel="shortcut icon" type="image/x-icon" href="{CONSTS.ASAP_URL}/pics/ASAP_logo.gif" />
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -151,7 +150,7 @@ def edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_mai
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css">
     
-    <link rel="stylesheet" href="{0}/css/general.css">
+    <link rel="stylesheet" href="{CONSTS.ASAP_URL}/css/general.css">
 
 </head>
 <body>
@@ -162,7 +161,7 @@ def edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_mai
                     <div class="col-md-1">
                     </div>
                     <div class="col-md-1">
-                        <img src="{0}/pics/ASAP_logo.gif" id="antibody_image" class="img-rounded">
+                        <img src="{CONSTS.ASAP_URL}/pics/ASAP_logo.gif" id="antibody_image" class="img-rounded">
                     </div>
                     <div class="col-md-9">
                         &nbsp;&nbsp;&nbsp;&nbsp;<span id="asap-title">ASAP</span>&nbsp;&nbsp;&nbsp;&nbsp;<span id="sub-title"><b>A</b> web server for Ig-<b>S</b>eq <b>A</b>nalysis <b>P</b>ipeline</span><br>
@@ -174,7 +173,7 @@ def edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_mai
     <div id="behind-nav-bar-results">
     </div>
     <div class="container" align="center" style="width: 650px">
-        <a href="{1}"><h2>Top {2} clones of {3}, chain {4}</h2></a><br>
+        <a href="{os.path.join('cdr3_analysis', chain + gp.top_cdr3_annotation_file_suffix)}"><h2>Top {gp.top_cdr3_clones_to_further_analyze} clones of {run}, chain {chain}</h2></a><br>
         <table class="table">
             <thead>
                 <tr>
@@ -186,7 +185,7 @@ def edit_top_cdr3_analysis_html_page(top_cdr3_analysis_html_path, gp, server_mai
                 </tr>
             </thead>
             <tbody>
-        '''.format(CONSTS.ASAP_URL, annotation_file_path, gp.top_cdr3_clones_to_further_analyze, run, chain))
+        ''')
         for i in range(gp.top_cdr3_clones_to_further_analyze):
             wasabi = '<a href="' + server_main_url + '/wasabi/index_general.html?url=' + server_main_url + '/results/' + run_number + '/outputs/'+run+'/cdr3_analysis/'+chain+'_top_' + str(gp.top_cdr3_clones_to_further_analyze) + '_clones/cluster_' + str(i) + '_msa.aln" target="_blank">+</a> '
             sequence_logo = '<a href="cdr3_analysis/' + chain + '_top_' + str(gp.top_cdr3_clones_to_further_analyze) + '_clones/cluster_' + str(i) + '_weblogo.pdf" target="_blank">+</a>'

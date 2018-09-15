@@ -135,34 +135,28 @@ def write_running_parameters_to_html(output_path, job_title, number_of_duplicate
         f.write(f'''
     <br><u><h3>Advanced Parameters:</h3></u><br>
     <div class="row">
-        <div class="col-md-2">
-            <b>Min read length: </b>{len_threshold}<br>
-        </div>
-        <div class="col-md-2">
-            <b>Min read quality: </b>{qlty_threshold}<br>
-        </div>
-        <div class="col-md-2">
-            <b>Raw data format: </b>{raw_data_suffix}<br>
-        </div>
-        <div class="col-md-6">
-            <b>reference library: </b>{lib_file_name}<br>
-        </div>
+        <b>Min read length: </b>{len_threshold}<br>
     </div>
     <div class="row">
-        <div class="col-md-3">
-            <b>MassSpec sequence: </b>{mass_spec_seq}<br>
-        </div>
-        <div class="col-md-3">
-            <b>#clones to analyze: </b>{number_of_clones_to_analyze}<br>
-        </div>
+        <b>Min read quality: </b>{qlty_threshold}<br>
     </div>
     <div class="row">
-        <div class="col-md-4">
-            <b>Forward UMI: </b>{f_umi if f_umi else 'None'}<br>
-        </div>
-        <div class="col-md-4">
-            <b>Reversed UMI: </b>{r_umi if r_umi else 'None'}<br>
-        </div>
+        <b># Clones to analyze: </b>{number_of_clones_to_analyze}<br>
+    </div>
+    <div class="row">
+        <b>MassSpec sequence: </b>{mass_spec_seq}<br>
+    </div>
+    <div class="row">
+        <b>Reference library: </b>{lib_file_name}<br>
+    </div>
+    <div class="row">
+        <b>Raw data format: </b>{raw_data_suffix}<br>
+    </div>
+    <div class="row">
+        <b>Forward UMI: </b>{f_umi if f_umi else 'None'}<br>
+    </div>
+    <div class="row">
+        <b>Reversed UMI: </b>{r_umi if r_umi else 'None'}<br>
     </div>
 </div>''')
 
@@ -180,8 +174,12 @@ def write_pair_file(debug_path, pair, run_content, run_filename, run_dir):
         f.write(run_content)
 
     #avoid double zipping:
-    if local_file_path.endswith('gz'):
-        sh.gunzip(local_file_path)
+    if local_file_path.endswith('.gz'):
+        try:
+            sh.gunzip(local_file_path)
+        except:
+            shutil.move(local_file_path, local_file_path[:-3])
+            pass
 
     with open(debug_path, 'a') as f:
         f.write(f'R{pair} was handled successfully\n')
@@ -296,11 +294,6 @@ write_html_prefix(output_path, run_number) # html's prefix must be written BEFOR
 print('Location: ' + output_url) #Redirects to the results url. MUST appear before any other print.
 print('Content-Type: text/html\n')  # For more details see https://www.w3.org/International/articles/http-charset/index#scripting
 sys.stdout.flush() #must be flushed immediately!!!
-
-# Send me a notification email every time there's a new request
-send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
-           receiver='orenavram@gmail.com', subject=f'ASAP - A new job has been submitted: {run_number}',
-           content=f"{os.path.join(CONSTS.ASAP_URL, 'results', run_number, 'cgi_debug.txt')}\n{os.path.join(CONSTS.ASAP_URL, 'results', run_number, 'output.html')}")
 
 try:
     write_info_paragraph_to_html(output_path)
@@ -450,7 +443,7 @@ try:
     #submission_cmd = 'ssh bioseq@lecs2login "module load python/anaconda_python-3.6.4; python /bioseq/bioSequence_scripts_and_constants/q_submitter.py {} {} -q {} --verbose > {}"'.format(cmds_file, wd, queue_name, log_file)
 
     # simple command when using shebang header
-    submission_cmd = f'ssh bioseq@lecs2login /bioseq/bioSequence_scripts_and_constants/q_submitter.py {cmds_file} {wd} -q "h=compute-8-8" --verbose > {log_file}' #TODO: change queue to bioseq
+    submission_cmd = f'ssh bioseq@lecs2login /bioseq/bioSequence_scripts_and_constants/q_submitter.py {cmds_file} {wd} -q "h=compute-8-8" --verbose > {log_file}' #TODO: change queue to bioseq "h=compute-8-8"
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'\nSSHing and SUBMITting the JOB to the QUEUE:\n{submission_cmd}\n\n')
@@ -480,6 +473,16 @@ except Exception as e:
         f.write(f'{ctime()}: {msg}\n\n')
         f.write(f'{fname}: {exc_type}, at line: {exc_tb.tb_lineno}\n\n')
         f.write('$'*60)
+
+    # Send me a notification email every time there's a failure
+    try:
+        email = form['email'].value.strip() if form['email'].value.strip() else 'NO_EMAIL'
+    except:
+        email = 'NO_EMAIL'
+    send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
+               receiver='orenavram@gmail.com', subject=f'ASAP job {run_number} by {email} has been failed: ',
+               content=f"{email}\n\n{os.path.join(CONSTS.ASAP_URL, 'results', run_number, 'output.html')}\n\n{os.path.join(CONSTS.ASAP_URL, 'results', run_number, 'cgi_debug.txt')}")
+
 
     #logger.info(f'Waiting {2*CONSTS.RELOAD_INTERVAL} seconds to remove html refreshing headers...')
     # Must be after flushing all previous data. Otherwise it might refresh during the writing.. :(

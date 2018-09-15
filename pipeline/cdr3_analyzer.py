@@ -38,6 +38,7 @@ def analyze_top_clones(gp):
     k = gp.top_cdr3_clones_to_further_analyze
     for i in range(gp.number_of_runs + gp.joint_run_is_needed):
         for chain in gp.chains:
+            logger.info(f'analyze_top_clones: run{i+1} {chain}')
             annotations_path = os.path.join(gp.parsed_mixcr_output_paths[i], chain + gp.sequence_annotation_file_suffix)
             if not os.path.exists(annotations_path):
                 logger.info('No such file: {}. Skipping its analysis...'.format(annotations_path))
