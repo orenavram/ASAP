@@ -480,7 +480,7 @@ except Exception as e:
     except:
         email = 'NO_EMAIL'
     send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
-               receiver='orenavram@gmail.com', subject=f'ASAP job {run_number} by {email} has been failed: ',
+               receiver='orenavram@gmail.com', subject=f'ASAP job {run_number} by {email} has been failed!',
                content=f"{email}\n\n{os.path.join(CONSTS.ASAP_URL, 'results', run_number, 'output.html')}\n\n{os.path.join(CONSTS.ASAP_URL, 'results', run_number, 'cgi_debug.txt')}")
 
 
