@@ -135,28 +135,44 @@ def write_running_parameters_to_html(output_path, job_title, number_of_duplicate
         f.write(f'''
     <br><u><h3>Advanced Parameters:</h3></u><br>
     <div class="row">
-        <b>Min read length: </b>{len_threshold}<br>
+        <div class="col-md-4">
+            <b>Min read length: </b>{len_threshold}<br>
+        </div>
     </div>
     <div class="row">
-        <b>Min read quality: </b>{qlty_threshold}<br>
+        <div class="col-md-4">
+            <b>Min read quality: </b>{qlty_threshold}<br>
+        </div>
     </div>
     <div class="row">
-        <b># Clones to analyze: </b>{number_of_clones_to_analyze}<br>
+        <div class="col-md-4">
+            <b># Clones to analyze: </b>{number_of_clones_to_analyze}<br>
+        </div>
     </div>
     <div class="row">
-        <b>MassSpec sequence: </b>{mass_spec_seq}<br>
+        <div class="col-md-4">
+            <b>MassSpec sequence: </b>{mass_spec_seq}<br>
+        </div>
     </div>
     <div class="row">
-        <b>Reference library: </b>{lib_file_name}<br>
+        <div class="col-md-4">
+            <b>Reference library: </b>{lib_file_name}<br>
+        </div>
     </div>
     <div class="row">
-        <b>Raw data format: </b>{raw_data_suffix}<br>
+        <div class="col-md-4">
+            <b>Raw data format: </b>{raw_data_suffix}<br>
+        </div>
     </div>
     <div class="row">
-        <b>Forward UMI: </b>{f_umi if f_umi else 'None'}<br>
+        <div class="col-md-4">
+            <b>Forward UMI: </b>{f_umi if f_umi else 'None'}<br>
+        </div>
     </div>
     <div class="row">
-        <b>Reversed UMI: </b>{r_umi if r_umi else 'None'}<br>
+        <div class="col-md-4">
+            <b>Reversed UMI: </b>{r_umi if r_umi else 'None'}<br>
+        </div>
     </div>
 </div>''')
 

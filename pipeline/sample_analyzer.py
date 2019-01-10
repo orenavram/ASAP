@@ -48,7 +48,7 @@ def analyze_samples(gp, output_html_path):
                     pass
         except Exception as e:
             logger.error(f'Error in fastq filtration procedure: {e}')
-            raise
+            raise e
 
         try:
             done_path = os.path.join(gp.output_path, 'done_1_' + run + '_' + 'mixcr_procedure.txt')
@@ -62,8 +62,10 @@ def analyze_samples(gp, output_html_path):
                 with open(done_path, 'w') as f:
                     pass
         except Exception as e:
-            logger.error('Error in MiXCR procedure: {}'.format(str(e)))
-            raise
+            logger.error(f'Error in MiXCR procedure: {e}')
+            with open(gp.error_path, 'w') as error_path_f:
+                error_path_f.write(f'An error in MiXCR procedure')
+            raise e
 
         try:
             done_path = os.path.join(gp.output_path, 'done_2_' + run + '_' + 'parse_alignment_file.txt')
@@ -105,7 +107,9 @@ def analyze_samples(gp, output_html_path):
 
     if gp.chains == []:
         logger.info('No relevant chains to analyze...')
-        raise ValueError('No relevant chains to analyze...')
+        with open(gp.error_path, 'w') as error_path_f:
+            error_path_f.write(f'No relevant chains were detected in your data...')#    <br>(Did you mean to mark "{"human" if gp.MMU else "mouse"}" instead of "{"mouse" if gp.MMU else "human"}"?)')
+        raise ValueError
 
     try:
         gp.joint_run_is_needed = gp.number_of_runs > 1
@@ -188,7 +192,7 @@ def analyze_samples(gp, output_html_path):
                 pass
     except Exception as e:
        logger.error('Error in generate_proteomic_db: {}'.format(str(e)))
-       raise
+       raise e
 
 
 def create_sub_working_directories(global_params, run):

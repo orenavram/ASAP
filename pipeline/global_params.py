@@ -80,3 +80,4 @@ cdr3_annotation_file_suffix = f'_cdr3_annotations.{raw_data_file_suffix}'
 mutations_file_suffix = f'_mutations.{raw_data_file_suffix}'
 proteomic_db_file_suffix = 'proteomics_db.fatsa'
 #Ka_Ks_file_suffix = '_Ka_Ks_analysis_2.' + raw_data_file_suffix
+error_path = os.path.join(output_path, 'error.txt')
