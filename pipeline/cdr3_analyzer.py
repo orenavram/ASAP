@@ -45,15 +45,21 @@ def analyze_top_clones(gp):
                 continue
 
             cdr3_to_aa_reads, cdr3_to_counts = parse_sequence_annotations_file(annotations_path, skip_rows=1)
+            logger.info(f'Sequence annotations file at {annotations_path} was parsed successfully')
             cdr3_to_num_of_different_reads = dict((cdr3, len(cdr3_to_aa_reads[cdr3])) for cdr3 in cdr3_to_aa_reads)
 
             most_common_cdr3 = sorted(cdr3_to_counts, key=lambda cdr3:(cdr3_to_counts.get(cdr3), cdr3_to_num_of_different_reads.get(cdr3)), reverse=True)
 
             cdr3_annotations_path = os.path.join(gp.cdr3_analysis_paths[i], chain + gp.cdr3_annotation_file_suffix)
             write_cdr3_annotations_file(cdr3_annotations_path, most_common_cdr3, cdr3_to_counts, cdr3_to_num_of_different_reads)
+            logger.info(f'CDR3 annotations file at {cdr3_annotations_path} was written successfully')
 
             clonal_expansion_histogram_path = cdr3_annotations_path.replace(gp.raw_data_file_suffix, 'png')
-            generate_clonal_expansion_histogram(cdr3_annotations_path, clonal_expansion_histogram_path, gp.top_cdr3_clones_to_clonal_expansion_graph)
+            try:
+                generate_clonal_expansion_histogram(cdr3_annotations_path, clonal_expansion_histogram_path, gp.top_cdr3_clones_to_clonal_expansion_graph)
+                logger.info(f'Histogram {clonal_expansion_histogram_path} was generated successfully')
+            except Exception as e:
+                logger.info(f'Histogram {clonal_expansion_histogram_path} generation was failed due to {e}')
 
             analyze_most_k_common_cdr3(annotations_path, gp.cdr3_analysis_paths[i], most_common_cdr3, cdr3_to_aa_reads, cdr3_to_counts, chain, gp, k)
 
@@ -77,40 +83,40 @@ def analyze_most_k_common_cdr3(annotations_path, cdr3_analysis_dir, most_common_
     top_clones_path = os.path.join(cdr3_analysis_dir, chain + '_top_{}_clones'.format(k))
     create_dir(top_clones_path)
     for i in range(len(most_k_common_cdr3)):
-        cdr3 = most_k_common_cdr3[i]
-        multiple_sequences = most_k_common_cdr3_to_aa_reads[cdr3]
-        cluster_prefix = os.path.join(top_clones_path, 'cluster_' + str(i))
-        ms_path = cluster_prefix + '_ms.fasta'
-        msa_path = cluster_prefix + '_msa.aln'
-
-        ms, msa = align_sequences(multiple_sequences, ms_path, msa_path, i)
-        # CONSENSUS must be picked from the ms rather than the msa (otherwise there will be a bug in the grep!!)
-        summary_align = AlignInfo.SummaryInfo(ms)
-
-        # find consensus sequence by majority rule
-        consensus = summary_align.dumb_consensus(threshold=0, ambiguous='_')
-        consensus = str(consensus)
-
-        # find most similar sequence
-        aa_most_similar_to_consesnsus, similarity_rate = find_most_similar_sequence(multiple_sequences, consensus)
-
-        #try:
-        dna_most_similar_to_consesnsus = find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path)
-        #except:
-        #    pass
-
-        # add entry to dict
-        most_k_common_cdr3_to_entry[cdr3] = [cdr3, str(most_k_common_cdr3_to_counts[cdr3]),
-                                             str(len(most_k_common_cdr3_to_aa_reads[cdr3])), consensus,
-                                             aa_most_similar_to_consesnsus, dna_most_similar_to_consesnsus,
-                                             str(similarity_rate)]
-
-        # generate web logo
-        weblogo_file_path = cluster_prefix + '_weblogo.pdf'
         try:
+            cdr3 = most_k_common_cdr3[i]
+            multiple_sequences = most_k_common_cdr3_to_aa_reads[cdr3]
+            cluster_prefix = os.path.join(top_clones_path, 'cluster_' + str(i))
+            ms_path = cluster_prefix + '_ms.fasta'
+            msa_path = cluster_prefix + '_msa.aln'
+
+            ms, msa = align_sequences(multiple_sequences, ms_path, msa_path, i)
+            # CONSENSUS must be picked from the ms rather than the msa (otherwise there will be a bug in the grep!!)
+            summary_align = AlignInfo.SummaryInfo(ms)
+
+            # find consensus sequence by majority rule
+            consensus = summary_align.dumb_consensus(threshold=0, ambiguous='_')
+            consensus = str(consensus)
+
+            # find most similar sequence
+            aa_most_similar_to_consesnsus, similarity_rate = find_most_similar_sequence(multiple_sequences, consensus)
+
+            #try:
+            dna_most_similar_to_consesnsus = find_correspnding_dna(aa_most_similar_to_consesnsus, annotations_path)
+            #except:
+            #    pass
+
+            # add entry to dict
+            most_k_common_cdr3_to_entry[cdr3] = [cdr3, str(most_k_common_cdr3_to_counts[cdr3]),
+                                                 str(len(most_k_common_cdr3_to_aa_reads[cdr3])), consensus,
+                                                 aa_most_similar_to_consesnsus, dna_most_similar_to_consesnsus,
+                                                 str(similarity_rate)]
+
+            # generate web logo
+            weblogo_file_path = cluster_prefix + '_weblogo.pdf'
             generate_weblogo(msa_path, weblogo_file_path)
         except Exception as e:
-            logger.warning('Couldn\'t generate weblogo {} due to the following reason: {}'.format(msa_path, e.args))
+            logger.warning(f'Couldn\'t generate weblogo {msa_path} due to the following reason: {e}')
 
     # write cdr3_to_entry to file
     top_cdr3_extended_annotations_path = os.path.join(cdr3_analysis_dir, chain + gp.top_cdr3_annotation_file_suffix)

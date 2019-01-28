@@ -70,7 +70,7 @@ except Exception as e:
         with open(gp.error_path) as error_path_f:
             error_txt = error_path_f.read()
             logger.error(f'error.txt file says:\n{error_txt}')
-            error_msg = f'The job was failed due to the following reason:\n{error_txt}'
+            error_msg = f'The job was failed due to the following reason:<br>{error_txt}'
 
     succeeded = False
 

@@ -24,9 +24,9 @@ def generate_lib_for_mixcr(wd, default_lib_path, alternative_lib_path, output_ht
 
 #input: path string to current database of fastq files, provided by NGS process
 #        path string to output all the results of MIXCR procedure
-def mixcr_procedure(fastq_path, outpath, mmu, lib_path, remote_run):
+def mixcr_procedure(fastq_path, outpath, mmu, lib_path, remote_run, error_path):
 
-    align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds = get_mixcr_cmds(lib_path, fastq_path, outpath, mmu, remote_run)
+    align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds = get_mixcr_cmds(lib_path, fastq_path, outpath, mmu, remote_run, error_path)
 
     logger.info('Current wd is: ' + os.getcwd())
     #logger.info('Changing wd to mixcr\'s dir')
@@ -56,7 +56,7 @@ def mixcr_procedure(fastq_path, outpath, mmu, lib_path, remote_run):
 
 
 '''assign variables to commands'''
-def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, remote_run):
+def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, remote_run, error_path):
 
     if not os.path.exists(outpath):
         os.makedirs(outpath)
@@ -80,6 +80,8 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, remote_run):
     if not os.path.exists(fastq2):
         logger.error('R2.fastq is missing...')
         raise OSError('R2.fastq does not exist...')
+
+    verify_fastq_files_format(error_path, fastq1, fastq2)
 
     vdjca_path = os.path.join(outpath, 'alignments.vdjca')
     clones_clns_path = os.path.join(outpath, 'clones.clns')
@@ -127,6 +129,38 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, remote_run):
     #     exportClones_cmds.append(exportClones_cmd)
 
     return align_cmd, assemble_cmd, exportAlignments_cmd, exportClones_cmds
+
+
+def verify_fastq_files_format(error_path, fastq1, fastq2):
+
+    rep_num = os.path.split(os.path.split(fastq1)[0])[-1][-1] #/bioseq/data/results/ASAP/154832296135203243128690777655/reads/run1/R1.fastq
+
+    num_lines_fastq1 = sum(1 for line in open(fastq1) if line.rstrip() != '')
+    logger.info(f'{num_lines_fastq1} lines in {fastq1}')
+
+    if num_lines_fastq1 % 4 != 0:
+        err_msg = f'Illegal fastq file format: number of lines in {os.path.split(fastq1)[-1]} of rep {rep_num} is not a multiple of 4. One or more records are faulty.'
+        logger.error(err_msg)
+        with open(error_path, 'w') as error_path_f:
+            error_path_f.write(err_msg)
+        raise ValueError(err_msg)
+
+    num_lines_fastq2 = sum(1 for line in open(fastq2) if line.rstrip() != '')
+    logger.info(f'{num_lines_fastq2} lines in {fastq2}')
+
+    if num_lines_fastq2 % 4 != 0:
+        err_msg = f'Illegal fastq file format: number of lines in {os.path.split(fastq2)[-1]} of rep {rep_num} is not a multiple of 4. One or more records are faulty.'
+        logger.error(err_msg)
+        with open(error_path, 'w') as error_path_f:
+            error_path_f.write(err_msg)
+        raise ValueError(err_msg)
+
+    if num_lines_fastq1 != num_lines_fastq2:
+        err_msg = f'Illegal fastq files format: {os.path.split(fastq1)[-1]} and {os.path.split(fastq2)[-1]} of rep {rep_num} contain different number of lines ({num_lines_fastq1} and {num_lines_fastq2}, respectively).'
+        logger.error(err_msg)
+        with open(error_path, 'w') as error_path_f:
+            error_path_f.write(err_msg)
+        raise ValueError(err_msg)
 
 
 '''executing command in command prompt'''

@@ -48,6 +48,8 @@ def plot_barplot(d, out_path, title='', x_label='', y_label='Frequency (%)\n', a
 def generate_clonal_expansion_histogram(cdr3_annotations_path, out_path, cutoff, fontsize=25):
     cols = np.loadtxt(cdr3_annotations_path, usecols=(1, 2), dtype='int')
     cutoff = min(cols.shape[0], cutoff)
+    if cols.ndim==1:
+        cols = cols.reshape((1, cols.size))
     plt.figure(figsize=[25,5])
     plt.style.use('seaborn-deep')
     plt.bar(np.arange(1, cutoff+1), cols[:cutoff, 0], label='Reads counts')

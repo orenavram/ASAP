@@ -212,7 +212,8 @@ def edit_failure_html(html_path, msg, run_number):
     html_text +='<div class="container" style="font-size: 20px;" align="justify"><h2>'
     html_text +=f'<font color="red">{msg}</font><br></h2>'
     html_text +=f'We are tracking all failed jobs and we\'ll let you know if anything was wrong from our side. ' \
-        f'Meanwhile, please make sure all running parameters are set correctly. If so, try to re-run your job ' \
+        f'Meanwhile, please make sure all running parameters are set correctly and that your input files are of the ' \
+        f'right format (fastq format with paired-end reads). If so, try to re-run your job ' \
         f'(maybe there was a passing system failure). If you keep having failures, please do ' \
         f'<a href="mailto:{CONSTS.ADMIN_EMAIL}?subject=ASAP%20Run%20Number%20{run_number}">contact us</a> and we will ' \
         f'try to assist personally.'
