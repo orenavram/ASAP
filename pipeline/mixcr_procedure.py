@@ -90,7 +90,7 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, remote_run, error_path):
                  ' -f'                                                          #overwrite output file if already exists
                  f' -s {"mouse" if MMU else "human"}'                                                       #consider species (mouse/human)
                  ' -c IGH,IGL,IGK'                                              #immunological chain gene(s) to align
-                 f' --report {outpath}/align_report.txt'                   #create report file
+                 #f' --report {outpath}/align_report.txt'                   #create report file
                  f' --library {lib_path.split(".json")[0]}'  # mixcr requires lib name without json suffix!!
                  ' -a'                                                          #save reads' ids from fastq files
                  #' --verbose'
