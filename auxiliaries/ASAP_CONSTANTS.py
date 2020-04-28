@@ -1,4 +1,4 @@
-#!/data/shared/python/anaconda3-5.1.0/bin/python3.6
+#!/groups/pupko/modules/python-anaconda3.6.5/bin/python
 
 import os
 
@@ -17,15 +17,15 @@ MAFFT_v7_222 = '/bioseq/Programs/MAFFT_7.222/installation/bin/mafft' # v7.222
 ASAP_URL = 'https://asap.tau.ac.il'
 #ASAP_LOG = '/bioseq/asap/ASAP_runs.log'
 
-RELOAD_INTERVAL = 30
+RELOAD_INTERVAL = 10
 RELOAD_TAGS = f'<META HTTP-EQUIV="REFRESH" CONTENT="{RELOAD_INTERVAL}"/>'
 
 
-ASAP_RESULTS_DIR = os.path.join(SERVERS_RESULTS_DIR, 'ASAP')
-ASAP_LOGS_DIR = os.path.join(SERVERS_LOGS_DIR, 'ASAP')
+ASAP_RESULTS_DIR = os.path.join(SERVERS_RESULTS_DIR, 'asap')
+ASAP_LOGS_DIR = os.path.join(SERVERS_LOGS_DIR, 'asap')
 ASAP_RESULTS_URL = os.path.join(ASAP_URL, 'results')
 ASAP_HTML_DIR = '/data/www/html/asap'
-ASAP_EXEC = '/bioseq/asap/ASAP'
+ASAP_EXEC = '/bioseq/asap'
 
 MAIN_SCRIPT = os.path.join(ASAP_EXEC, 'pipeline/NGS_analyzer.py')
 

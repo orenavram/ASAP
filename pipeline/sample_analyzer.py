@@ -3,7 +3,7 @@ import os
 import shutil
 
 from UMI_Handler import handle_UMI
-from auxiliaries import create_dir
+from pipeline_auxiliaries import create_dir
 from cdr3_analyzer import analyze_cdr3
 from mixcr_procedure import mixcr_procedure, generate_lib_for_mixcr
 from parse_alignments import parse_alignment_file

@@ -1,3 +1,5 @@
+#!/groups/pupko/modules/python-anaconda3.6.5/bin/python
+
 try:
     import matplotlib  # Must be before importing matplotlib.pyplot or pylab! to Avoid the need of X-Dislay https://stackoverflow.com/questions/4706451/how-to-save-a-figure-remotely-with-pylab/4706614#4706614
     matplotlib.use('Agg')  # Must be before importing matplotlib.pyplot or pylab! to Avoid the need of X-Dislay
@@ -6,11 +8,12 @@ try:
 
     if os.path.exists('/bioseq/'): #remote run
         remote_run = True
-        #sys.path.append('/bioseq/bioSequence_scripts_and_constants') # this is where GENERAL_CONSTANTS is located in host-ibis3
-        sys.path.append('/bioseq/asap/ASAP/auxiliaries') # this is where ASAP_CONSTANTS is located in host-ibis3
+        os.chdir('/bioseq/asap/')
+        sys.path.append('./auxiliaries/')
+        sys.path.append('./pipeline/')
     else: #local run
         remote_run = False
-        sys.path.append('./auxiliaries')  # this is where ASAP_CONSTANTS (and GENERAL_CONSTANTS, currently unused) is located in my comp
+        sys.path.append('./auxiliaries/')  # this is where ASAP_CONSTANTS (and GENERAL_CONSTANTS, currently unused) is located in my comp
 
     from time import time, ctime, sleep
     import logging
@@ -26,7 +29,7 @@ try:
     gp.remote_run = remote_run
 
     argv = sys.argv
-    from auxiliaries import create_dir, send_email, measure_time
+    from pipeline_auxiliaries import create_dir, send_email, measure_time
     from html_editor import edit_success_html, edit_failure_html
 
     logger.info('Starting ' + argv[0] + '!')
@@ -93,17 +96,6 @@ if succeeded:
     edit_success_html(gp, output_html_path, CONSTS.ASAP_URL, run_number)
 else:
     edit_failure_html(output_html_path, error_msg, run_number)
-
-#Change running status
-# with open(output_html_path) as f:
-#     html_content = f.read()
-# if succeeded:
-#     html_content = html_content.replace('RUNNING', 'FINISHED')
-# else:
-#     html_content = html_content.replace('RUNNING', 'FAILED')
-# with open(output_html_path, 'w') as f:
-#     html_content = f.write(html_content)
-
 
 end = time()
 logger.info(f'Finished joining samples. Took {measure_time(int(end-start))}.')

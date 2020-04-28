@@ -10,7 +10,7 @@ from Bio.Align import AlignInfo
 from Bio.Align import MultipleSeqAlignment
 from Bio.Alphabet import Gapped, IUPAC
 
-from auxiliaries import create_dir
+from pipeline_auxiliaries import create_dir
 from plots_generator import plot_barplot, generate_clonal_expansion_histogram
 from weblogo_generator import generate_weblogo
 from text_handler import string_similarity, read_table_to_dict

@@ -1,6 +1,4 @@
-#!/data/shared/python/anaconda3-5.1.0/bin/python3.6
-
-# old shebang: #!/shared/python/anaconda3.5/bin/python
+#!/groups/pupko/modules/python-anaconda3.6.5/bin/python
 
 #THIS IS A SANDBOX!!!!!!
 #THIS IS A SANDBOX!!!!!!
@@ -22,9 +20,9 @@ import os
 import sys
 
 #sys.path.append('/bioseq/bioSequence_scripts_and_constants')
-sys.path.append('/bioseq/asap/ASAP/auxiliaries')
+sys.path.append('/bioseq/asap/auxiliaries')
 import ASAP_CONSTANTS as CONSTS
-from auxiliaries import create_dir
+from pipeline_auxiliaries import create_dir
 
 
 def hello_world(output_path='', run_number='NO_RUN_NUMBER'):

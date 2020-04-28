@@ -1,6 +1,4 @@
-#!/data/shared/python/anaconda3-5.1.0/bin/python3.6
-
-# old shebang: #!/shared/python/anaconda3.5/bin/python
+#!/groups/pupko/modules/python-anaconda3.6.5/bin/python
 
 import os
 import sys
@@ -12,8 +10,15 @@ import subprocess
 from time import time, ctime
 from random import randint
 
+if os.path.exists('/bioseq'): # remote run
+    sys.path.append('/bioseq/asap/auxiliaries/')
+    sys.path.append('/bioseq/bioSequence_scripts_and_constants/')
+else:
+    # local run
+    sys.path.append('../auxiliaries/')
+
 #sys.path.append('/bioseq/bioSequence_scripts_and_constants')
-sys.path.append('/bioseq/asap/ASAP/auxiliaries')
+sys.path.append('/bioseq/asap/auxiliaries')
 import ASAP_CONSTANTS as CONSTS
 from auxiliaries import create_dir, send_email
 
@@ -269,16 +274,16 @@ def write_cmds_file(cmds_file, run_number, parameters_file):
     new_line_delimiter = ';!@#'
     # the code contains features that are exclusive to Python3.6 (or higher)!
     # repseqio and mixcr require java 1.8 (or higher)
-    required_modules = ' '.join(['python/anaconda_python-3.6.4',
-                                 'mafft/mafft7313',
+    required_modules = ' '.join(['python/python-anaconda3.6.5',
+                                 'mafft/7.123',
                                  'repseqio/repseqio-linuxbrew',
                                  'MiXCR/MiXCR-2.1.11',
-                                 'java/java180_144'])
+                                 'java/java-1.8'])
     with open(cmds_file, 'w') as f:
         f.write(f'module load {required_modules}')
         f.write(new_line_delimiter)
-        f.write(' '.join(['python', CONSTS.MAIN_SCRIPT, parameters_file]))
-        f.write('\t' + 'ASAP_' + run_number)
+        f.write(' '.join([CONSTS.MAIN_SCRIPT, parameters_file]))
+        f.write('\t' + 'asap_' + run_number)
 
 
 # prints detailed error report on BROWSER when cgi crashes
@@ -456,13 +461,13 @@ try:
 
     log_file = cmds_file.replace('cmds', 'log')
     # complex command with more than one operation (module load + python q_submitter.py)
-    #submission_cmd = 'ssh bioseq@lecs2login "module load python/anaconda_python-3.6.4; python /bioseq/bioSequence_scripts_and_constants/q_submitter.py {} {} -q {} --verbose > {}"'.format(cmds_file, wd, queue_name, log_file)
+    #submission_cmd = 'ssh bioseq@powerlogin "module load python/anaconda_python-3.6.4; python /bioseq/bioSequence_scripts_and_constants/q_submitter.py {} {} -q {} --verbose > {}"'.format(cmds_file, wd, queue_name, log_file)
 
     # simple command when using shebang header
-    submission_cmd = f'ssh bioseq@lecs2login /bioseq/bioSequence_scripts_and_constants/q_submitter.py {cmds_file} {wd} -q "h=compute-8-8" --verbose > {log_file}' #TODO: change queue to bioseq "h=compute-8-8"
+    submission_cmd = f'/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py {cmds_file} {wd} -q pupkoweb --verbose > {log_file}'
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
-        f.write(f'\nSSHing and SUBMITting the JOB to the QUEUE:\n{submission_cmd}\n\n')
+        f.write(f'\nSUBMITting the JOB to the QUEUE:\n{submission_cmd}\n\n')
 
     subprocess.call(submission_cmd, shell=True)
 

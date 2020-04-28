@@ -9,7 +9,7 @@ import aa_sequences as aa
 import regex
 from plots_generator import generate_alignment_report_pie_chart
 from text_handler import write_dict_to_file, logger, write_mapping_file
-from auxiliaries import measure_time
+from pipeline_auxiliaries import measure_time
 
 def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_annotation_file_suffix, mutations_file_suffix, len_threshold, qlty_threshold):
     '''parse alignment procedure'''

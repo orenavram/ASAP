@@ -34,7 +34,7 @@ def mixcr_procedure(fastq_path, outpath, mmu, lib_path, remote_run, error_path):
     #logger.info('Current wd is: ' + os.getcwd())
 
     #for debugging:
-    library_cmd = 'mixcr -v'.split()          #which library paths mixcr uses
+    library_cmd = 'mixcr -v'.split()  #which library paths mixcr uses
     logger.info(f'Germline library paths of mixcr are:\n{subprocess.check_output(library_cmd).decode()}')
 
     logger.info('Starting mixcr align procedure')
@@ -133,7 +133,7 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, remote_run, error_path):
 
 def verify_fastq_files_format(error_path, fastq1, fastq2):
 
-    rep_num = os.path.split(os.path.split(fastq1)[0])[-1][-1] #/bioseq/data/results/ASAP/154832296135203243128690777655/reads/run1/R1.fastq
+    rep_num = os.path.split(os.path.split(fastq1)[0])[-1][-1] #/bioseq/data/results/asap/154832296135203243128690777655/reads/run1/R1.fastq
 
     num_lines_fastq1 = sum(1 for line in open(fastq1) if line.rstrip() != '')
     logger.info(f'{num_lines_fastq1} lines in {fastq1}')
