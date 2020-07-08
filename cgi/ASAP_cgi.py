@@ -88,7 +88,7 @@ def write_info_paragraph_to_html(output_path):
     with open(output_path, 'a') as f:
         f.write(f"""<br><div class="container" style="font-size: 20px;" align="justify"> 
 <H1 align=center>Job Status - <FONT color='red'>RUNNING</FONT></h1>
-<br>ASAP is now processing your request. This page will be automatically updated every {CONSTS.RELOAD_INTERVAL} seconds (until the job is done). You can also reload it manually. Once the job has finished, several links to the output files will appear below. A link to this page was sent to your email in case you wish to view these results at a later time without recalculating them. Please note that the results will be kept in the server for three months.
+<br>ASAP is now processing your request. This page will be automatically updated every few seconds (until the job is done). You can also reload it manually. Once the job has finished, several links to the output files will appear below. A link to this page was sent to your email in case you wish to view these results at a later time without recalculating them. Please note that the results will be kept in the server for three months.
 </div>
 <br>""")
 
@@ -160,7 +160,7 @@ def write_running_parameters_to_html(output_path, job_title, number_of_duplicate
         </div>
     </div>
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-4" name="refr-lib">
             <b>Reference library: </b>{lib_file_name}<br>
         </div>
     </div>
@@ -282,7 +282,7 @@ def write_cmds_file(cmds_file, run_number, parameters_file):
     with open(cmds_file, 'w') as f:
         f.write(f'module load {required_modules}')
         f.write(new_line_delimiter)
-        f.write(' '.join([CONSTS.MAIN_SCRIPT, parameters_file]))
+        f.write(f'{CONSTS.MAIN_SCRIPT} {parameters_file}')
         f.write('\t' + 'asap_' + run_number)
 
 
@@ -464,7 +464,7 @@ try:
     #submission_cmd = 'ssh bioseq@powerlogin "module load python/anaconda_python-3.6.4; python /bioseq/bioSequence_scripts_and_constants/q_submitter.py {} {} -q {} --verbose > {}"'.format(cmds_file, wd, queue_name, log_file)
 
     # simple command when using shebang header
-    submission_cmd = f'/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py {cmds_file} {wd} -q pupkoweb --verbose > {log_file}'
+    submission_cmd = f'/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py {cmds_file} {wd} -q pupkoweb --cpu 4 --verbose > {log_file}'
 
     with open(cgi_debug_path, 'a') as f: # for cgi debugging
         f.write(f'\nSUBMITting the JOB to the QUEUE:\n{submission_cmd}\n\n')

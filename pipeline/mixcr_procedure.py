@@ -1,23 +1,30 @@
 import os
 import subprocess
+import json
 import ASAP_CONSTANTS as CONSTS
 from text_handler import logger
 
+
+def remove_collisions(default_lib_path, alternative_lib_path):
+    pass
+
 def generate_lib_for_mixcr(wd, default_lib_path, alternative_lib_path, output_html_path, remote_run):
     merged_lib_path = f'{wd}/merged_lib.json'
-    execute_command(f'repseqio merge -f {default_lib_path} {alternative_lib_path} {merged_lib_path}')
-    if os.path.exists(merged_lib_path):
-        #merge succeeded
-        logger.info(f'Merge succeeded! Using merged lib at: {merged_lib_path}')
-        return merged_lib_path
-    else:
+    remove_collisions(default_lib_path, alternative_lib_path)
+    try:
+        execute_command(f'repseqio merge -f {default_lib_path} {alternative_lib_path} {merged_lib_path}')
+        if os.path.exists(merged_lib_path):
+            #merge succeeded
+            logger.info(f'Merge succeeded! Using merged lib at: {merged_lib_path}')
+            return merged_lib_path
+    except:
         #merge failed. will use the default lib
         logger.info(f'Merge failed! Using default lib at: {default_lib_path}')
         if remote_run:
             with open(output_html_path) as f:
                 html_txt = f.read()
             logger.info(f"html_txt.find('+ alternative_lib'): {html_txt.find('+ alternative_lib')}")
-            html_txt = html_txt.replace('+ alternative_lib', '(merging was failed)')
+            html_txt = html_txt.replace('+ alternative_lib', '(merging failed)').replace('refr-lib', 'red-text')
             with open(output_html_path, 'w') as f:
                 f.write(html_txt)
         return default_lib_path
@@ -93,6 +100,7 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, remote_run, error_path):
                  #f' --report {outpath}/align_report.txt'                   #create report file
                  f' --library {lib_path.split(".json")[0]}'  # mixcr requires lib name without json suffix!!
                  ' -a'                                                          #save reads' ids from fastq files
+                 ' --threads 4'                                                          #number of threads
                  #' --verbose'
                  f' {fastq1} {fastq2}'                               #input files- 2 X fastq files
                  f' {vdjca_path}')
@@ -102,6 +110,7 @@ def get_mixcr_cmds(lib_path, fastq_path, outpath, MMU, remote_run, error_path):
                     ' -f'                                                           #overwrite output file if already exists
                     f' -i {outpath}/index_file'                                   #keep mapping between initial reads and final clones
                     ' -OseparateByC=true'                                           #separate by isotypes
+                    ' --threads 4'                                                          #number of threads
                     #' -OcloneFactoryParameters.vParameters.featureToAlign=VRegion' #align v region and not v transcript
                     #' -OassemblingFeatures=[CDR3]'                   #define sequence to create clones by
                     #' -OminimalClonalSequenceLength=6'                             #minimum number of nucleotides in clonal sequence
