@@ -179,7 +179,9 @@ def write_running_parameters_to_html(output_path, job_title, number_of_duplicate
             <b>Reversed UMI: </b>{r_umi if r_umi else 'None'}<br>
         </div>
     </div>
-</div>''')
+</div>
+<!--result-->
+''')
 
 
 def write_pair_file(debug_path, pair, run_content, run_filename, run_dir):
