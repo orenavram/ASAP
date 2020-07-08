@@ -12,7 +12,7 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
     if gp.remote_run: # run on ibis. cgi generated the initial file
         with open(html_path) as f:
             html_text = f.read()
-    html_text = html_text.replace('RUNNING', 'FINISHED').replace(f'ASAP is now processing your request. This page will be automatically updated every {CONSTS.RELOAD_INTERVAL} seconds (until the job is done). You can also reload it manually. Once the job has finished, several links to the output files will appear below. ','')
+    html_text = html_text.replace('RUNNING', 'FINISHED').replace(f'ASAP is now processing your request. This page will be automatically updated every few seconds (until the job is done). You can also reload it manually. Once the job has finished, several links to the output files will appear below. ','')
     html_text += '<br><center><h2>RESULTS:<h2><a href=\'outputs.zip\' target=\'_blank\'><h3><b>Download zipped full results</b></h3></a></center><br>\n'
     html_text += f'''<div{' class="container"' if not gp.joint_run_is_needed else ''}><table class="table">'''
     html_text += '<thead><tr><th></th>'
@@ -22,7 +22,7 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
         runs = ['joint'] + runs
         for run in runs:
             html_text += '<th align="center">'
-            html_text += '<h2><b>' + run.replace('run','rep ').title() + ' results</b></h2>\n'
+            html_text += '<h2><b>' + run.replace('run', 'rep ').title() + ' results</b></h2>\n'
             html_text += '</th>'
 
     html_text += '</tr><thead><tbody>'
@@ -207,7 +207,7 @@ def edit_failure_html(html_path, msg, run_number):
     if os.path.exists(CONSTS.SERVERS_RESULTS_DIR): # run on ibis. cgi generated the initial file
         with open(html_path) as f:
             html_text = f.read()
-    html_text = html_text.replace('RUNNING', 'FAILED').replace(f'ASAP is now processing your request. This page will be automatically updated every {CONSTS.RELOAD_INTERVAL} seconds (until the job is done). You can also reload it manually. Once the job has finished, several links to the output files will appear below. ','')
+    html_text = html_text.replace('RUNNING', 'FAILED').replace(f'ASAP is now processing your request. This page will be automatically updated every few seconds (until the job is done). You can also reload it manually. Once the job has finished, several links to the output files will appear below. ','')
     html_text +='\n<br>'
     html_text +='<div class="container" style="font-size: 20px;" align="justify"><h2>'
     html_text +=f'<font color="red">{msg}</font><br></h2>'
