@@ -1,25 +1,88 @@
 import os
 import subprocess
+import shutil
 import json
 import ASAP_CONSTANTS as CONSTS
 from text_handler import logger
 
+def get_taxon_dict_from_json(lib_json, taxon):
+    for taxon_dict in lib_json:
+        if taxon_dict['taxonId'] == taxon:
+            return taxon_dict
 
-def remove_collisions(default_lib_path, alternative_lib_path):
-    pass
+    raise ValueError('Cant really happen...')
+
+
+def get_taxa_and_lib(lib_path):
+    with open(lib_path) as f:
+        lib_json = json.load(f)
+    taxon2taxon_dict = {}
+    for taxon_dict in lib_json:
+        taxon = taxon_dict['taxonId']
+        taxon2taxon_dict[taxon] = get_taxon_dict_from_json(lib_json, taxon)
+    return taxon2taxon_dict, lib_json
+
+
+def get_gene_names(alternative_taxon_dict):
+    gene_names = set()
+    for gene_dict in alternative_taxon_dict['genes']:
+        gene_names.add(gene_dict['name'])
+    return gene_names
+
+
+def remove_colliding_entries_from_default_dict(alternative_taxon_dict, default_taxon_dict):
+    alternative_gene_names = get_gene_names(alternative_taxon_dict)
+    default_gene_names = set(get_gene_names(default_taxon_dict))
+    for gene_name in alternative_gene_names:
+        if gene_name in default_gene_names:
+            gene_to_remove = -1
+            for i, gene_dict in enumerate(default_taxon_dict['genes']):
+                if gene_dict['name'] == gene_name:
+                    gene_to_remove = i
+                    break
+            sequence_to_remove = -1
+            for i, sequence_dict in enumerate(default_taxon_dict['sequenceFragments']):
+                if sequence_dict['uri'].endswith(gene_name):
+                    sequence_to_remove = i
+                    break
+            if gene_to_remove > -1:
+                if sequence_to_remove == -1:
+                    logger.error(f'Did not find sequence for {gene_name}')
+                default_taxon_dict['genes'].pop(gene_to_remove)
+                default_taxon_dict['sequenceFragments'].pop(sequence_to_remove)
+
+
+def remove_collisions_from_default_lib(local_default_lib_path, alternative_lib_path):
+    alternative_taxon2taxon_dict, alternative_lib_json = get_taxa_and_lib(alternative_lib_path)
+    default_taxon2taxon_dict, default_lib_json = get_taxa_and_lib(local_default_lib_path)
+    for taxon in alternative_taxon2taxon_dict:
+        if taxon in default_taxon2taxon_dict:
+            remove_colliding_entries_from_default_dict(alternative_taxon2taxon_dict[taxon], default_taxon2taxon_dict[taxon])
+
+    result = [value for value in default_taxon2taxon_dict.values()]
+    # save manipulated local default lib
+    with open(local_default_lib_path, 'w') as f:
+        json.dump(result, f, indent=4)
+
+
+# remove_collisions_from_default_lib('/Users/Oren/Desktop/imgt.201822-5.sv4 2.json',
+#                                    '/Users/Oren/Desktop/alternative_lib 2.json')
+
 
 def generate_lib_for_mixcr(wd, default_lib_path, alternative_lib_path, output_html_path, remote_run):
-    merged_lib_path = f'{wd}/merged_lib.json'
-    remove_collisions(default_lib_path, alternative_lib_path)
     try:
-        execute_command(f'repseqio merge -f {default_lib_path} {alternative_lib_path} {merged_lib_path}')
-        if os.path.exists(merged_lib_path):
-            #merge succeeded
-            logger.info(f'Merge succeeded! Using merged lib at: {merged_lib_path}')
-            return merged_lib_path
+        # avoid changing the original default lib!!
+        local_default_lib_path = f'{wd}/manipulated_default_lib.json'
+        shutil.copyfile(default_lib_path, local_default_lib_path)
+        remove_collisions_from_default_lib(local_default_lib_path, alternative_lib_path)
+
+        merged_lib_path = f'{wd}/merged_lib.json'
+        execute_command(f'repseqio merge -f {local_default_lib_path} {alternative_lib_path} {merged_lib_path}')
+        logger.info(f'Merge succeeded! Using merged lib at: {merged_lib_path}')
+        return merged_lib_path
     except:
-        #merge failed. will use the default lib
-        logger.info(f'Merge failed! Using default lib at: {default_lib_path}')
+        # merging failed. will use the default lib
+        logger.info(f'Merging failed! Using ORIGINAL default lib at: {default_lib_path}')
         if remote_run:
             with open(output_html_path) as f:
                 html_txt = f.read()
