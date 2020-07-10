@@ -78,6 +78,6 @@ sequence_annotation_file_suffix = f'_AA_sequence_annotations.{raw_data_file_suff
 top_cdr3_annotation_file_suffix = f'_top_{top_cdr3_clones_to_further_analyze}_cdr3_extended_annotations.{raw_data_file_suffix}'
 cdr3_annotation_file_suffix = f'_cdr3_annotations.{raw_data_file_suffix}'
 mutations_file_suffix = f'_mutations.{raw_data_file_suffix}'
-proteomic_db_file_suffix = 'proteomics_db.fatsa'
+proteomic_db_file_suffix = 'proteomics_db.fasta'
 #Ka_Ks_file_suffix = '_Ka_Ks_analysis_2.' + raw_data_file_suffix
 error_path = os.path.join(output_path, 'error.txt')
