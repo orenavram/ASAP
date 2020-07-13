@@ -14,18 +14,22 @@ SERVERS_LOGS_DIR = '/bioseq/data/logs'
 # IMPORTANT: one must run the command: setenv PATH "/bioseq/Programs/MAFFT_7.222/installation/bin:${PATH}" ahead of this mafft command so all components will be found...
 MAFFT_v7_222 = '/bioseq/Programs/MAFFT_7.222/installation/bin/mafft' # v7.222
 
-ASAP_URL = 'https://asap.tau.ac.il'
 #ASAP_LOG = '/bioseq/asap/ASAP_runs.log'
 
 RELOAD_INTERVAL = 10
 RELOAD_TAGS = f'<META HTTP-EQUIV="REFRESH" CONTENT="{RELOAD_INTERVAL}"/>'
 
+WEBSERVER_NAME = 'asap'
 
-ASAP_RESULTS_DIR = os.path.join(SERVERS_RESULTS_DIR, 'asap')
-ASAP_LOGS_DIR = os.path.join(SERVERS_LOGS_DIR, 'asap')
+ASAP_URL = f'https://{WEBSERVER_NAME}.tau.ac.il'
+
+ASAP_RESULTS_DIR = os.path.join(SERVERS_RESULTS_DIR, WEBSERVER_NAME)
+ASAP_LOGS_DIR = os.path.join(SERVERS_LOGS_DIR, WEBSERVER_NAME)
 ASAP_RESULTS_URL = os.path.join(ASAP_URL, 'results')
-ASAP_HTML_DIR = '/data/www/html/asap'
-ASAP_EXEC = '/bioseq/asap'
+ASAP_HTML_DIR = f'/data/www/html/{WEBSERVER_NAME}'
+ASAP_EXEC = f'/bioseq/{WEBSERVER_NAME}'
+
+SUBMISSIONS_LOG = f'/bioseq/{WEBSERVER_NAME}/submissions_log.txt'
 
 MAIN_SCRIPT = os.path.join(ASAP_EXEC, 'pipeline/NGS_analyzer.py')
 

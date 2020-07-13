@@ -10,17 +10,9 @@ import subprocess
 from time import time, ctime
 from random import randint
 
-if os.path.exists('/bioseq'): # remote run
-    sys.path.append('/bioseq/asap/auxiliaries/')
-    sys.path.append('/bioseq/bioSequence_scripts_and_constants/')
-else:
-    # local run
-    sys.path.append('../auxiliaries/')
-
-#sys.path.append('/bioseq/bioSequence_scripts_and_constants')
-sys.path.append('/bioseq/asap/auxiliaries')
+sys.path.append('/bioseq/asap/pipeline')
 import ASAP_CONSTANTS as CONSTS
-from auxiliaries import create_dir, send_email
+from pipeline_auxiliaries import create_dir, send_email
 
 def print_hello_world(output_path = '', run_number = 'NO_RUN_NUMBER'):
 
@@ -516,3 +508,10 @@ except Exception as e:
     html_content = html_content.replace(CONSTS.RELOAD_TAGS, '')
     with open(output_path, 'w') as f:
         html_content = f.write(html_content)
+
+
+with open(CONSTS.SUBMISSIONS_LOG, 'a') as f:
+    f.write(f'{user_email}\t{run_number}\t{ctime()}\n')
+
+with open(cgi_debug_path, 'a') as f:  # for cgi debugging
+    f.write(f'{ctime()}: Submission was documented in \n')
