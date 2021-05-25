@@ -11,7 +11,7 @@ from time import time, ctime
 from random import randint
 
 sys.path.append('/bioseq/asap/pipeline')
-import ASAP_CONSTANTS as CONSTS
+import CONSTANTS as CONSTS
 from pipeline_auxiliaries import create_dir, send_email
 
 def print_hello_world(output_path = '', run_number = 'NO_RUN_NUMBER'):
@@ -293,11 +293,11 @@ if False:
     run_number = 'debug'#str(round(time())) + str(randint(1000,9999)) # adding 4 random figures to prevent users see data that are not their's
 
 results_url = os.path.join(CONSTS.ASAP_RESULTS_URL, run_number)
-output_url = os.path.join(results_url, 'output.html')
+output_url = os.path.join(results_url, CONSTS.RESULT_WEBPAGE_NAME)
 
 wd = os.path.join(CONSTS.ASAP_RESULTS_DIR, run_number)
 create_dir(wd)
-output_path = os.path.join(wd, 'output.html')
+output_path = os.path.join(wd, CONSTS.RESULT_WEBPAGE_NAME)
 cgi_debug_path = os.path.join(wd, 'cgi_debug.txt')
 
 #print('Content-Type: text/html\n')  # For more details see https://www.w3.org/International/articles/http-charset/index#scripting
@@ -496,7 +496,7 @@ except Exception as e:
         email = 'NO_EMAIL'
     send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
                receiver='orenavram@gmail.com', subject=f'ASAP job {run_number} by {email} has been failed!',
-               content=f"{email}\n\n{os.path.join(CONSTS.ASAP_URL, 'results', run_number, 'output.html')}\n\n{os.path.join(CONSTS.ASAP_URL, 'results', run_number, 'cgi_debug.txt')}")
+               content=f"{email}\n\n{os.path.join(CONSTS.ASAP_URL, 'results', run_number, CONSTS.RESULT_WEBPAGE_NAME)}\n\n{os.path.join(CONSTS.ASAP_URL, 'results', run_number, 'cgi_debug.txt')}")
 
 
     #logger.info(f'Waiting {2*CONSTS.RELOAD_INTERVAL} seconds to remove html refreshing headers...')

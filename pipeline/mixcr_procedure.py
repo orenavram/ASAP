@@ -2,7 +2,7 @@ import os
 import subprocess
 import shutil
 import json
-import ASAP_CONSTANTS as CONSTS
+import CONSTANTS as CONSTS
 from text_handler import logger
 
 def get_taxon_dict_from_json(lib_json, taxon):

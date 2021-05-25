@@ -13,8 +13,9 @@ try:
         sys.path.append('./pipeline/')
     else: #local run
         remote_run = False
-        sys.path.append('./auxiliaries/')  # this is where ASAP_CONSTANTS (and GENERAL_CONSTANTS, currently unused) is located in my comp
+        sys.path.append('./auxiliaries/')  # this is where CONSTANTS (and GENERAL_CONSTANTS, currently unused) is located in my comp
 
+    import CONSTANTS as CONSTS
     from time import time, ctime, sleep
     import logging
 
@@ -44,9 +45,8 @@ try:
     create_dir(gp.output_path)
 
     # main code!
-    output_html_path = os.path.join(gp.working_dir, 'output.html')
+    output_html_path = os.path.join(gp.working_dir, CONSTS.RESULT_WEBPAGE_NAME)
 
-    import ASAP_CONSTANTS as CONSTS
 
     if gp.remote_run:
         gp.alleles_lib_path = CONSTS.IMGT_LIB
@@ -113,7 +113,7 @@ with open(output_html_path, 'w') as f:
 
 print('Done. Bye.')
 
-output_url = os.path.join(CONSTS.ASAP_RESULTS_URL, run_number, 'output.html')
+output_url = os.path.join(CONSTS.ASAP_RESULTS_URL, run_number, CONSTS.RESULT_WEBPAGE_NAME)
 
 logger.info('Sending email...')
 user_email_file = os.path.join(gp.working_dir, 'user_email.txt')
@@ -153,7 +153,7 @@ if not succeeded:
     # Send me a notification email every time there's a failure
     send_email(smtp_server=CONSTS.SMTP_SERVER, sender=CONSTS.ADMIN_EMAIL,
                receiver='orenavram@gmail.com', subject=f'ASAP job {run_number} by {email} has been failed: ',
-               content=f"{email}\n\n{os.path.join(output_folder_url, 'output.html')}\n\n{os.path.join(output_folder_url, 'cgi_debug.txt')}\n\n{os.path.join(output_folder_url, error_log_path)}\n\n{os.path.join(gp.working_dir, error_log_path)}")
+               content=f"{email}\n\n{os.path.join(output_folder_url, CONSTS.RESULT_WEBPAGE_NAME)}\n\n{os.path.join(output_folder_url, 'cgi_debug.txt')}\n\n{os.path.join(output_folder_url, error_log_path)}\n\n{os.path.join(gp.working_dir, error_log_path)}")
 
 
-logger.info(argv[0] + ' is DONE!!')
+logger.info(sys.argv[0] + ' is DONE!!')

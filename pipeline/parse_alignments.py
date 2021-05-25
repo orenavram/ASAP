@@ -71,12 +71,15 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
         #iterate over alignments file line by line            
         for line in f:
 
+            # avoid a bug that happens when a tab is used instead of space
+            line = re.sub('\t([012]:N:[012]:[012])', r' \1', line)
             #logger.debug('Next line of file is:\n{}'.format(line))
             line_tokens = line.split('\t')
             #count total number of entries provided by mixcr alignment
             total_lines += 1
+            logger.debug(total_lines)
 
-            if not total_lines%100000:
+            if total_lines % 100000 == 0:
                 logger.info('total_lines: {}'.format(total_lines))
             # If the first token contains two sequences (separated by a comma) it means that
             # MiXCR was unable to find an overlap between the two paired-end reads.
@@ -123,30 +126,17 @@ def parse_alignment_file(mixcr_output_path, parsed_mixcr_output_path, sequence_a
             #core_aa = line_tokens[7] + line_tokens[5] + line_tokens[11] + line_tokens[9] + line_tokens[15] + line_tokens[13] + line_tokens[17]
             core_aa = ''.join(line_tokens[AA_FR1:AA_FR4+1])
 
-            # fixed_core_dna = ''
-            # partial_ORF = False
-            # for i in range(DNA_FR1,DNA_FR4+1):
-            #     fixed_core_dna += line_tokens[i]
-            #     if len(line_tokens[i]) % 3 != 0: # fill partial ORFs (Probably a bug in MiXCR)
-            #         partial_ORF = True
-            #         fixed_core_dna += get_end_of_ORF_after_core_dna_fragment(dna_read, line_tokens[i])
-            # if partial_ORF:
-            #     # fix dna only if ORF is partial and translate to aa
-            #     core_dna = fixed_core_dna
-            #     core_aa = Bio.Seq.translate(core_dna)
-
-            #sanity check
-            if core_aa != Bio.Seq.translate(core_dna):
-                logger.debug('core_aa is NOT identical to the translated core_dna')
-                logger.debug('core_aa:\n{}'.format(core_aa))
-                logger.debug('translated core_dna:\n{}'.format(Bio.Seq.translate(core_dna)))
-            #sanity check
-            if (core_dna not in dna_read) and (not core_aa.endswith('VTVS_')):
-                logger.debug('dna_read:\n{}'.format(dna_read))
-                logger.debug('core dna:\n{}'.format(core_dna))
-            #sanity check
-            if not core_aa.endswith(aa.end_j_seq):
-                logger.debug('end_j_seq after fixation is: {}'.format(core_aa[-len(aa.end_j_seq[0]): ]))
+            if logger.level <= 10:  # debug mode
+                #sanity checks
+                if core_aa != Bio.Seq.translate(core_dna[:len(core_dna)//3*3]):
+                    logger.debug('core_aa is NOT identical to the translated core_dna')
+                    logger.debug('core_aa:\n{}'.format(core_aa))
+                    logger.debug('translated core_dna:\n{}'.format(Bio.Seq.translate(core_dna)))
+                if (core_dna not in dna_read) and (not core_aa.endswith('VTVS_')):
+                    logger.debug('dna_read:\n{}'.format(dna_read))
+                    logger.debug('core dna:\n{}'.format(core_dna))
+                if not core_aa.endswith(aa.end_j_seq):
+                    logger.debug('end_j_seq after fixation is: {}'.format(core_aa[-len(aa.end_j_seq[0]): ]))
 
             # verify that core_aa is not non-sense
             if '*' in core_aa:

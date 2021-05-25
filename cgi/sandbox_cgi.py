@@ -21,7 +21,7 @@ import sys
 
 #sys.path.append('/bioseq/bioSequence_scripts_and_constants')
 sys.path.append('/bioseq/asap/auxiliaries')
-import ASAP_CONSTANTS as CONSTS
+import CONSTANTS as CONSTS
 from pipeline_auxiliaries import create_dir
 
 

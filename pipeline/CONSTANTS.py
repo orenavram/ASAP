@@ -33,6 +33,8 @@ SUBMISSIONS_LOG = f'/bioseq/{WEBSERVER_NAME}/submissions_log.txt'
 
 MAIN_SCRIPT = os.path.join(ASAP_EXEC, 'pipeline/NGS_analyzer.py')
 
+RESULT_WEBPAGE_NAME = 'result.html'
+
 #path to example runs
 EXAMPLE_FILE_RUN1_R1 = os.path.join(ASAP_HTML_DIR, 'example', 'run1', '242_R1.fastq')
 EXAMPLE_FILE_RUN1_R2 = os.path.join(ASAP_HTML_DIR, 'example', 'run1', '242_R2.fastq')

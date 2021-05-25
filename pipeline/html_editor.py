@@ -4,7 +4,7 @@ import sys
 
 logger = logging.getLogger('main')
 
-import ASAP_CONSTANTS as CONSTS
+import CONSTANTS as CONSTS
 
 
 def edit_success_html(gp, html_path, server_main_url, run_number):
@@ -13,7 +13,7 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
         with open(html_path) as f:
             html_text = f.read()
     html_text = html_text.replace('RUNNING', 'FINISHED').replace(f'ASAP is now processing your request. This page will be automatically updated every few seconds (until the job is done). You can also reload it manually. Once the job has finished, several links to the output files will appear below. ','')
-    html_text += '<br><center><h2>RESULTS:<h2><a href=\'outputs.zip\' target=\'_blank\'><h3><b>Download zipped full results</b></h3></a></center><br>\n'
+    html_text += '<br><center><h2>Quick access to selected results:</h2>\n(See full results download link at the bottom of this page)</center><br>\n'
     html_text += f'''<div{' class="container"' if not gp.joint_run_is_needed else ''}><table class="table">'''
     html_text += '<thead><tr><th></th>'
 
@@ -126,7 +126,8 @@ def edit_success_html(gp, html_path, server_main_url, run_number):
             html_text += '</td>\n'
 
         html_text += '</tr></tbody>'
-    html_text += '</table></div>'
+    html_text += '</table></div>\n'
+    html_text += '<center><a href=\'outputs.zip\' target=\'_blank\'><h3><b>Download zipped full results</b></h3></a></center>'
     html_text += f'<br><br><br>\n<hr>\n<h4 class=footer><p align=\'center\'>Questions and comments are welcome! Please <span class="admin_link"><a href="mailto:{CONSTS.ADMIN_EMAIL}?subject=ASAP%20Run%20Number%20{run_number}">contact us</a></span></p></h4>\n'
     # html_text += '<div id="bottom_links" align="center"><span class="bottom_link"><a href="' + server_main_url + '" target="_blank">Home</a>&nbsp;|&nbsp<a href="' + server_main_url + 'overview.html" target="_blank">Overview</a>\n</span>\n<br>\n</div>\n</body>\n</html>\n'
     html_text += '<br><br><br>\n</body>\n</html>\n'
