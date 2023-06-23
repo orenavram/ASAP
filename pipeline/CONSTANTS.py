@@ -23,7 +23,7 @@ WEBSERVER_NAME = 'asap'
 
 ASAP_URL = f'https://{WEBSERVER_NAME}.tau.ac.il'
 
-ASAP_RESULTS_DIR = os.path.join(SERVERS_RESULTS_DIR, WEBSERVER_NAME)
+WEBSERVER_RESULTS_DIR = os.path.join(SERVERS_RESULTS_DIR, WEBSERVER_NAME)
 ASAP_LOGS_DIR = os.path.join(SERVERS_LOGS_DIR, WEBSERVER_NAME)
 ASAP_RESULTS_URL = os.path.join(ASAP_URL, 'results')
 ASAP_HTML_DIR = f'/data/www/html/{WEBSERVER_NAME}'
@@ -31,6 +31,7 @@ ASAP_EXEC = f'/bioseq/{WEBSERVER_NAME}'
 
 SUBMISSIONS_LOG = f'/bioseq/{WEBSERVER_NAME}/submissions_log.txt'
 
+Q_SUBMITTER_PATH = '/bioseq/bioSequence_scripts_and_constants/q_submitter_power.py'
 MAIN_SCRIPT = os.path.join(ASAP_EXEC, 'pipeline/NGS_analyzer.py')
 
 RESULT_WEBPAGE_NAME = 'result.html'
